@@ -3,11 +3,11 @@ THE MASTER - A base for plugins and themes
 
 Author: Hannes Diercks
 URL: http://www.red-thorn.de
-Plugin Info: http://plugins.red-thorn.de/libary/!html/
-Version: 2.0.3
-Date: 2011-12-16 18:00:00
+Plugin Info: http://plugins.red-thorn.de/libary/!themaster/
+Version: 2.0.4
+Date: 2012-01-17 10:22:00
 Requires: 3.0
-Tested: 3.2.1
+Tested: 3.3.1
 
 
 Description
