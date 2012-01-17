@@ -1,13 +1,13 @@
 THE MASTER - A base for plugins and themes
 ==========================================
 
-Author: Hannes Diercks
-URL: http://www.red-thorn.de
-Plugin Info: http://plugins.red-thorn.de/libary/!themaster/
-Version: 2.0.4
-Date: 2012-01-17 10:22:00
-Requires: 3.0
-Tested: 3.3.1
+Author: Hannes Diercks  
+URL: http://www.red-thorn.de  
+Plugin Info: http://plugins.red-thorn.de/libary/!themaster/  
+Version: 2.0.4  
+Date: 2012-01-17 15:55:00  
+Requires: 3.0  
+Tested: 3.3.1  
 
 
 Description
@@ -32,24 +32,24 @@ Changelog
 ---------
 
 ### 2.0.4
-	+	init on github
++	init on github
 
 ### 2.0.3
-	+	added toAlpha(), toAlphaNumeric(), toSlugForm() methods to THEMASTER
-	+	added recursive_get() to THEMASTER
-	+	changed $WPMaster->currentUser to Static & fixed bug in get_user($key)
-	+	added global source functionality
-	+	fixed required init args functionality
-	+	Added is_browser() to THEMASTER
++	added toAlpha(), toAlphaNumeric(), toSlugForm() methods to THEMASTER
++	added recursive_get() to THEMASTER
++	changed $WPMaster->currentUser to Static & fixed bug in get_user($key)
++	added global source functionality
++	fixed required init args functionality
++	Added is_browser() to THEMASTER
 
 ### 2.0.2
-	+	added THEWPMASTER::add_contentTag($tag, $callback)
-	+	added get_HTML for fallback on global HTML class or error
-	+	admin_notices() changed to pure static function.
-	+	added reg_model() for including model classes
-	+	fixed THEDEBUG - arrays can now be debugged ;)
-	+	added reg_js($filename, $vars), reg_css($filename, $vars) & echo_sources() to THEMASTER
-	+	echo_sources in wp_master replaced, sources will be added via wp_enqueue_script/style
++	added THEWPMASTER::add_contentTag($tag, $callback)
++	added get_HTML for fallback on global HTML class or error
++	admin_notices() changed to pure static function.
++	added reg_model() for including model classes
++	fixed THEDEBUG - arrays can now be debugged ;)
++	added reg_js($filename, $vars), reg_css($filename, $vars) & echo_sources() to THEMASTER
++	echo_sources in wp_master replaced, sources will be added via wp_enqueue_script/style
 
 ### 2.0.1
 +   cleaned data structure and funcional update proccess
