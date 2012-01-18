@@ -18,7 +18,7 @@ Description
 This plugin allocates THEWPMASTER Class which brings handy functionalety and presets
 for plugin and theme development in wordpress.
 
-See http://plugins.red-thorn.de/libary/!themaster for details
+See [Plugin Page](http://plugins.red-thorn.de/libary/!themaster) for details
 
 
 
