@@ -5,9 +5,11 @@ Author: Hannes Diercks
 URL: http://www.red-thorn.de  
 Plugin Info: http://plugins.red-thorn.de/libary/!themaster/  
 Version: 2.0.4  
-Date: 2012-01-17 15:55:00  
+Date: 2012-01-18 16:34:00  
 Requires: 3.0  
 Tested: 3.3.1  
+
+
 
 
 Description
@@ -19,6 +21,8 @@ for plugin and theme development in wordpress.
 See http://plugins.red-thorn.de/libary/!themaster for details
 
 
+
+
 Installation
 ------------
 
@@ -28,11 +32,10 @@ Installation
 3. See http://plugins.red-thorn.de/libary/!themaster for usage details
 
 
+
+
 Changelog
 ---------
-
-### 2.0.4
-+	init on github
 
 ### 2.0.3
 +	added toAlpha(), toAlphaNumeric(), toSlugForm() methods to THEMASTER
@@ -61,16 +64,24 @@ Changelog
 +   Intern version *no details*
 
 
+
+
 Upgrade Notice
 --------------
 
-+   None ;)
+### 2.0.4
++	init on github
+
+
+
 
 
 Known Bugs
 ----------
 
 +   None ;)
+
+
 
 
 Todo
