@@ -451,7 +451,10 @@ class THEBASE {
 	public function echo_sources($admin = false) {
 		if(empty(self::$registeredSources)) return;
 		
-		$sources = $admin == 'admin' ? self::$registeredSources['front'] : self::$registeredSources['admin'];
+		$sources = $admin == 'admin' ? self::$registeredSources['admin'] : self::$registeredSources['front'];
+		unset($sources['less']);
+		if(empty($sources)) return;
+
 		$HTML = $this->get_HTML();
 		foreach($sources as $type => $files) {
 			foreach($files as $file => $url) {
@@ -464,7 +467,7 @@ class THEBASE {
 		$HTML = $this->get_HTML();
 		$HTML->sg_script();
 		foreach(self::$registeredJsVars as $name => $var) {
-			$HTML->blank('var '.$name.' = '.json_encode($var));
+			$HTML->blank('var '.$name.' = '.json_encode($var).';');
 		}
 		$HTML->end();
 	}

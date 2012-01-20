@@ -4,7 +4,7 @@ THE MASTER - A base for plugins and themes
 Author: Hannes Diercks  
 URL: http://www.red-thorn.de  
 Plugin Info: http://plugins.red-thorn.de/libary/!themaster/  
-Version: 2.0.4  
+Version: 2.0.5  
 Date: 2012-01-18 16:34:00  
 Requires: 3.0  
 Tested: 3.3.1  
@@ -29,13 +29,18 @@ Installation
 1. Upload the plugin directory to the `/wp-content/plugins/` directory
 2. Activate the plugin through the 'Plugins' menu in WordPress
 4. Does nothing now
-3. See http://plugins.red-thorn.de/libary/!themaster for usage details
+3. See [Plugin Page](http://plugins.red-thorn.de/libary/!themaster) for usage details
 
 
 
 
 Changelog
 ---------
+
+### 2.0.5
++	fixed THEBASE::echo_sources()
++	added THEWPMASTER::force_echo_sources()
++	added res/js/animaterotatescale.js by [zachstronaut](http://www.zachstronaut.com/posts/2009/08/07/jquery-animate-css-rotate-scale.html)
 
 ### 2.0.3
 +	added toAlpha(), toAlphaNumeric(), toSlugForm() methods to THEMASTER

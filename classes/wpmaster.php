@@ -256,6 +256,9 @@ class THEWPMASTER extends THEUPDATES {
 	 */
 	public function echo_sources() {
 	}
+	public function force_echo_sources() {
+		parent::echo_sources();
+	}
 	
 	public function get_post($post_ID, $key = null) {
 		if(!isset(self::$_postCache[$post_ID])) {
