@@ -37,6 +37,9 @@ Installation
 Changelog
 ---------
 
+### 2.1.0
++	init
+
 ### 2.0.5
 +	fixed THEBASE::echo_sources()
 +	added THEWPMASTER::force_echo_sources()
