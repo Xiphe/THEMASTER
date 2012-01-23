@@ -209,7 +209,7 @@ class THEMASTER extends THEDEBUG {
 	 */
 	private function _is_browser($browser, $version = null, $strict = null) {
 		if(self::$BrowserObj == null) {
-			require_once(dirname(__FILE__).DS.'Browser'.DS.'Browser.php');
+			require_once(dirname(dirname(__FILE__)).'classes'.DS.'Browser'.DS.'Browser.php');
 			self::$BrowserObj = new Browser;
 			self::$browserVersion = self::$BrowserObj->getVersion();
 			self::$browser = self::$BrowserObj->getBrowser();
