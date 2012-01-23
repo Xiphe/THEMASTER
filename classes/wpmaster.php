@@ -115,7 +115,8 @@ class THEWPMASTER extends THEUPDATES {
 				if(!isset(self::$_ftp_conn_id)) {
 					mkdir($dir, $chmod);
 				} else {
-					ftp_mkdir(self::$_ftp_conn_id, self::$_ftpBaseDir.DS.$basedir.DS.$folder.DS);
+					ftp_mkdir(self::$_ftp_conn_id, 		   self::$_ftpBaseDir.DS.$basedir.DS.$folder.DS);
+					ftp_chmod(self::$_ftp_conn_id, $chmod, self::$_ftpBaseDir.DS.$basedir.DS.$folder.DS);
 				}
 			}
 			
