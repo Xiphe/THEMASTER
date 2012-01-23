@@ -20,6 +20,21 @@ class THEWPMASTER extends THEUPDATES {
 	private static $_hooked = array();
 	private static $_contentTags = array();
 	
+	private static $_ftp_conn_id;
+	private static $_ftpBaseDir;
+	private static $_folderStructure = array(
+		'classes' => 0755,
+		'models' => 0755,
+		'res' => array(
+			'chmod' => 0755,
+			'css' => 0777,
+			'includes' => 0755,
+			'js' => 0755,
+			'less' => 0755,
+		),
+		'views' => 0755,
+	);
+	
 	/** The init - does nothing for subclasses und calls _masterInit if its called by THEMASTER
 	 *
 	 * @param array $initArgs
@@ -63,10 +78,6 @@ class THEWPMASTER extends THEUPDATES {
 			add_action('init', array('THEWPMASTER', 'register_sources'), 100, 0);
 			self::$_hooked['register_sources'] = true;
 		}
-		if(!isset(self::$_hooked['_masterInstall'])) {
-			register_activation_hook(dirname(dirname(__FILE__)).basename(__FILE__), array('THEWPMASTER', '_masterInstall') );
-			self::$_hooked['_masterInstall'] = true;
-		}
 		if(!isset(self::$_hooked['print_jsVars'])) {
 			add_action('wp_head', array('THEWPMASTER', 'print_jsVars'), 0, 0);
 			add_action('admin_head', array('THEWPMASTER', 'print_adminJsVars'), 0, 0);
@@ -74,8 +85,44 @@ class THEWPMASTER extends THEUPDATES {
 		}
 	}
 	
-	public function _masterInstall() {
-		mail('hdiercks@uptoyou.de', 'HI INSTALLER');
+	public static function _masterInstall() {
+		if(!isset(self::$_ftp_conn_id) && defined('FTP_HOST') && defined('FTP_USER') && defined('FTP_PASS')) {
+			self::$_ftp_conn_id = ftp_connect(FTP_HOST);
+			$login_result = ftp_login(self::$_ftp_conn_id, FTP_USER, FTP_PASS);
+			self::$_ftpBaseDir = str_replace(FTP_WORKING_PATH, '', dirname(dirname(__FILE__)));
+		}
+		self::_check_folderStructure(self::$_folderStructure, '');
+		ftp_close(self::$_ftp_conn_id);
+	}
+	
+	private static function _check_folderStructure($structure, $basedir) {
+		$subfolders = array();
+		foreach($structure as $folder => $chmod) {
+			if(is_array($chmod)) {
+				$t = $chmod['chmod'];
+				unset($chmod['chmod']);
+				$subfolders = $chmod;
+				$chmod = $t;
+			}
+			
+			if(is_dir(($dir = dirname(dirname(__FILE__)).$basedir.DS.$folder.DS))) {
+				if(!isset(self::$_ftp_conn_id)) {
+					chmod($dir, $chmod);
+				} else {
+					ftp_chmod(self::$_ftp_conn_id, $chmod, self::$_ftpBaseDir.DS.$basedir.DS.$folder.DS);
+				}
+			} else {
+				if(!isset(self::$_ftp_conn_id)) {
+					mkdir($dir, $chmod);
+				} else {
+					ftp_mkdir(self::$_ftp_conn_id, self::$_ftpBaseDir.DS.$basedir.DS.$folder.DS);
+				}
+			}
+			
+			if(is_array($subfolders)) {
+				self::_check_folderStructure($subfolders, $basedir.DS.$folder);
+			}
+		}
 	}
 	
 	private function _get_pluginSymlinkPath($file) {

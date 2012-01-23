@@ -4,8 +4,8 @@ THE MASTER - A base for plugins and themes
 Author: Hannes Diercks  
 URL: http://www.red-thorn.de  
 Plugin Info: http://plugins.red-thorn.de/libary/!themaster/  
-Version: 2.0.5  
-Date: 2012-01-18 16:34:00  
+Version: 2.0.6  
+Date: 2012-01-23 13:11:00  
 Requires: 3.0  
 Tested: 3.3.1  
 
@@ -37,11 +37,14 @@ Installation
 Changelog
 ---------
 
+### 2.0.6
++	added themasterInstall()
++	added THEWPMASTER::_masterInstall() that generates the directory tree in the plugin folder
+
 ### 2.0.5
 +	fixed THEBASE::echo_sources()
 +	added THEWPMASTER::force_echo_sources()
 +	added res/js/animaterotatescale.js by [zachstronaut](http://www.zachstronaut.com/posts/2009/08/07/jquery-animate-css-rotate-scale.html)
-+	added themasterInstall()
 *	remove base.less.css from index
 
 ### 2.0.3
