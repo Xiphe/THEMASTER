@@ -63,9 +63,9 @@ class THEWPMASTER extends THEUPDATES {
 			add_action('init', array('THEWPMASTER', 'register_sources'), 100, 0);
 			self::$_hooked['register_sources'] = true;
 		}
-		if(!isset(self::$_hooked['install'])) {
+		if(!isset(self::$_hooked['_masterInstall'])) {
 			register_activation_hook(dirname(dirname(__FILE__)).basename(__FILE__), array('THEWPMASTER', '_masterInstall') );
-			self::$_hooked['install'] = true;
+			self::$_hooked['_masterInstall'] = true;
 		}
 		if(!isset(self::$_hooked['print_jsVars'])) {
 			add_action('wp_head', array('THEWPMASTER', 'print_jsVars'), 0, 0);

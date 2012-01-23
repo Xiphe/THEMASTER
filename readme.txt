@@ -41,6 +41,8 @@ Changelog
 +	fixed THEBASE::echo_sources()
 +	added THEWPMASTER::force_echo_sources()
 +	added res/js/animaterotatescale.js by [zachstronaut](http://www.zachstronaut.com/posts/2009/08/07/jquery-animate-css-rotate-scale.html)
++	added themasterInstall()
+*	remove base.less.css from index
 
 ### 2.0.3
 +	added toAlpha(), toAlphaNumeric(), toSlugForm() methods to THEMASTER

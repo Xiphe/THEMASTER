@@ -17,4 +17,9 @@ if(!defined('DS'))
 if(!defined('WPMASTERAVAILABE')) {
 	require_once(dirname(__FILE__).'/classes/wpmaster.php');
 }
+
+register_activation_hook(__FILE__, 'themasterInstall');
+function themasterInstall() {
+	
+}
 ?>
