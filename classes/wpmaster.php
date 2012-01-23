@@ -63,11 +63,19 @@ class THEWPMASTER extends THEUPDATES {
 			add_action('init', array('THEWPMASTER', 'register_sources'), 100, 0);
 			self::$_hooked['register_sources'] = true;
 		}
+		if(!isset(self::$_hooked['install'])) {
+			register_activation_hook(dirname(dirname(__FILE__)).basename(__FILE__), array('THEWPMASTER', '_masterInstall') );
+			self::$_hooked['install'] = true;
+		}
 		if(!isset(self::$_hooked['print_jsVars'])) {
 			add_action('wp_head', array('THEWPMASTER', 'print_jsVars'), 0, 0);
 			add_action('admin_head', array('THEWPMASTER', 'print_adminJsVars'), 0, 0);
 			self::$_hooked['print_jsVars'] = true;
 		}
+	}
+	
+	public function _masterInstall() {
+		mail('hdiercks@uptoyou.de', 'HI INSTALLER');
 	}
 	
 	private function _get_pluginSymlinkPath($file) {
