@@ -202,7 +202,7 @@ class THEBASE {
 	protected function _masterInit($initArgs) {
 		$this->session();
 		
-		$this->debug('_masterInit:'.get_class(get_called_class()));
+		$this->debug('_masterInit: '.get_called_class());
 		
 		$this->reg_less('base');
 		$this->reg_admin_less('base');
