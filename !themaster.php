@@ -10,7 +10,6 @@ Author URI: http://red-thorn.de/
 Update Server: http://plugins.red-thorn.de/api/index.php
 */
 
-register_update_hook(__FILE__, '_masterInstall');
 register_activation_hook(__FILE__, '_masterInstall');
 function _masterInstall() {
 	require_once(dirname(__FILE__).DS.'classes'.DS.'wpmaster.php');

@@ -68,8 +68,7 @@ class THEWPMASTER extends THEUPDATES {
 		
 		$pluginPath = isset($this->pluginPath) ? $this->pluginPath : $this->basePath;
 		include_once($this->basePath.DS.'classes'.DS.'master.php');
-		register_update_hook(($file = $pluginPath.DS.basename($this->basePath)).'.php', array($name, 'install'));
-		register_activation_hook($file, array($name, 'install'));
+		register_activation_hook($pluginPath.DS.basename($this->basePath).'.php', array($name, 'install'));
 	
 		if(!isset(self::$_hooked['admin_notices'])) {
 			add_action('admin_notices', array('THEWPMASTER', 'admin_notices'));
