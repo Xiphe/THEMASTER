@@ -32,4 +32,8 @@
 		return $this;
 	}
 	
+	public function debug() {
+		call_user_func_array(array(THEDEBUG, 'debug'), func_get_args());
+	}
+	
 } ?>

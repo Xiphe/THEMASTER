@@ -48,8 +48,7 @@ class THEMASTER extends THEDEBUG {
 	}
 	
 	protected function _masterInit($initArgs) {
-		parent::_masterInit($initArgs);
-
+		return parent::_masterInit($initArgs);
 	}
 	
 	public function toAlpha($string) {

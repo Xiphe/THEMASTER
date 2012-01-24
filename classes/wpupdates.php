@@ -13,12 +13,14 @@ class THEUPDATES extends THEMASTER {
 	}
 	
 	protected function _masterInit($initArgs) {
-		parent::_masterInit($initArgs);
+		$obj = parent::_masterInit($initArgs);
 		
 		$this->_checkForcing();
 				
 		if(isset($this->updatable) && $this->updatable == true)
 			$this->updatable($this->textdomain);
+		
+		return $obj;
 	}
 	
 	protected function _hooks() {
@@ -33,7 +35,7 @@ class THEUPDATES extends THEMASTER {
 		self::$_forced = true;
 	}
 	
-	public function _checkConstants() {
+	private function _checkConstants() {
 		if(self::$_checked === true) return;
 		$const = get_defined_constants(true);
 		foreach($const['user'] as $const => $name) {

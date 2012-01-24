@@ -5,7 +5,7 @@ Author: Hannes Diercks
 URL: http://www.red-thorn.de  
 Plugin Info: http://plugins.red-thorn.de/libary/!themaster/  
 Version: 2.0.6  
-Date: 2012-01-23 13:11:00  
+Date: 2012-01-24 02:00:00  
 Requires: 3.0  
 Tested: 3.3.1  
 
@@ -38,14 +38,18 @@ Changelog
 ---------
 
 ### 2.0.6
-+	added themasterInstall()
-+	added THEWPMASTER::_masterInstall() that generates the directory tree in the plugin folder
++	added THEWPMASTER::_masterUpdate() and PLUGIN::update() based on THEVERSION_PLUGINNAME or PLUGIN::$theversion
++	renamed old activation hooks from PLUGIN::install() to PLUGIN::activate()
++	added THEWPMASTER::$_folderStructure and PLUGIN::$folderStructure to create the dirs on update and check dir permissions
++	added THEMODEL::debug()
++	fixed bug that hides the output (bool) false and (null) null general and (int) 0 in firePHP
++	added functionality to enable static calls of THEDEBUG::debug(), rebug() & diebug();
 
 ### 2.0.5
 +	fixed THEBASE::echo_sources()
 +	added THEWPMASTER::force_echo_sources()
 +	added res/js/animaterotatescale.js by [zachstronaut](http://www.zachstronaut.com/posts/2009/08/07/jquery-animate-css-rotate-scale.html)
-*	remove base.less.css from index
+*	removed base.less.css from index
 
 ### 2.0.3
 +	added toAlpha(), toAlphaNumeric(), toSlugForm() methods to THEMASTER

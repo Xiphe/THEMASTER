@@ -9,14 +9,15 @@ Author: Hannes Diercks
 Author URI: http://red-thorn.de/
 Update Server: http://plugins.red-thorn.de/api/index.php
 */
+define('THEUPDATES_UPDATABLE_THEMASTER', '!themaster');
+define('THEVERSION_THEMASTER', '2.0.6');
 
-register_activation_hook(__FILE__, '_masterInstall');
-function _masterInstall() {
+register_activation_hook(__FILE__, '_masterActivate');
+function _masterActivate() {
 	require_once(dirname(__FILE__).DS.'classes'.DS.'wpmaster.php');
-	THEWPMASTER::_masterInstall();
+	THEWPMASTER::_masterActivate();
 }
 
-define('THEUPDATES_UPDATABLE_THEMASTER', '!themaster');
 if(!defined('DS'))
 	define('DS', DIRECTORY_SEPARATOR);
 

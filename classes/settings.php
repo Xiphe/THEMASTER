@@ -13,7 +13,7 @@
 		);
 				
 		protected function _masterInit($initArgs) {
-			parent::_masterInit($initArgs);
+			return parent::_masterInit($initArgs);
 		}
 		
 		protected function _get_setting($key) {

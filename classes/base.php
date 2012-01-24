@@ -213,9 +213,10 @@ class THEBASE {
 		// $name = strtoupper($this->prefix).'Master';
 		
 		// global $$name;
-		$this->get_instance('Master');
+		$r = $this->get_instance('Master');
 	
 		$this->initiated = TRUE;
+		return $r;
 	}
 	
 	protected function _storeSingleton($name, $obj) {
@@ -633,6 +634,11 @@ class THEBASE {
 				$args[str_replace($string.'_', '', $key)] = $value;
 		}
 		return $args;
+	}
+	
+	// end of update chain.
+	public function update() {
+		return true;
 	}
 	
 	public function arrayToGet(array $arr) {

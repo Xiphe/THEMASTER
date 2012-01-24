@@ -46,7 +46,7 @@ class THEDEBUG extends THESETTINGS {
 				echo $this->get_debug('Debug mode setted to FirePHP but FirePHP could not be found', 4);
 			}
 		}
-		parent::_masterInit($initArgs);
+		return parent::_masterInit($initArgs);
 	}
 	
 	/** Generates the Debug Array and allowes mixing positions of nr & name
@@ -98,9 +98,11 @@ class THEDEBUG extends THESETTINGS {
 	}
 	
 	public function debug($args = null) {
-		if(is_string($args) && strtolower($args) === 'callstack') $this->callStack();
+		$obj = isset($this) ? $this : self::inst();
+		if(is_string($args) && strtolower($args) === 'callstack') $obj->callStack();
+		elseif(is_string($args) && strtolower($args) === 'calledBy') $obj->callStack(1);
 		else {
-			call_user_func_array(array($this, '_inner_debug'), func_get_args());
+			call_user_func(array($obj, '_inner_debug'), func_get_args());
 		}
 	}
 	
@@ -117,7 +119,7 @@ class THEDEBUG extends THESETTINGS {
 		if(!$this->_get_setting('debug')) return;
 		elseif($this->_get_setting('debug') === 'get' && (!isset($_GET['debug']) || $_GET['debug'] != 'true')) return;
 		
-		$this->_gen_debug(func_get_args());
+		$this->_gen_debug($args);
 		
 		// TODO: Summed Mails + Summed Output;
 		switch ($this->_get_setting('debugMode')) {
@@ -135,6 +137,13 @@ class THEDEBUG extends THESETTINGS {
 					break;
 			case 'FirePHP':
 				FB::setOptions(array('file' => $this->_cDebug['btFile'], 'line' => $this->_cDebug['btLine']));
+				if($this->_cDebug['type'] == 'boolean') {
+					$this->_cDebug['var'] = '(boolean) '.($this->_cDebug['var'] ? 'true' : 'false');
+				} elseif($this->_cDebug['type'] == 'NULL') {
+					$this->_cDebug['var'] = '(null) NULL';
+				} elseif($this->_cDebug['type'] == 'string') {
+					$this->_cDebug['var'] = '"'.$this->_cDebug['var'].'"';
+				}
 				switch ($this->_cDebug['nr']) {
 					case 2:
 						FB::info($this->_cDebug['var'], $this->_cDebug['name']);
@@ -159,7 +168,7 @@ class THEDEBUG extends THESETTINGS {
 		}
 		
 	}
-	
+
 	/** Debug function, returns the given variable with additional informations
 	 *
 	 * @param mixed $var the variable to be debugged
@@ -237,16 +246,16 @@ class THEDEBUG extends THESETTINGS {
 	 * @date Sep 22th 2011
 	 */
 	public function diebug() {
+		$obj = isset($this) ? $this : self::inst();
 		$args = func_get_args();
-		call_user_func_array(array($this, 'debug'), $args);
+		call_user_func_array(array($obj, 'debug'), $args);
 		die();
 	}
 	public function rebug($var) {
+		$obj = isset($this) ? $this : self::inst();
 		$args = func_get_args();
-		call_user_func_array(array($this, 'debug'), $args);
+		call_user_func_array(array($obj, 'debug'), $args);
 		return $var;
 	}
-	
-	
 }
 ?>

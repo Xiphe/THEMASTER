@@ -13,6 +13,7 @@ class THEWPMASTER extends THEUPDATES {
 	static $_notes = array(); // Array of passed Notes to be printet via print_adminMessages()
 	static $_postCache = array(); // Array of Posts
 	
+	
 	/** Used by add_contentTag() & do_ContentTags()
 	 * @since 2.0.2
 	 * @date Dez 14th 2011
@@ -21,10 +22,9 @@ class THEWPMASTER extends THEUPDATES {
 	private static $_contentTags = array();
 	
 	private static $_ftp_conn_id;
-	private static $_ftpBaseDir;
 	private static $_folderStructure = array(
 		'classes' => 0755,
-		'models' => 0755,
+		// 'models' => 0755,
 		'res' => array(
 			'chmod' => 0755,
 			'css' => 0777,
@@ -32,7 +32,7 @@ class THEWPMASTER extends THEUPDATES {
 			'js' => 0755,
 			'less' => 0755,
 		),
-		'views' => 0755,
+		// 'views' => 0755,
 	);
 	
 	/** The init - does nothing for subclasses und calls _masterInit if its called by THEMASTER
@@ -55,12 +55,13 @@ class THEWPMASTER extends THEUPDATES {
 	 * @date Jul 28th 2011
 	 */
 	protected function _masterInit($initArgs) {
-		parent::_masterInit($initArgs);
+		$obj = parent::_masterInit($initArgs);
 		
 		// TODO: INCLUDE HTML CLASS
 		// include_once($this->basePath.'/classes/html/!html.php');
 		
 		$name = strtoupper($this->prefix).'Master';
+		$this->_versionCheck($name, $obj);
 		
 		if(is_dir($this->basePath.'/languages')) {
 			load_plugin_textdomain($this->textdomain, false, $this->folderName.'/languages/');
@@ -68,8 +69,12 @@ class THEWPMASTER extends THEUPDATES {
 		
 		$pluginPath = isset($this->pluginPath) ? $this->pluginPath : $this->basePath;
 		include_once($this->basePath.DS.'classes'.DS.'master.php');
-		register_activation_hook($pluginPath.DS.basename($this->basePath).'.php', array($name, 'install'));
+		register_activation_hook($pluginPath.DS.basename($this->basePath).'.php', array($name, 'activate'));
 	
+		if(!isset(self::$_hooked['masterVersionCheck'])) {
+			$this->_versionCheck('themaster', $this);
+			self::$_hooked['masterVersionCheck'] = true;
+		}
 		if(!isset(self::$_hooked['admin_notices'])) {
 			add_action('admin_notices', array('THEWPMASTER', 'admin_notices'));
 			self::$_hooked['admin_notices'] = true;
@@ -84,44 +89,77 @@ class THEWPMASTER extends THEUPDATES {
 			self::$_hooked['print_jsVars'] = true;
 		}
 	}
+
+	private function _versionCheck($slug, $obj) {
+		if($GLOBALS['pagenow'] != 'plugins.php') return;
+		if( (defined(($name = 'THEVERSION_'.strtoupper($slug))) && ($version = constant($name)))
+		 || (isset($this->theversion) && ($version = $this->theversion))
+		) {
+			$name = strtolower($name);
+			if(version_compare(get_option($name), $version, '<')) {
+				if($name == 'theversion_themaster') {
+					$r = $this->_masterUpdate();
+				} else {
+					if(isset($obj->folderStructure) && is_array($obj->folderStructure)) {
+						$this->_check_folderStructure($obj->folderStructure, $obj->basePath);
+					}
+					$r = $obj->update();
+				}
+				if($r === true) {
+					update_option($name, $version);
+				} else {
+					throw new Exception('Error: Update method for "'.$name.'" failed.', 1);
+				}
+			}
+		}
+	}
 	
-	public static function _masterInstall() {
+	private function _masterUpdate() {
+		$this->_check_folderStructure(self::$_folderStructure, dirname(dirname(__FILE__)).DS);
+		return true;
+	}
+	public function _masterActivate() {
+	}
+	
+	private function _check_folderStructure($structure, $basePath) {
 		if(!isset(self::$_ftp_conn_id) && defined('FTP_HOST') && defined('FTP_USER') && defined('FTP_PASS')) {
 			self::$_ftp_conn_id = ftp_connect(FTP_HOST);
 			$login_result = ftp_login(self::$_ftp_conn_id, FTP_USER, FTP_PASS);
-			self::$_ftpBaseDir = str_replace(FTP_WORKING_PATH, '', dirname(dirname(__FILE__)));
+			$basePath = str_replace(FTP_WORKING_PATH, '', $basePath);
 		}
-		self::_check_folderStructure(self::$_folderStructure, '');
-		ftp_close(self::$_ftp_conn_id);
+		self::_check_folderStructureWalker($structure, '', $basePath);
+		if(isset(self::$_ftp_conn_id)) {
+			ftp_close(self::$_ftp_conn_id);
+		}
 	}
 	
-	private static function _check_folderStructure($structure, $basedir) {
-		$subfolders = array();
+	private static function _check_folderStructureWalker($structure, $basedir, $root) {
 		foreach($structure as $folder => $chmod) {
+			$subfolders = null;
 			if(is_array($chmod)) {
 				$t = $chmod['chmod'];
 				unset($chmod['chmod']);
 				$subfolders = $chmod;
 				$chmod = $t;
 			}
-			
-			if(is_dir(($dir = dirname(dirname(__FILE__)).$basedir.DS.$folder.DS))) {
+			$dir = $root.$basedir.DS.$folder.DS;
+			if(is_dir($dir)) {
 				if(!isset(self::$_ftp_conn_id)) {
 					chmod($dir, $chmod);
 				} else {
-					ftp_chmod(self::$_ftp_conn_id, $chmod, self::$_ftpBaseDir.DS.$basedir.DS.$folder.DS);
+					ftp_chmod(self::$_ftp_conn_id, $chmod, $dir);
 				}
 			} else {
 				if(!isset(self::$_ftp_conn_id)) {
 					mkdir($dir, $chmod);
 				} else {
-					ftp_mkdir(self::$_ftp_conn_id, 		   self::$_ftpBaseDir.DS.$basedir.DS.$folder.DS);
-					ftp_chmod(self::$_ftp_conn_id, $chmod, self::$_ftpBaseDir.DS.$basedir.DS.$folder.DS);
+					ftp_mkdir(self::$_ftp_conn_id, $dir);
+					ftp_chmod(self::$_ftp_conn_id, $chmod, $dir);
 				}
 			}
 			
 			if(is_array($subfolders)) {
-				self::_check_folderStructure($subfolders, $basedir.DS.$folder);
+				self::_check_folderStructureWalker($subfolders, $basedir.DS.$folder, $root);
 			}
 		}
 	}
