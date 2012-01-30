@@ -40,6 +40,7 @@ Changelog
 ### 2.1.0
 +	relocated base class files from /classes to /core
 +	added init_THEWPMASTER() function wich comes with an try - catch phrase
++	changed suffix from readme from .txt to .md
 
 ### 2.0.6
 +	added THEWPMASTER::_masterUpdate() and PLUGIN::update() based on THEVERSION_PLUGINNAME or PLUGIN::$theversion
