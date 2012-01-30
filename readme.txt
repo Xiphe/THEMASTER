@@ -4,8 +4,8 @@ THE MASTER - A base for plugins and themes
 Author: Hannes Diercks  
 URL: http://www.red-thorn.de  
 Plugin Info: http://plugins.red-thorn.de/libary/!themaster/  
-Version: 2.0.6  
-Date: 2012-01-24 02:00:00  
+Version: 2.1.0  
+Date: 2012-01-30 13:35:00  
 Requires: 3.0  
 Tested: 3.3.1  
 
@@ -36,6 +36,10 @@ Installation
 
 Changelog
 ---------
+
+### 2.1.0
++	relocated base class files from /classes to /core
++	added init_THEWPMASTER() function wich comes with an try - catch phrase
 
 ### 2.0.6
 +	added THEWPMASTER::_masterUpdate() and PLUGIN::update() based on THEVERSION_PLUGINNAME or PLUGIN::$theversion
@@ -75,7 +79,7 @@ Changelog
 +   **First public version**
 
 ### pre 2.0
-+   Intern version *no details*
++   Intern versions *no details*
 
 
 
@@ -101,5 +105,6 @@ Known Bugs
 Todo
 ----
 
-### 2.0.1
-+	Add Admin Option Page generator
++	enable deep subfolders for classes, models & views
++	first look for global includable classes, models & views in /!themaster/...
++	Add Admin Option Page generator (2.0.1)
