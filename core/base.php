@@ -1,11 +1,35 @@
 <?php
-// Version 2.1.0
+// Register base model file.
 require_once('model.php');
+
 class THEBASE {
-	// Gets True if THEMASTER is initiated
-	public $initiated = FALSE;
-	
+
+	/* ------------------ */
+	/*  STATIC VARIABLES  */
+	/* ------------------ */
+
+	/* PRIVATE */
+	// Turns true after first initiation.
+	private static $s_initiated = false;
+
+	private static $s_registeredSources = array();
+	private static $s_registeredJsVars = array();
+	private static $s_registeredAdminJsVars = array();
+
+	private static $s_callbacks = array(); // HOLDS CALLBACK METHODS 
+	private static $_singletons = array();
+
+	protected static $sBasePath_;
+	protected static $sFolderName_;
+	protected static $sProjectFile_;
+	protected static $sTextdomain_;
+	protected static $sBaseUrl_;
+	protected static $sTextID_;
+
+	public static $THECLASSES = array('THEWPMASTER', 'THEWPSETTINGS', 'THEWPUPDATES', 'THEMASTER', 'THEDEBUG', 'THESETTINGS', 'THEBASE');
+
 	// The Args needed by the Object to get initiated
+	private $_masterInitiated = false;
 	private $_requiredInitArgs = array();
 	protected $requiredInitArgs = array();
 	
@@ -13,14 +37,10 @@ class THEBASE {
 	private $_initArgs = array();
 	
 	// This is the Place of all Singleton Instances
-	protected static $_singletons = array(); 
 	
 	// Temporary Globales Used by: 
 	private $_temp_globals = array();
 	
-	public static $registeredSources = array();
-	public static $registeredJsVars = array();
-	public static $registeredAdminJsVars = array();
 	
 	/** The Constructor gets called by every subclass
 	 *
@@ -30,45 +50,95 @@ class THEBASE {
 	 * @package base
 	 * @date Nov 10th 2011
 	 */
-	function __construct($initArgs) {
-		$this->_initArgs = $initArgs;
-		if($this->_get_setting('errorReporting') === true) {
-			error_reporting(E_ALL);
-			ini_set('display_errors', 1);
-		} else {
-			error_reporting(0);
-			ini_set('display_errors', 0);
-		}
-				
-		if(!isset($initArgs['original']) || $initArgs['original'] !== true) {
-			throw new Exception('__construct() method chain of THEMASTER overwritten.');
+	function __construct( $initArgs ) {
+		if( !isset( $this->constructing ) || $this->constructing !== true ) {
+			throw new Exception("ERROR: THEBASE is not ment to be constructed directly.", 1);
 			return false;
+		} else {
+			unset( $this->constructing );
+		}
+
+		self::s_init();
+
+		if( $initArgs === 'MINIMASTER' ) {
+			return $this;
 		}
 		
-		/* check if Called Class is meant to be a Singleton (Subclass: static $singleton = true;)
-		 * and if it is stored in THEMASTERs private $singletons array
-		 */
-		$cc = strtolower(get_called_class());
-		if(isset(self::$_singletons[$cc]) && is_object(($r = self::$_singletons[$cc])) 
-				&& isset($r->singleton) && $r->singleton === true)
-			return $r;
 		
 		// cjeck for required Init args (defined by protected $requiredInitArgs = array();)
+		$err = $this->get_requiredArgsError(
+			$initArgs,
+			array_merge(
+				$this->_requiredInitArgs,
+				$this->requiredInitArgs
+			)
+		);
 		
-		$err = $this->get_requiredArgsError($initArgs, array_merge($this->_requiredInitArgs, $this->requiredInitArgs));
-		
-		if($err === false) {
+		if( $err === false ) {
 			// no error -> Set Init args as Class Variables
-			foreach ($initArgs as $key => $value) {
+			foreach( $initArgs as $key => $value ) {
 				$this->$key = $value;
 			}
 			// initiate the Object
-			if(in_array(get_class($this), array('THEWPMASTER', 'THEMASTER', 'THEDEBUG', 'THEUPDATES', 'THESETTINGS'))) {
-				$this->_masterInit($initArgs);
+
+			if( isset( $this->isMaster ) && $this->isMaster === true ) {
+				unset( $initArgs['isMaster'] );
+				$this->_mastersInitArgs = $initArgs;
+				self::do_callback( 'beforeMasterInit', $this );
+				$this->_masterInit();
+			} else {
+				self::do_callback( 'initiated', $this, array( 'class' => get_class($this) ) );
 			}
+
+
+			// $this->_masterInit( $initArgs );
+			// $this->_masterInit( $initArgs );
 		} else {
-			throw new ErrorException('Required args Error: '.$err.' in Class: '.get_class($this), 1);
+			throw new ErrorException('<strong>THEMASTER - Required args Error:</strong> ' . $err . ' in ' . ucfirst( $initArgs['projectType'] ). ' "' . $initArgs['projectName'] . '"' , 1);
 			return false;
+		}
+	}
+
+	protected static function check_singleton_( $name = null ) {
+		/* check if Called Class is meant to be a Singleton (Subclass: static $singleton = true;)
+		 * and if it is stored in THEMASTERs private $singletons array
+		 */
+
+		$name = isset( $name ) ? $name :  strtolower( get_called_class() );
+		if( isset( self::$_singletons[$name] )
+		 && is_object( ( $r = self::$_singletons[$name] ) ) 
+		 && isset( $r->singleton ) && $r->singleton === true
+		) {
+			return $r;
+		} else {
+			return false;
+		}
+	}
+
+	private static function s_init() {
+		if( !self::$s_initiated ) {
+			self::session();
+
+			self::$sProjectFile_ = THEMASTER_PROJECTFILE;
+			self::$sBasePath_ = dirname( self::$sProjectFile_ ) . DS;
+			self::$sFolderName_ = basename( self::$sBasePath_ );
+			self::$sTextdomain_ = pathinfo( self::$sProjectFile_, PATHINFO_FILENAME );
+			self::$sTextID_ = self::$sFolderName_ . '/' . basename( self::$sProjectFile_ );
+
+			if( function_exists( 'plugins_url' )) {
+				self::$sBaseUrl_ = plugins_url( self::$sTextdomain_ );
+			}
+			
+			if( THESETTINGS::get_setting( 'errorReporting', self::$sTextID_ ) === true ) {
+				error_reporting(E_ALL);
+				ini_set('display_errors', 1);
+			} else {
+				error_reporting(0);
+				ini_set('display_errors', 0);
+			}
+
+			self::$s_initiated = true;
+			self::do_callback( 'afterBaseS_init' );
 		}
 	}
 	
@@ -78,8 +148,12 @@ class THEBASE {
 	 * @return void
 	 * @date Jan 22th 2012
 	 */
-	protected function _initArgs($initArgs) {
-		$this->_requiredInitArgs = array_merge($this->_requiredInitArgs, $initArgs);
+	protected function add_requiredInitArgs_( $initArgs ) {
+		if( is_array( $initArgs )) {
+			$this->_requiredInitArgs = array_merge( $this->_requiredInitArgs, $initArgs );
+		} elseif( is_string( $initArgs )) {
+			array_push( $this->_requiredInitArgs, $initArgs );
+		}
 	}
 	
 	public function delete_invalidPathChars($path, $regex = '!_-\w\/\\\ ') {
@@ -114,7 +188,7 @@ class THEBASE {
 	 * @date Jan 22th 2012
 	 */
 	public function get_directPath($path) {
-		$this->debug('call of get_directPath');
+		// $this->debug('call of get_directPath');
 		return str_replace('..'.DS, '', $this->get_cleanedPath($path));
 	}
 	
@@ -125,10 +199,10 @@ class THEBASE {
 	// }
 
 	
-	// Deprached since 2.1.0
+	// Deprecated since 2.1.0
 	public function cleanupPath($path)  {
-		$this->debug('Deprached usage of cleanupPath.', 1);
-		$this->get_cleanedPath($path);
+		$this->deprecated('THEBASE::get_cleanedPath()');
+		return $this->get_cleanedPath($path);
 	}
 	
 	/** Replaces / & \ to DIRECTORY_SEPERATOR in $path
@@ -138,7 +212,7 @@ class THEBASE {
 	 * @date Jan 22th 2012
 	 */
 	public function get_cleanedPath($path) {
-		return preg_replace('/[\/\\\]+/', DS, $path);
+		return preg_replace("/[\/\\\]+/", DS, $path);
 	}
 	
 	/** Getter for Static Variables of Named Classes
@@ -165,18 +239,11 @@ class THEBASE {
 				return $r;
 		elseif(isset(self::$_singletons['master']))
 			return self::$_singletons['master'];
+		elseif( defined( 'THEMINIWPMASTERAVAILABLE' ) )
+			return $GLOBALS[ 'THEMINIWPMASTER' ];
+		elseif( defined( 'THEMINIMASTERAVAILABLE' ) )
+			return $GLOBALS['THEMINIMASTER'];
 		return false;
-	}
-	
-	/** The init - does nothing for subclasses und calls _masterInit if its called by THEMASTER
-	 *
-	 * @param array $initArgs
-	 * @return void
-	 * @access protected
-	 * @date Jul 28th 2011
-	 */
-	protected function init($initArgs) {
-		
 	}
 	
 	// TODO: Documentation
@@ -200,10 +267,10 @@ class THEBASE {
 	 *
 	 * @return array
 	 * @access public
-	 * @date Jul 28th 2011
 	 */
 	public static function extr() {
 		$called = get_called_class();
+
 		if(
 			isset(self::$_singletons[strtolower($called)])
 			&& is_object(self::$_singletons[strtolower($called)])
@@ -220,6 +287,8 @@ class THEBASE {
 			return array($called => $inst);
 	}
 	
+	
+	
 	/** returns an array of files in a specific folder, excluding files starting with . or _
 	 *
 	 * @param string $dir the
@@ -228,12 +297,18 @@ class THEBASE {
 	 * @access public
 	 * @date Jul 29th 2011
 	 */
-	public function get_dir_array($dir, $key = 'filename') {
-		if ($handle = opendir($dir)) {
+	public function get_dirArray(
+		$dir,
+		$key = 'filename',
+		$filter = array(
+			1, array('.', '_')
+		)
+	) {
+		if ( $handle = opendir( $dir ) ) {
 			$r = array();
 			$i = 0;
-			while (false !== ($file = readdir($handle))) {
-				if(!in_array(substr($file, 0, 1), array('.', '_'))) {
+			while ( false !== ( $file = readdir( $handle ) ) ) {
+				if ( !in_array( substr( $file, 0, $filter[0] ), $filter[1] ) ) {
 					$k = $key == 'filename' ? $file : $i;
 					$r[$k] = $file;
 					$i++;
@@ -249,9 +324,12 @@ class THEBASE {
 	 * @date Nov 10th 2011
 	 */
 	public function session() {
-		if(!isset($_SESSION))
-			session_start();
-		return $_SESSION;
+		// TODO: UNCOMMENT
+		// if( !isset( $_SESSION ) && !headers_sent() )
+		// 	session_start();
+
+		// if( isset( $_SESSION ) )
+		// 	return $_SESSION;
 	}
 	
 	/** Initiation for a new Instance of THEMASTER, generates a new Submaster XYMaster
@@ -261,30 +339,41 @@ class THEBASE {
 	 * @access private
 	 * @date Jul 28th 2011
 	 */
-	protected function _masterInit($initArgs) {
-		$this->session();
+	protected function _masterInit() {
+		// if( isset($this->slug) && !isset( self::$_singletons['masters'][ $this->slug ] ) )
+		// 	self::$_singletons['masters'][ $this->slug ] = $this;
 		
-		$this->reg_less('base');
-		$this->reg_admin_less('base');
-		
-		if(!isset(self::$_singletons['master']))
-			self::$_singletons['master'] = $this;
-		
-		$this->_mastersInitArgs = $initArgs;
-		
+			
 		// $name = strtoupper($this->prefix).'Master';
 		
 		// global $$name;
-		$r = $this->get_instance('Master');
-	
-		$this->initiated = TRUE;
-		return $r;
+
+		// $this->debug( $this, 'called' );
+
+
+		return true;
+		// $this->diebug( 'tot' );
+
+		// try {
+		// 	$r = $this->get_instance( 'Master' );
+		// 	$this->initiated = TRUE;
+		// 	return $r;
+		// } catch (Exception $e) {
+		// 	if( class_exists('THEWPMASTER') ) {
+		// 		THEWPMASTER::sMasterInitError( $e, $initArgs );
+		// 	} else {
+		// 		echo '<p>' . $e . '</p>';
+		// 	}
+		// }
 	}
-	
-	protected function _storeSingleton($name, $obj) {
-		
+
+	protected function _masterInitiated() {
+		if( $this->_masterInitiated  !== true ) {
+			self::do_callback( 'initiated', $this, array( 'class' => get_class($this) ) );
+			$this->_masterInitiated = true;
+		}
 	}
-	
+
 	/** Checks if Array 1 has all required keys, specified by Array 2
 	 * 
 	 * @param Array $args
@@ -391,7 +480,8 @@ class THEBASE {
 		}
 	}
 
-	/** getter for Own HTML Class, falls back on global HTML class 
+	/** 
+	 *  getter for Own HTML Class, falls back on global HTML class 
 	 *  if object does not have its own HTML class
 	 *
 	 * @param bool $silence switch for disabling the error throwing
@@ -400,121 +490,192 @@ class THEBASE {
 	 * @date Dez 14th 2011
 	 * @since 2.0.12
 	 */
-	public function get_HTML($silence = false) {
-		if(isset($this->HTML))
+	public function get_HTML( $silence = false ) {
+		if( !isset( $this ) || !isset( $this->HTML ) ) {
+			return self::sget_HTML( $silence );
+		} else {
 			return $this->HTML;
-		else
-			return self::sget_HTML($silence);
+		}
 	}
 		
-	public static function sget_HTML($silence = false) {
-		if(isset($GLOBALS['HTML']))
+	public static function sget_HTML( $silence = false ) {
+		if( isset( $GLOBALS['HTML'] ) )
 			return $GLOBALS['HTML'];
-		elseif($silence !== true)
-			throw new Exception("HTML Class Needed but not available.", 1);
+		elseif( $silence !== true )
+			throw new Exception( "HTML Class Needed but not available.", 1 );
 		else
 			return false;
 	}
 	
-	public function reg_jsVar($name, $var) {
-		if(!isset(self::$registeredJsVars[$name]))
-			self::$registeredJsVars[$name] = $var;
+	public function reg_jsVar( $name, $var ) {
+		if( !isset( self::$s_registeredJsVars[$name] ) )
+			self::$s_registeredJsVars[$name] = $var;
 	}
 	
-	public function reg_adminJsVar($name, $var) {
-		if(!isset(self::$registeredAdminJsVars[$name]))
-			self::$registeredAdminJsVars[$name] = $var;
+	public function reg_adminJsVar( $name, $var ) {
+		if( !isset( self::$s_registeredAdminJsVars[$name] ) )
+			self::$s_registeredAdminJsVars[$name] = $var;
 	}
 	
-	public function reg_js($filename, $vars = false) {
-		$this->_reg_source('js', $filename, $vars);
+	public function reg_js( $filename, $vars = false ) {
+		self::_reg_source( 'js', $filename, $vars );
 	}
 	
-	public function reg_less($filename, $vars = false) {
-		$this->_reg_source('less', $filename, $vars);
+	public function reg_less( $filename, $vars = false ) {
+		self::_reg_source( 'less', $filename, $vars );
 	}
 	
-	public function reg_css($filename, $vars = false) {
-		$this->_reg_source('css', $filename, $vars);
+	public function reg_css( $filename, $vars = false ) {
+		self::_reg_source( 'css', $filename, $vars );
 	}
 
-	public function reg_admin_js($filename, $vars = false) {
-		$this->_reg_source('js', $filename, $vars, true);
+	public function reg_adminJs( $filename, $vars = false ) {
+		self::_reg_source( 'js', $filename, $vars, true );
 	}
 	
-	public function reg_admin_less($filename, $vars = false) {
-		$this->_reg_source('less', $filename, $vars, true);
+	public function reg_adminLess( $filename, $vars = false ) {
+		self::_reg_source( 'less', $filename, $vars, true );
 	}
 	
-	public function reg_admin_css($filename, $vars = false) {
-		$this->_reg_source('css', $filename, $vars, true);
+	public function reg_adminCss( $filename, $vars = false ) {
+		self::_reg_source( 'css', $filename, $vars, true );
 	}
 	
-	/** __documentation__
-	 *
-	 * @param __mixed__ $__foo__ __description__
-	 * @return __void__ __description__
-	 * @access private
-	 * @date Dez 15th 2011
+
+	/**
+	 * Registeres the source into THEBASE::$s_registeredSources.
+	 * 
+	 * @param  string  $source   the source type
+	 * @param  string  $filename filename of the source
+	 * @param  mixed   $vars     false or array to give additional get parameters to the source
+	 * @param  boolean $admin    flag indicating if source is for admin or frontpage
+	 * @return boolean           flag indicating if source is registered successfully
 	 */
-	private function _reg_source($source, $filename, $vars = false, $admin = false) {
+	private function _reg_source( $source, $filename, $vars = false, $admin = false ) {
+		$foa = ( $admin ? 'admin' : 'front' );
+
+
 		$lfn = strtolower($filename);
-		if(isset(self::$registeredSources[($admin ? 'admin' : 'front')][$source][$lfn]))
+		if( isset( self::$s_registeredSources[$foa][$source][$lfn] ) )
 			return true;
 		
 		try {
-			$path = DS.'res'.DS.$source.DS.$lfn.'.'.$source;
-			$path .= is_array($vars) ? '.php' : '';
-			$basePath = $this->basePath;
-			$file = $basePath.$path;
-			$baseUrl = $this->baseUrl;
-			
-			$masterBasePath = dirname(dirname(__FILE__));
-			$masterFile = $masterBasePath.$path;
-			if(file_exists($masterFile)) {
-				$basePath = $masterBasePath;
-				$file = $masterFile;
-				$baseUrl = plugins_url('!themaster');
-			}
-			
-			
-			if(file_exists($file)) {
-				if($source == 'less') {
-					require_once(dirname(dirname(__FILE__)).DS.'classes'.DS.'lessPHP'.DS.'lessc.inc.php');
-					self::$registeredSources['front'][$source][$lfn] = true;
-					$lfn .= '.less';
-					$path = DS.'res'.DS.'css'.DS.$lfn.'.css';
-					try {
-						lessc::ccompile($file, ($target = $basePath.$path));
-					} catch(Exception $e) {
-						$this->debug('LESS ERROR: '.$e->getMessage()." \nFile: ".$e->getFile()." \nLine: ".$e->getLine(), 4);
-						return false;
-					}
-					$source = 'css';
-				}
-				
-				$path = str_replace(DS, '/', $path);
-				$url = $baseUrl.$path;
-				$url .= is_array($vars) ? '?'.$this->arrayToGet($vars) : '';
-				if($admin)
-					self::$registeredSources['admin'][$source][$lfn] = $this->get_HTML()->escape_mBB($url);
-				else
-					self::$registeredSources['front'][$source][$lfn] = $this->get_HTML()->escape_mBB($url);
+
+			// @ added 12-05-10
+			if( ( $t = substr( $filename, 0, 7 ) ) == 'http://' || $t == 'https:/' ) {
+				// $this->diebug( $filename );
+				self::$s_registeredSources[$foa][$source][$lfn] = $filename;
 				return true;
-			} else {
-				throw new Exception(strtoupper($source).' File not found: '.$filename.' | '.$file);
-				return false;
+			}
+
+			$path = DS . 'res' . DS . $source . DS . $lfn;
+			if( isset( $this ) && isset( $this->basePath ) && is_dir( $this->basePath . $path ) && file_exists( $this->basePath . $path ) ) {
+				foreach($this->get_dirArray( $this->basePath . $path ) as $subFile ) {
+					if( ( $sfx = $this->get_suffix( $subFile ) ) == $source ) {
+						$this->_reg_source( 
+							$source,
+							$lfn . DS . substr( $subFile, 0, strlen( $subFile ) - strlen( $sfx )-1 ),
+							$vars,
+							$admin
+						);
+					}
+				}
+				return;
+			}
+
+
+			$path .= is_array( $vars ) ? '.' . $source . '.php' : '.' . $source;
+
+			$pureFile = $path;
+
+			$paths = array();
+			if( isset( $this ) ) {
+				array_push( $paths, array(
+					'basePath' => $this->basePath,
+					'baseUrl' => $this->baseUrl
+				) );
+			}
+			array_push( $paths, array(
+				'basePath' => self::$sBasePath_,
+				'baseUrl' => self::$sBaseUrl_
+			) );
+			
+			foreach( $paths as $k => $p ) {
+				extract( $p );
+
+				if( file_exists( ( $file = $basePath . $pureFile ) ) ) {
+					if( $source == 'less' ) {
+						self::$s_registeredSources[$foa][$source][$lfn] = true;
+						
+						$lfn .= '.less';
+						$path = 'res' . DS . 'css' . DS . $lfn . '.css';
+						$target = $basePath . $path;
+						
+						if( !file_exists( ( $target ) ) 
+						 || filemtime( $file ) > filemtime( $target )
+						) {
+							require_once( self::$sBasePath_ . 'classes' . DS . 'lessPHP' . DS . 'lessc.inc.php' );
+							require_once( self::$sBasePath_ . 'classes' . DS . 'CSSfix' . DS . 'CSSfix.php' );
+							$content = file( $file );
+							
+							// if($content[0] !== ($import = '@import "../../../../plugins/themaster/res/less/elements.less";'."\n")) {
+							$import = "// themaster //\n@import \"elements.less\";\n// End: themaster //\n\n";
+							if( !isset( $content[3] )
+							 || $content[0] . $content[1] . $content[2] . $content[3] !== $import
+							) {
+								$content = $import . implode( '', $content );
+								file_put_contents( $file, $content );
+							}
+							try {
+								$LessC = new lessc( $file );
+								$LessC->importDir = array( 
+									'', 
+									$basePath . 'res' . DS . 'less'
+								);
+								$CSS = $LessC->parse();
+								$CSSfix = new CSSfix();
+								$CSSfix->from_string( $CSS );
+								file_put_contents( ( $target = $basePath . $path ), $CSSfix->generate( false ) );
+
+								// lessc::ccompile($file, ($target = $basePath.$path));
+							} catch( Exception $e) {
+								THEDEBUG::debug('LESS ERROR: '.$e->getMessage()." \nFile: ".$e->getFile()." \nLine: ".$e->getLine(), 4);
+								return false;
+							}
+						}
+						$source = 'css';
+					}
+					
+					$path = str_replace( DS, '/', $path );
+					$url = $baseUrl . '/' . $path;
+					$url .= is_array($vars) ? '?' . $this->arrayToGet($vars) : '';
+
+					if( defined('HTMLCLASSAVAILABLE') ) {
+						if( !is_object( self::get_HTML() ) ) {
+							THEDEBUG::debug( 'callstack' );
+							THEDEBUG::diebug( $lfn );
+						}
+						self::$s_registeredSources[$foa][$source][$lfn] = self::get_HTML()->escape_mBB( $url );
+					} else {
+						self::$s_registeredSources[$foa][$source][$lfn] = $url;
+					}
+
+					return true;
+				} elseif( $k+1 === count( $paths ) ) {
+					throw new Exception(strtoupper($source).' File not found: '.$filename.' | '.$file);
+					return false;
+				}
 			}
 		} catch(Exception $e) {
-			$this->debug($e->getMessage()."\nFile: ".$e->getFile()."\nLine: ".$e->getLine(), 4);
+			THEDEBUG::debug($e->getMessage()."\nFile: ".$e->getFile()."\nLine: ".$e->getLine(), 4);
 			return false;
 		}
 	}
 	
 	public function echo_sources($admin = false) {
-		if(empty(self::$registeredSources)) return;
+		if(empty(self::$s_registeredSources)) return;
 		
-		$sources = $admin == 'admin' ? self::$registeredSources['admin'] : self::$registeredSources['front'];
+		$sources = $admin == 'admin' ? self::$s_registeredSources['admin'] : self::$s_registeredSources['front'];
 		unset($sources['less']);
 		if(empty($sources)) return;
 
@@ -525,12 +686,25 @@ class THEBASE {
 			}
 		}
 	}
+
+	public static function sGet_registeredSources() {
+		return self::$s_registeredSources;
+	}
+
+	public static function sGet_registeredJsVars() {
+		return self::$s_registeredJsVars;
+	}
+
+	public static function sGet_registeredAdminJsVars() {
+		return self::$s_registeredAdminJsVars;
+	}
 	
 	public function echo_jsVars() {
 		$HTML = $this->get_HTML();
 		$HTML->sg_script();
-		foreach(self::$registeredJsVars as $name => $var) {
+		foreach(self::$s_registeredJsVars as $name => $var) {
 			$HTML->blank('var '.$name.' = '.json_encode($var).';');
+			unset(self::$s_registeredJsVars[$name]);
 		}
 		$HTML->end();
 	}
@@ -538,24 +712,21 @@ class THEBASE {
 	public function echo_AdmimJsVars() {
 		$HTML = $this->get_HTML();
 		$HTML->sg_script();
-		foreach(self::$registeredAdminJsVars as $name => $var) {
+		foreach(self::$s_registeredAdminJsVars as $name => $var) {
 			$HTML->blank('var '.$name.' = '.json_encode($var));
+			unset(self::$s_registeredAdminJsVars[$name]);
 		}
 		$HTML->end();
 	}
 	
 	
-	public function incl($sSource) {
-		$sSource = $this->get_directPath($sSource);
-		if(strstr($sSource, DS))
-			$sSource .= '.php';
-		else
-			$sSource .= DS.$sSource.'.php';
+	public function incl($sSource, $include = false) {
+		$sSource = $this->get_verryCleanedDirectPath($sSource).'.php';
 		
 		if(file_exists(($path = $this->basePath.DS.'res'.DS.'includes'.DS.$sSource))) {
-			return $path;
+			return $include ? include($path) : $path;
 		} elseif(file_exists(($path = dirname(dirname(__FILE__)).DS.'res'.DS.'includes'.DS.$sSource))) {
-			return $path;
+			return $include ? include($path) : $path;
 		}
 		return false;
 	}
@@ -589,15 +760,21 @@ class THEBASE {
 	 * @access public
 	 * @date Dez 15th 2011
 	 */
-	public function reg_model($modelname) {
-		if(class_exists(strtoupper($this->prefix).$modelname)) return true;
+	public function reg_model( $modelname, $staticInits = null ) {
+		if( class_exists( ( $fullModelname = strtoupper( $this->prefix ) . $modelname ) ) ) return true;
 		try {
-			$lmn = strtolower($modelname);
-			if(file_exists($this->basePath.'/models/'.$lmn.'.php')) {
-				include($this->basePath.'/models/'.$lmn.'.php');
+			if( file_exists( 
+				( $inclPath = $this->basePath . DS . 'models' . DS . strtolower( $modelname ) . '.php' ) 
+			) ) {
+				include( $inclPath );
+				if( is_array( $staticInits ) ) {
+					foreach( $staticInits as $key => $value ) {
+						$fullModelname::$$key = $value;
+					}
+				}
 				return true;
 			} else {
-				throw new Exception('Model File not found: '.$modelname.' | '.$this->basePath.'/models/'.$lmn.'.php');
+				throw new Exception('Model File not found: '.$fullModelname.' | ' . $inclPath);
 			}
 		} catch(Exception $e) {
 			$this->debug($e->getMessage()."\nFile: ".$e->getFile()."\nLine: ".$e->getLine(), 4);
@@ -615,82 +792,223 @@ class THEBASE {
 	 * @access public
 	 * @date Jul 29th 2011
 	 */
-	public function get_instance($classname, $initArgs = array()) {
-		
-		// if(is_object($classname)) {
-			// $initArgs['post'] = $classname;
-			// $classname = $initArgs['args']['class'];
-			// unset($initArgs['args']['class']);
-			// $initArgs = array_merge($initArgs, $initArgs['args']['args']);
-			// unset($initArgs['args']);
-		// } // TODO: WTF?
-		$filename = strtolower($classname);
-		$lcn = strtolower($this->prefix.$classname);
+	public function get_instance( $classname, $initArgs = array() ) {
+
+		if( $classname === 'Master' ) {
+			if( isset( $initArgs['prefix'] )
+		 	 && isset( $initArgs['basePath'] )
+		 	) {
+				$prefix = $initArgs['prefix'];
+				$basePath = $initArgs['basePath'];
+		 	} else {
+		 		throw new Exception( 'Master initiation misses arguments (prefix & basePath)', 1);
+		 		return false;
+		 	}
+		} elseif( isset( $this ) ) {
+			$prefix = $this->prefix;
+			$basePath = $this->basePath;
+		} else {
+			throw new Exception( 'Can not call nonmaster classes statically.', 1 );
+			return false;
+		}
+
+		$classname = trim( $classname );
+		$filename = strtolower( $classname );
+		$lcn = strtolower( $prefix . $classname );
+
 		if(isset(self::$_singletons[$lcn]) && is_object(self::$_singletons[$lcn]))
 			return self::$_singletons[$lcn];
-		
-		if(file_exists($this->basePath.'/classes/'.$filename.'.php')) {
-			include_once($this->basePath.'/classes/'.$filename.'.php');
-			
-			$classname = strtoupper($this->prefix).$classname;
-			$obj = new $classname(
-				// array_merge(array('Master' => $this), 
-				array_merge(
-					$this->_mastersInitArgs,
-					array_merge($this->_initArgs, $initArgs)
-				// )
-			));
-			if(!$obj) {
-				throw new Exception('Class was not initiated: '.$classname);
-			} else {
-				if(isset($obj->singleton) && $obj->singleton === true)
-					self::$_singletons[$lcn] = $obj;
-				if(isset($obj->HTML) && $obj->HTML === true) {
-					if(defined('HTMLCLASSAVAILABLE') && HTMLCLASSAVAILABLE === true) {
-						$obj->HTML = new HTML($obj->baseUrl);
-					} else {
-						throw new Exception('Class "'.$classname.'" should have been initiated whith HTML Object,'.
-						' but it seems as the HTML Class file is not available could not be found');
+
+		foreach( array( $basePath, self::$sBasePath_ ) as $k => $basePath ) {
+			if( file_exists( ( $file = $basePath . 'classes' . DS . $filename . '.php' ) ) ) {
+				include_once( $file );
+				
+				$classname = ( $k === 0 ? $prefix : '' ) . $classname;
+
+				if( !class_exists( $classname ) ) {
+					throw new Exception('<strong>!THE MASTER ERROR:</strong> Class ' . $classname . ' is not available.', 2);
+				}
+
+				$args = isset( $this ) ? array_merge(
+						$this->_mastersInitArgs,
+						array_merge( $this->_initArgs, $initArgs )
+				) : $initArgs;
+
+				self::register_callback(
+					'initiated', 
+					function( $obj ) {
+						if( isset( $obj->singleton ) && $obj->singleton === true ) {
+							THEBASE::sRegSingleton( $obj );
+						}
+
+						if( isset( $obj->HTML ) && $obj->HTML === true ) {
+							if( defined( 'HTMLCLASSAVAILABLE' ) && HTMLCLASSAVAILABLE === true ) {
+								$obj->HTML = new HTML( $obj->baseUrl );
+							} else {
+								throw new Exception( '<strong>!THE MASTER ERROR:</strong> Class "'
+									. get_class( $obj ) . '" should have been initiated whith HTML Object,'
+									. ' but it seems as the HTML Class file is not available.', 4 );
+							}
+						}
+
+						if( method_exists( $obj, '_hooks' ) )
+							$obj->_hooks();
+						if( method_exists( $obj, 'hooks' ) )
+							$obj->hooks();
+						if( method_exists( $obj, 'init' ) )
+							$obj->init();
+					},
+					1,
+					function( $condArgs, $givenArgs ) {
+						return $condArgs['class'] === $givenArgs['class'];
+					},
+					array( 'class' => $classname )
+				);
+
+				$obj = new $classname( $args );
+
+				if( !$obj )
+					throw new Exception( '<strong>!THE MASTER ERROR:</strong> Class was not initiated: ' . $classname, 3 );
+				
+				return $obj;
+			} 
+		}
+		throw new Exception( '<strong>!THE MASTER ERROR:</strong> Class File for ' . $classname
+			. ' not found --- Should be '
+			. '<em>' . $basePath . 'classes' . DS . strtolower($classname) . '.php</em>'
+			. ' or <em>' . self::$sBasePath_ . 'classes' . DS . strtolower($classname) . '.php</em>.',
+			1
+		);
+	}
+
+	public static function sRegSingleton( $obj ) {
+		$name = get_class( $obj );
+		$lcn = strtolower( $name );
+		if( isset( self::$_singletons[ $lcn ] ) ) {
+			throw new Exception('Invalid double construction of singleton "' . $name . '"', 1 );
+		} else {
+			self::$_singletons[ $lcn ] = $obj;
+		}
+	}
+
+	public function register_callback( $name, $cb, $times = 1, $condition = null, $conditionArgs = array(), $position = 10 ) {
+		self::$s_callbacks[$name][$position][] = array(
+			'condition' => $condition,
+			'cb' => $cb,
+			'times' => $times,
+			'conditionArgs' => $conditionArgs
+		);
+	}
+
+	public function do_callback( $name, $callbackArgs = array(), $doConditionArgs = array() ) {
+		if( isset( self::$s_callbacks[$name] ) 
+		 && count( self::$s_callbacks[$name] ) > 0
+		) {
+			ksort( self::$s_callbacks[$name] );
+
+			foreach( array( 'callbackArgs', 'doConditionArgs' ) as $k ) {
+				if( !is_array( $$k ) ) {
+					$$k = array( $$k );
+				}
+			}
+			foreach( self::$s_callbacks[$name] as $nr => $cbg ) {
+				foreach( $cbg as $k => $v ) {
+					extract( $v );
+
+					if( !isset( $condition )
+					 || ( !is_callable( $condition ) && $condition )
+					 || call_user_func_array( $condition, array( $doConditionArgs, $conditionArgs ) )
+					) {
+						array_unshift( $callbackArgs, $cb );
+						call_user_func_array( array( 'THEMASTER', 'tryTo' ), $callbackArgs );
+						
+						if( $times !== '*' ) {
+							$times--;
+							if( $times <= 0 ) {
+								unset( self::$s_callbacks[$name][$nr][$k] );
+							} else {
+								self::$s_callbacks[$name][$nr][$k]['times'] = $times;
+							}
+						}
 					}
 				}
-				
-				if(method_exists($obj, 'init'))
-					$obj->init($initArgs);
-				if(method_exists($this, '_hooks'))
-					$this->_hooks($obj);
-				if(method_exists($obj, 'hooks'))
-					$obj->hooks();
-				return $obj;
 			}
-		} else {
-			throw new Exception('Class File not found: '.$classname.' | '.$this->basePath.'/classes/'.strtolower($classname).'.php');
 		}
 	}
 		
 	// end of hooking chain.
 	protected function _hooks() { }
 
-	/** returns an array of $_POST data matched by the given string
+	/** returns an array containing the keys of $data, starting with the given prefix
+	 *  $data = array( 'foo_bar1' => 'bar, 'bar_bar2' => 'foo' );
+	 *  filtered by $match = 'foo' will return array( 'foo_bar1' => 'bar );
 	 *
-	 * @param string $string the beginning of the $_POST keys that should be returned
+	 * @param string $match the beginning of the $data keys that should be returned
+	 * @param array|class $data
 	 * @return array
 	 * @access public
-	 * @date Jul 28th 2011
+	 * @date Feb 29th 2012
 	 */
-	public function filter_post_data_by($string) {
+	public function filter_data_by( $match, $data ) {
 		$args = array();
-		foreach($_POST as $key => $value) {
+		foreach($data as $key => $value) {
 			if(substr($key, 0, 1) == '_')
 				$key = substr($key, 1, strlen($key));			
-			if(strlen($key) > strlen($string) && substr($key, 0, strlen($string)) == $string)
-				$args[str_replace($string.'_', '', $key)] = $value;
+			if(strlen($key) > strlen($match) && substr($key, 0, strlen($match)) == $match)
+				$args[str_replace($match.'_', '', $key)] = $value;
 		}
 		return $args;
+	}
+	
+	
+	public function filter_post_data_by( $string ) {
+		$this->deprecated('THEBASE::filter_postDataBy()');
+		return $this->filter_data_by( $string, $_POST );
+	}
+	/** returns an array containing the keys of $_POST, starting with the given prefix
+	 *  $_POST = array( 'foo_bar1' => 'bar, 'bar_bar2' => 'foo' );
+	 *  filtered by $match = 'foo' will return array( 'foo_bar1' => 'bar );
+	 *
+	 * @param string $match the beginning of the $_POST keys that should be returned
+	 * @return array
+	 * @access public
+	 * @date Feb 29th 2012
+	 */
+	public function filter_postDataBy( $string ) {
+		return $this->filter_data_by( $string, $_POST );
+	}
+	/** returns an array containing the keys of $_GET, starting with the given prefix
+	 *  $_GET = array( 'foo_bar1' => 'bar, 'bar_bar2' => 'foo' );
+	 *  filtered by $match = 'foo' will return array( 'foo_bar1' => 'bar );
+	 *
+	 * @param string $match the beginning of the $_GET keys that should be returned
+	 * @return array
+	 * @access public
+	 * @date Feb 29th 2012
+	 */
+	public function filter_getDataBy( $string ) {
+		return $this->filter_data_by( $string, $_GET );
+	}
+	/** returns an array containing the keys of $_REQUEST, starting with the given prefix
+	 *  $_REQUEST = array( 'foo_bar1' => 'bar, 'bar_bar2' => 'foo' );
+	 *  filtered by $match = 'foo' will return array( 'foo_bar1' => 'bar );
+	 *
+	 * @param string $match the beginning of the $_REQUEST keys that should be returned
+	 * @return array
+	 * @access public
+	 * @date Feb 29th 2012
+	 */
+	public function filter_requestDataBy( $string ) {
+		return $this->filter_data_by( $string, $_REQUEST );
 	}
 	
 	// end of update chain.
 	public function update() {
 		return true;
+	}
+
+	public function get_textID( $file ) {
+		return basename( dirname( $file ) ) . '/' . basename( $file );
 	}
 	
 	public function arrayToGet(array $arr) {
@@ -701,6 +1019,16 @@ class THEBASE {
 		return implode('&', $r);
 	}
 	
+	/** slices the given string by the last . and returns the last characters.
+	 *
+	 * @param string $file a url, path or filename
+	 * @return string the suffix
+	 * @date Mrz 27th 2012
+	 */
+	public function get_suffix($file) {
+		return substr( $file, strrpos( $file, '.' )+1, strlen( $file ) );
+	}
+
 	/** fallback method for THEDEBUG
 	 *
 	 * @param mixed $var the variable to be debugged
@@ -715,6 +1043,16 @@ class THEBASE {
 	}
 }
 
+if(!function_exists('__')) {
+	function __( $text ) {
+		return $text;
+	}
+}
+if(!function_exists('_e')) {
+	function _e( $text ) {
+		echo $text;
+	}
+}
 
 /******************************** 
  * Retro-support of get_called_class() 

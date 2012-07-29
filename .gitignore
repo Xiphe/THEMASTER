@@ -1,0 +1,8 @@
+*.class
+*.pyc
+*.pyo
+*.project
+*.settings
+*.DS_Store
+/demo
+res/css/*.less.css

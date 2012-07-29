@@ -1,34 +1,103 @@
 <?php
-	require_once('base.php');
-	class THESETTINGS extends THEBASE {
-		public $updateApiUrl = 'http://plugins.red-thorn.de/api/index.php';
-		private $_settings = array(
-			'debug' => false,
-			'debugMode' => 'inline',  // inline, mail, FirePHP, summed
-			'useHTML' => true,
-			'debugEmail' => 'hdiercks@uptoyou.de',
-			'debugEmailFrom' => 'noreply@uptoyou.de',
-			'errorReporting' => false,
-			'forceUpdates' => false,
-		);
-				
-		protected function _masterInit($initArgs) {
-			return parent::_masterInit($initArgs);
-		}
-		
-		protected function _get_setting($key) {
+require_once('base.php');
+class THESETTINGS extends THEBASE {
+
+	// Turns true after first initiation.
+	private static $s_initiated = false;
+
+
+	private static $s_settings = array();
 			
-			if(isset($this->_settings[$key])) {
-				$const = get_defined_constants(true);
-				
-				if(isset($const['user']['THEMASTER_'.strtoupper($key)])) {
-					return $const['user']['THEMASTER_'.strtoupper($key)];
-				} else {
-					return $this->_settings[$key];
-				}
-			} else {
-				throw new Exception('Tried to get non-existent Setting "'.$key.'".');
-			}
+	private static  $s_forcedSettings = array();
+	
+	public function __construct( $initArgs ) {
+		if( !isset( $this->constructing ) || $this->constructing !== true ) {
+			throw new Exception("ERROR: THESETTINGS is not ment to be constructed directly.", 1);
+			return false;
+		}
+
+		$this->add_requiredInitArgs_( array( 'textID' ) );
+
+		if( !self::$s_initiated ) {
+			self::$s_settings[ THEBASE::get_textID( THEMASTER_PROJECTFILE ) ] = array(
+				'debug' => false,
+				'debugMode' => 'inline',  // inline, mail, FirePHP, summed
+				'debugGet' => false,
+				'useHTML' => true,
+				'debugEmail' => false,
+				'debugEmailFrom' => false,
+				'errorReporting' => false,
+				'forceUpdates' => false
+			);
+
+			self::$s_initiated = true;
+		}
+
+		parent::__construct( $initArgs );
+	}
+
+	protected function _masterInit() {
+		if( !isset( $this ) ) {
+			throw new Exception("_masterInit should not be called staticaly.", 1);
+		}
+		if( isset( $this->_masterInitiated ) && $this->_masterInitiated === true ) {
+			return;
+		}
+
+		if( parent::_masterInit() ) {
+			return true;
 		}
 	}
+
+	public function get_setting( $key, $textID = null ) {
+		if( class_exists( 'THEWPSETTINGS' ) ) {
+			return THEWPSETTINGS::get_setting( $key, $textID );
+		} else {
+			if( $textID === null && isset( $this ) ) {
+				$textID = $this->textID;
+			}
+			return self::_get_setting( $key, $textID );
+		}
+	}
+
+	public static function _get_setting( $key, $textID = null, $noDefaults = false, $silent = false ) {
+		if( !$silent && $textID === null ) {
+			throw new Exception( 'Tried to get setting "' . $key . '" without textID.' );
+			return;
+		}
+
+		if( isset( self::$s_settings[$textID][$key] ) ) {
+
+			if( ( $setting = self::_get_forcedSetting( $key, $textID ) ) !== null ) {
+				return $setting;
+			} else {
+				$const = get_defined_constants(true);
+				$constKey = 'THEMASTER_' . strtoupper( $textID ) . '_' . strtoupper( $key );
+				if( isset( $const['user'][$constKey] )) {
+					return $const['user'][$constKey];
+				} elseif( !$noDefaults ) {
+					return self::$s_settings[$textID][$key];
+				}
+			}
+		} elseif( !$silent ) {
+			throw new Exception( 'Tried to get non-existent setting "' . $textID . ': ' . $key . '".' );
+		}
+		return;
+	}
+	
+	public static function _get_forcedSetting( $key, $textID ) {
+		if( isset( self::$s_forcedSettings[$textID][$key] ) ) {
+			return self::$s_forcedSettings[$textID][$key];
+		}
+		return;
+	}
+
+	protected function _set_setting( $key, $textID, $value ) {
+		if( isset( self::$s_settings[$textID][$key] ) ) {
+			self::$s_forcedSettings[$textID][$key] = $value;
+		} else {
+			throw new Exception( 'Tried to set non-existent setting "' . $textID . ': ' . $key . '".' );
+		}
+	}
+}
 ?>

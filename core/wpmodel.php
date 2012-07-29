@@ -1,7 +1,8 @@
-<?php class THEWPMODEL extends THEMODEL {
+<?php
+class THEWPMODEL extends THEMODEL {
 	private static $_structures = array();
 	
-	private $_possibleReadKey;
+	private $_possibleReadKey = array();
 	
 	private static $_WPTypes = array(
 		'int' => '%d',
@@ -35,9 +36,9 @@
 	public function read_empty() {
 		return true;
 	}
-	public function read() {
-		if($this->pre_read()) {
-			if(!$this->table || !$this->_checkReadKeys()) {
+	public function read( $keys = '*', $args = null ) {
+		if( $this->pre_read( $args ) ) {
+			if(!self::$table || !$this->_checkReadKeys()) {
 				throw new Exception('tryed to get DB entry without table or enough key information.', 1);
 				return false;
 			}
@@ -45,9 +46,9 @@
 			global $wpdb;
 			$where = $this->_whereKey();
 			if(($result = $wpdb->get_row($wpdb->prepare('
-				SELECT *
-				FROM '.$this->table.'
-				'.$where['where'],
+				SELECT ' . $keys . '
+				FROM ' . self::$table . '
+				' . $where['where'],
 				$where['values']
 			)))) {
 				$structure = $this->_get_structure();
@@ -59,10 +60,10 @@
 					
 					$this->$k = $v;
 				}
-			} else if(!$this->read_empty()) {
+			} else if(!$this->read_empty( $args )) {
 				return $this;
 			}
-			$this->after_read();
+			$this->after_read( $args );
 		}
 		return $this;
 	}
@@ -91,7 +92,7 @@
 	public function after_save() {}
 	public function save() {
 		if($this->pre_save()) {
-			if(!$this->table) {
+			if(!self::$table) {
 				throw new Exception('tryed to Save a Model without table', 1);
 				return false;
 			}
@@ -105,9 +106,9 @@
 				}
 			}
 			if(isset($values['ID'])) {
-				$wpdb->update($this->table, $values, array('ID' => $values['ID']), $format);
+				$wpdb->update(self::$table, $values, array('ID' => $values['ID']), $format);
 			} elseif(count($values) > 0) {
-				$wpdb->insert($this->table, $values, $format);
+				$wpdb->insert(self::$table, $values, $format);
 			}
 			
 			$this->after_save();
@@ -120,7 +121,7 @@
 		$where = 'WHERE 1=1 ';
 		$values = array();
 		foreach($this->_possibleReadKey as $k => $key) {
-			$where .= 'AND '.$key.' = '.$this->get_wpType($structure[$key]).'
+			$where .= 'AND '.$key.' = \''.$this->get_wpType($structure[$key]).'\'
 ';
 			$values[] = $this->$key;
 		}
@@ -136,25 +137,40 @@
 	public function after_delete() {}
 	public function deleteError() { return true; }
 	public function delete() {
-		if($this->pre_delete()) {
-			if(!$this->table) {
+		if( call_user_func_array( array( $this, 'pre_delete' ), func_get_args() ) ) {
+			if(!self::$table) {
 				throw new Exception('tryed to Delete a Model without table', 1);
 				return false;
 			}
 			
+			global $wpdb;
 			
 			$where = $this->_whereKey();
-			global $wpdb;
-					
-			if($wpdb->query($wpdb->prepare('
-				DELETE FROM '.$this->table.'
-				'.$where['where'],
+			$query = $wpdb->prepare(
+				'DELETE FROM ' . self::$table . ' ' .
+				$where['where'],
+
 				$where['values']
-			))) {
+			);
+
+			if( empty($where['values'])
+			 &&	$this->deleteError( 
+			 		'eraseAll',
+			 		'You will delete all entrys... return "ok" to continue.',
+			 		$query
+			 	) != 'ok'
+			) {
+				throw new Exception('Error on Delete.', 1);
+				return false;
+			}
+
+			THEDEBUG::inst()->countbug('a');
+			if( ( $r = $wpdb->query( $query ) ) ) {
+				$this->deleted = true;
 				$this->after_delete();
 				return $this;
 			} else {
-				if($this->deleteError()) {
+				if( $this->deleteError( 'delete went wrong.', $query, $r ) ) {
 					throw new Exception('Error on Delete.', 1);
 					return false;
 				}
@@ -164,20 +180,20 @@
 	}
 	
 	public function _get_structure() {
-		if(!isset(self::$_structures[$this->table])) {
+		if(!isset(self::$_structures[self::$table])) {
 			global $wpdb;
-			foreach($wpdb->get_results('SHOW INDEX FROM '.$this->table) as $pk) {
-				self::$_structures[$this->table]['___keys___'][$pk->Key_name][] = $pk->Column_name;
+			foreach($wpdb->get_results('SHOW INDEX FROM '.self::$table) as $pk) {
+				self::$_structures[self::$table]['___keys___'][$pk->Key_name][] = $pk->Column_name;
 			}
 			
 			foreach($wpdb->get_results('
 				SELECT DATA_TYPE, COLUMN_NAME
 				FROM INFORMATION_SCHEMA.Columns
-				WHERE TABLE_NAME = "'.$this->table.'";')
+				WHERE TABLE_NAME = "'.self::$table.'";')
 			as $column) {
-				self::$_structures[$this->table][$column->COLUMN_NAME] = $column->DATA_TYPE;
+				self::$_structures[self::$table][$column->COLUMN_NAME] = $column->DATA_TYPE;
 			}
 		}
-		return self::$_structures[$this->table];
+		return self::$_structures[self::$table];
 	}
 } ?>

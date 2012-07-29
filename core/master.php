@@ -1,13 +1,30 @@
 <?php
+// Include parent class.
 require_once('debug.php');
+
 class THEMASTER extends THEDEBUG {	
 
-	static $BrowserObj = null;
-	static $browser = null;
-	static $browserVersion = null;
+	/* ------------------ */
+	/*  STATIC VARIABLES  */
+	/* ------------------ */
+
+	/* PRIVATE */
+
+	// Turns true after first initiation.
+	private static $s_initiated = false;
+
+	private static $s_BrowserObj = null;
+	private static $s_browser = null;
+	private static $s_browserVersion = null;
 	
+	private static $s_phpQueryInitiated = false;
+
+	private static $s_initiatedProjects = array();
+	private static $s_toBeInitiated = array();
+	private static $_masterCronstructed = false;
+
 	// Browser Translation Table for use with Browser Class
-	private $_browserArray = array(
+	private static $s_browserArray = array(
 		'oa' => 'OPERA',
 		'wtv' => 'WEBTV',
 		'np' => 'NETPOSITIVE',
@@ -26,6 +43,7 @@ class THEMASTER extends THEDEBUG {
 		'as' => 'SAFARI',
 		'iph' => 'IPHONE',
 		'ipo' => 'IPOD',
+		'ipa' => 'IPAD',
 		'ga' => 'ANDROID',
 		'gc' => 'CHROME',
 		'gb' => 'GOOGLEBOT',
@@ -34,23 +52,151 @@ class THEMASTER extends THEDEBUG {
 		'bb' => 'BLACKBERRY',
 	);
 
-	function __construct($initArgs) {
-		$initArgs['original'] = true;
-		$this->_initArgs(array(
+	/* -------------------- */
+	/*  INSTANCE VARIABLES  */
+	/* -------------------- */
+
+
+	/* PROTECTED */
+
+
+	protected $_r = array(
+		'status' => 'error',
+		'msg' => 'nothing happened.',
+		'errorCode' => -1
+	);
+	
+	protected $_baseErrors = array();
+	
+
+	/* ---------------------- */
+	/*  CONSTRUCTION METHODS  */
+	/* ---------------------- */
+
+
+	/**
+	 * The Constructor method
+	 *
+	 * @param	array	$initArgs	the initiation arguments
+	 */
+	function __construct( $initArgs ) {
+		if( !isset( $this->constructing )
+		 && $this->constructing !== true
+		 && is_object( ( $r = THEBASE::check_singleton_() ) ) ) {
+			return $r;
+		} else {
+			$this->constructing = true;
+		}
+
+		$this->add_requiredInitArgs_( array(
 			'prefix',
 			'basePath',
 			'baseUrl',
-			'projectName',
-			'textdomain'
-		));
-		parent::__construct($initArgs);
-		
+			'projectName'
+		) );
+
+		if( !self::$s_initiated ) {
+			THEBASE::register_callback( 'afterBaseS_init', array( 'THEMASTER', 'sinit' ) );
+		}
+
+		parent::__construct( $initArgs );
+	}
+
+	/**
+	 * One time initiaton.
+	 */
+	public static function sinit() {
+		if( !self::$s_initiated ) {
+
+			if( defined( 'HTMLCLASSAVAILABLE' ) && HTMLCLASSAVAILABLE === true ) {
+				// Register !html as available plugin
+				array_push( self::$s_initiatedProjects, '!html' );
+			}
+
+			// Register themaster as available plugin.
+			array_push( self::$s_initiatedProjects, '!themaster' );
+
+			// Prevent this from beeing executed twice.
+			self::$s_initiated = true;
+		}
+	}
+
+	public function tryTo( $func ) {
+		$args = func_get_args();
+		unset( $args[0] );
+		try {
+			return call_user_func_array( $func, $args );
+		} catch( Exception $e ) {
+			if( class_exists( 'THEWPMASTER' ) ) {
+				THEWPMASTER::sTryError( $e );
+			} else {
+				self::sTryToError( $e );
+			}
+		}
+	}
+
+	static public function sTryToError( $e ) {
+		echo $e->getMessage() . "\nFile: " . $e->getFile() . "\nLine: " . $e->getLine();
+	}
+
+	protected function _masterInit() {
+		if( !isset( $this ) ) {
+			throw new Exception("_masterInit should not be called staticaly.", 1);
+		}
+		if( isset( $this->_masterInitiated ) && $this->_masterInitiated === true ) {
+			return;
+		}
+
+		if( isset( $this->requiredPlugins )
+		 && ( is_array( $this->requiredPlugins ) || is_object( $this->requiredPlugins ) )
+		 && !$this->group_in_array( $this->requiredPlugins, self::$s_initiatedProjects )
+		) {
+			if( !isset( self::$s_toBeInitiated[ $this->textdomain ] ) ) {
+				self::$s_toBeInitiated[ $this->textdomain ] = array(
+					'required' => $this->requiredPlugins,
+					'method' => array( $this, '_masterInit' ),
+					'type' => $this->projectType
+				);
+			}
+			return false;
+		} else {
+			if( isset( self::$s_toBeInitiated[ $this->textdomain ] ) ) {
+				unset( self::$s_toBeInitiated[ $this->textdomain ] );
+			}
+
+			if( parent::_masterInit() ) {
+				array_push( self::$s_initiatedProjects, $this->textdomain );
+				
+				foreach( self::$s_toBeInitiated as $k => $call ) {
+					call_user_func( $call['method'] );
+				}
+				
+				if( class_exists( 'THEWPMASTER' ) ) {
+					return true;
+				} else {
+					$this->_masterInitiated();
+				}
+			}
+		}
+	}
+
+	public function get_uninitiated() {
+		return self::$s_toBeInitiated;
+	}
+
+	public function get_initiated() {
+		return self::$s_initiatedProjects;
 	}
 	
-	protected function _masterInit($initArgs) {
-		return parent::_masterInit($initArgs);
+	public function group_in_array( $needels, $haystack ) {
+		foreach( $needels as $k ) {
+			if( !in_array( $k, $haystack ) ) {
+				return false;
+			}
+		}
+		return true;
 	}
-	
+
 	public function toAlpha($string) {
 		return preg_replace("/[^a-zA-Z]/", '', $string);
 	}
@@ -70,8 +216,8 @@ class THEMASTER extends THEDEBUG {
 	 * @access public
 	 * @date Jul 28th 2011
 	 */
-	public function isValidEmail($email){
-		return eregi("^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,3})$", $email);
+	public function isValidEmail( $email ){
+		return preg_match( "/^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,3})$/", $email );
 	}
 	
 	/** Tries to get a deeper array or object variable
@@ -96,6 +242,9 @@ class THEMASTER extends THEDEBUG {
 				// throw new Exception("tried to get undefined path: ".$path, 1);
 		}
 		return $obj;
+	}
+	public function rget( $obj, $path ) {
+		return self::recursive_get( $obj, $path );
 	}
 	
 	/** curPageURL returns the current url
@@ -177,21 +326,29 @@ class THEMASTER extends THEDEBUG {
 	 * 		Internet Explorer 7.1.6
 	 * 		Apple Safari 2.2.0 or any heigher subversion (2.2.1, 2.2.7,..)
 	 *
-	 * @param string $sBrowsers a string formated Browser Array 
+	 * @param string $sBrowsers a string formated Browser Array or 'mobile' / 'desktop'
 	 * @return bool
 	 * @access public
 	 * @date Dec 28th 2011
 	 */
 	public function is_browser($sBrowsers) {
-		foreach(explode('||', $sBrowsers) as $browser) {
-			$b = preg_split('/([\d\.]+)/', $browser, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
-			if(!isset($this->_browserArray[$b[0]]))
+		$mobile = 'iph||ipo||ga||bb';
+		
+		if( $sBrowsers == 'mobile' ) {
+			return $this->is_browser( $mobile );
+		} elseif( $sBrowsers == 'desktop' ) {
+			return !$this->is_browser( $mobile );
+		}
+
+		foreach( explode( '||', $sBrowsers ) as $browser) {
+			$b = preg_split( '/([\d\.]+)/', $browser, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY );
+			if( !isset( self::$s_browserArray[$b[0]] ) )
 				continue; //TODO: THROW ERROR.
-			$version = isset($b[1]) ? $b[1] : null;
+			$version = isset( $b[1] ) ? $b[1] : null;
 			$strict = null;
-			if(isset($b[2]))
+			if( isset( $b[2] ) )
 				$strict = $b[2] == 's' ? true : 'soft';
-			if($this->_is_browser($this->_browserArray[$b[0]], $version, $strict) === true)
+			if( $this->_is_browser( self::$s_browserArray[$b[0]], $version, $strict ) === true )
 				return true;
 		}
 		return false;
@@ -199,7 +356,7 @@ class THEMASTER extends THEDEBUG {
 	
 	/** Private Subfunction for $this->is_browser, initiates the Browser Class and compares Versions etc.
 	 *
-	 * @param string $browser the Browser transpated string *see $this->_browserArray
+	 * @param string $browser the Browser transpated string *see self::$s_browserArray
 	 * @param null|int $version optional browser version
 	 * @param null|true|'soft' $strict null for greater than, true for 100% match requirement, 'soft' allows 2 == 2.0.0
 	 * @return bool
@@ -207,23 +364,23 @@ class THEMASTER extends THEDEBUG {
 	 * @date Dec 28th 2011
 	 */
 	private function _is_browser($browser, $version = null, $strict = null) {
-		if(self::$BrowserObj == null) {
-			require_once(dirname(dirname(__FILE__)).'classes'.DS.'Browser'.DS.'Browser.php');
-			self::$BrowserObj = new Browser;
-			self::$browserVersion = self::$BrowserObj->getVersion();
-			self::$browser = self::$BrowserObj->getBrowser();
+		if(self::$s_BrowserObj == null) {
+			require_once( dirname( dirname( __FILE__ ) ) . DS . 'classes' . DS . 'Browser' . DS . 'Browser.php' );
+			self::$s_BrowserObj = new Browser;
+			self::$s_browserVersion = self::$s_BrowserObj->getVersion();
+			self::$s_browser = self::$s_BrowserObj->getBrowser();
 		}
-		if(self::$browser == $this->get_classConstant('Browser', 'BROWSER_'.$browser)) { 
+		if(self::$s_browser == $this->get_classConstant('Browser', 'BROWSER_'.$browser)) { 
 			if($version === null)
 				return true;
-			elseif($strict === null && version_compare(self::$browserVersion, $version, '>=')) {
+			elseif($strict === null && version_compare(self::$s_browserVersion, $version, '>=')) {
 				return true;
 			} elseif($strict === 'soft') {
-				$s1 = preg_replace('/0\./', '', self::$browserVersion);
+				$s1 = preg_replace('/0\./', '', self::$s_browserVersion);
 				$s2 = preg_replace('/0\./', '', $version);
 				if(substr($s1, 0, strlen($s2)) === $s2)
 					return true;
-			} elseif($strict === true && self::$browserVersion == $version)
+			} elseif($strict === true && self::$s_browserVersion == $version)
 				return true;
 			
 		}
@@ -243,15 +400,15 @@ class THEMASTER extends THEDEBUG {
 	 * @date Jul 27th 2011
 	 */
 	public function is_iPad() {
-		if(preg_match('#iPad#', $_SERVER['HTTP_USER_AGENT']) === 1)
-			return true;
-		else
-			return false;
+		$this->debug('Deprecated use of is_iPad(), use is_browser("ipa") instead', 3);
+		$this->debug('callstack');
+		return $this->is_browser('ipa');
 	}
 	
 	function randomString($length = 12, $type = 'pAan') {
 		echo $this->get_randomString($length, $type);
 	}
+	
 	function get_randomString($length = 12, $type = 'pAan') {
 		$punctuation = '!#$%&()=?*+-_:.;,<>';
 		$alpha = 'abcdefghijklmnopqrstuvwxyz';
@@ -259,7 +416,7 @@ class THEMASTER extends THEDEBUG {
 		$numeric = '1234567890';
 		
 		$source = '';
-		if(stristr($type, 'p')) {
+		if(stristr($type, 'p') || stristr($type, 'P')) {
 			$source .= $punctuation;
 		}
 		if(strstr($type, 'a')) {
@@ -268,7 +425,7 @@ class THEMASTER extends THEDEBUG {
 		if(strstr($type, 'A')) {
 			$source .= $Alpha;
 		}
-		if(stristr($type, 'n')) {
+		if(stristr($type, 'n') || stristr($type, 'N')) {
 			$source .= $numeric;
 		}
 		if($source == '') {
@@ -286,6 +443,88 @@ class THEMASTER extends THEDEBUG {
 		return $r;
 	}
 	
+	public function switchVars(array $vars) {
+		$i = 0;
+		foreach ($vars as $k => $v) {
+			if($i == 0) {
+				$pk = $k;
+				$pv = $v;
+			} else {
+				return array($pk => $v, $k => $pv);
+			}
+			$i++;
+		}
+	}
 	
+	public function initPhpQuery() {
+		if( self::$s_phpQueryInitiated === false ) {
+			require_once( dirname( dirname( __FILE__ ) ) . DS . 'classes' . DS . 'phpQuery.php' );
+			self::$s_phpQueryInitiated = true;
+		}
+	}
 	
-} ?>
+	public function pq($html, $contentType = null) {
+		$this->initPhpQuery();
+		$html = $this->get_HTML()->r_div($html, '#themaster_phpquery_wrap_T3o0A5um8UfCK8Ba');
+		phpQuery::newDocument( $html, $contentType );
+	}
+	
+	public function get_pqHtml() {
+		return pq('#themaster_phpquery_wrap_T3o0A5um8UfCK8Ba')->html();
+	}
+	
+	protected function rebuild_r() {
+		$this->_r = array(
+			'status' => 'error',
+			'msg' => 'nothing happened.',
+			'errorCode' => -1
+		);
+	}
+	
+	protected function _exit( $status = null, $msg = null, $errorCode = null ) {
+		if( is_int( $status ) && isset( $this->_baseErrors[$status] ) ) {
+			$msg = $this->_baseErrors[$status];
+			$errorCode = $status;
+			$status = 'error';
+		}
+		
+		foreach( array('status', 'msg', 'errorCode') as $k ) {
+			if( $$k !== null ) {
+				$this->_r[$k] = $$k;
+			}
+		}
+		if( $this->_get_setting( 'debug', THEBASE::get_textID( THEMASTER_PROJECTFILE ) ) === true
+		 && isset( $_REQUEST['debug'] )
+		 && $_REQUEST['debug'] == 'true'
+		) {
+			$this->debug( $this->_r, 'result', 3 );
+			exit();
+		}
+
+		
+		if( isset( $_REQUEST['callback'] ) ) {
+			header( 'Content-Type: text/javascript' );
+			echo preg_replace( '/[^\w-]/', '', $_REQUEST['callback'] ) . "(" . json_encode($this->_r) . ");";
+		} else {
+			echo json_encode($this->_r);
+		}
+		exit;
+	}
+
+	public function sc( $a, $b = null ) {
+		$r = new stdClass();
+		if( is_array( $a ) || is_object( $a ) ) {
+			foreach( $a as $k => $v ) {
+				$r->$k = $v;
+			}
+		} elseif( is_string( $a ) ) {
+			$r->$a = $b;
+		}
+		return $r;
+	}
+}
+// if( !defined('THEMINIMASTERAVAILABLE') ) {
+// 	$GLOBALS['THEMINIMASTER'] = new THEMASTER('MINIMASTER');
+// 	define('THEMINIMASTERAVAILABLE', true);
+// }
+?>

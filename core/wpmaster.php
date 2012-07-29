@@ -1,56 +1,131 @@
-<?php 
+<?php
+// Include parent class.
 require_once('wpupdates.php');
+// Include Model class.
 require_once('wpmodel.php');
-// Version: 2.0.2
-define('WPMASTERAVAILABE', true);
-class THEWPMASTER extends THEUPDATES {
-	/** The Args needed by the Object to get initiated
-	 * @package wp
-	 */	
+
+class THEWPMASTER extends THEWPUPDATES {
+
+
+	/* ------------------ */
+	/*  STATIC VARIABLES  */
+	/* ------------------ */
 	
-	public static $currentUser; // Current User, if logged in
+
+	/* PUBLIC */
+
+
+	// Holds the current User Object if available.
+	public static $sCurrentUser;
+
+
+	/* PROTECTED */
+
+
+	/* PRIVATE */
+
+
+	// turns true after first initiation.
+	private static $s_initiated = false;
+
+	// Array of passed Notes to be printet via print_adminMessages()
+	private static $s_notes = array(); 
+
+	// Array of Posts
+	private static $s_postCache = array();
 	
-	static $_notes = array(); // Array of passed Notes to be printet via print_adminMessages()
-	static $_postCache = array(); // Array of Posts
+	// List of hooked actions and filters.
+	private static $s_hooked = array();
+
+	// Available registered content tags.
+	private static $s_contentTags = array();
+
+	private static $adminNoticesSent = false;
 	
-	
-	/** Used by add_contentTag() & do_ContentTags()
-	 * @since 2.0.2
-	 * @date Dez 14th 2011
-	 */
-	private static $_hooked = array();
-	private static $_contentTags = array();
-	
-	private static $_ftp_conn_id;
-	private static $_folderStructure = array(
+	//
+	private static $s_ftp_conn_id;
+	private static $s_folderStructure = array(
 		'classes' => 0755,
 		// 'models' => 0755,
 		'res' => array(
 			'chmod' => 0755,
 			'css' => 0777,
 			'includes' => 0755,
-			'js' => 0755,
+			'js' => 0777,
 			'less' => 0755,
 		),
 		// 'views' => 0755,
 	);
-	
-	function __construct($initArgs) {
-		$this->requiredInitArgs[] = 'theversion';
-		parent::__construct($initArgs);
-	}
-	
-	/** The init - does nothing for subclasses und calls _masterInit if its called by THEMASTER
+
+
+	/* ---------------------- */
+	/*  CONSTRUCTION METHODS  */
+	/* ---------------------- */
+
+
+	/**
+	 * The Constructor method
 	 *
-	 * @param array $initArgs
-	 * @return void
-	 * @access protected
-	 * @date Jul 28th 2011
+	 * @param	array	$initArgs	the initiation arguments
 	 */
-	protected function init($initArgs) {
-		if(get_class($this) == 'THEWPMASTER')
-			$this->_masterInit($initArgs);
+	final public function __construct( $initArgs ) {
+		if( is_object( ( $r = THEBASE::check_singleton_( get_class( $this ) ) ) ) ) {
+			return $r;
+		} else {
+			$this->constructing = true;
+		}
+
+		// Register "theversion" as required initiation argument.
+		$this->add_requiredInitArgs_( 'version' );
+
+		if( !self::$s_initiated ) {
+			THEBASE::register_callback( 'afterBaseS_init', array( 'THEWPMASTER', 'sinit' ) );
+		}
+
+		// Pass ball to parent.
+		parent::__construct( $initArgs );
 	}
+	
+
+	/**
+	 * One time initiaton.
+	 */
+	public static function sinit() {
+		if( !self::$s_initiated ) {
+			// Register one-time-hooks.
+
+			if( function_exists( 'is_admin' ) ) {
+				if( !is_admin() ) {
+					THEBASE::reg_less( 'base' );
+				} else {
+					THEBASE::reg_adminLess( 'tm-admin' );
+					THEBASE::reg_adminJs( 'tm-admin' );
+				}
+			} 
+
+			self::s_hooks();
+
+			// Register hash rederect for login.
+			if( isset( $GLOBALS['pagenow'] )
+			 && $GLOBALS['pagenow'] == 'wp-login.php'
+			 && isset($_GET['redirect_to']) 
+			 && isset($_GET['forceRederect'])
+			 && $_GET['forceRederect'] == 'hash'
+			) {
+				$this->reg_js('twpm_login');
+			}
+
+			// Define availability constant.
+			define( 'WPMASTERAVAILABE', true );
+
+			// Prevent this from beeing executed twice.
+			self::$s_initiated = true;
+		}
+	}
+
+	/* -------------------- */
+	/*  INITIATION METHODS  */
+	/* -------------------- */
 	
 	/** Initiation for a new Instance of THEWPMASTER, generates a new Submaster XYMaster
 	 *
@@ -59,59 +134,139 @@ class THEWPMASTER extends THEUPDATES {
 	 * @access private
 	 * @date Jul 28th 2011
 	 */
-	protected function _masterInit($initArgs) {
-		$obj = parent::_masterInit($initArgs);
-		
-		// TODO: INCLUDE HTML CLASS
-		// include_once($this->basePath.'/classes/html/!html.php');
-		
-		$name = strtoupper($this->prefix).'Master';
-		
-		$this->_versionCheck($obj->textdomain, $obj);
-		
-		if(is_dir($this->basePath.'/languages')) {
-			load_plugin_textdomain($this->textdomain, false, $this->folderName.'/languages/');
+	final protected function _masterInit() {
+		if( !isset( $this ) ) {
+			throw new Exception("_masterInit should not be called staticaly.", 1);
 		}
-		
-		$pluginPath = isset($this->pluginPath) ? $this->pluginPath : $this->basePath;
-		include_once($this->basePath.DS.'classes'.DS.'master.php');
-		register_activation_hook($pluginPath.DS.basename($this->basePath).'.php', array($name, 'activate'));
+		if( isset( $this->_masterInitiated ) && $this->_masterInitiated === true ) {
+			return;
+		}
+
+		if( parent::_masterInit() ) {
+			$this->_versionCheck();
+			
+			if( is_dir( $this->basePath . DS . 'languages' ) ) {
+				load_plugin_textdomain( $this->textdomain, false, $this->basePath . DS . 'languages' . DS );
+			}
+
+			if( method_exists( $this, 'activate' ) ) {
+				register_activation_hook( $this->projectFile, array( $this, 'activate' ) );
+			}
+
+			if( method_exists( $this, 'deactivate' ) ) {
+				register_activation_hook( $this->projectFile, array( $this, 'deactivate' ) );
+			}
+
+			$this->_masterInitiated();
+		}
 	
-		if(!isset(self::$_hooked['masterVersionCheck'])) {
-			$this->_versionCheck('themaster', $this);
-			self::$_hooked['masterVersionCheck'] = true;
-		}
-		if(!isset(self::$_hooked['admin_notices'])) {
-			add_action('admin_notices', array('THEWPMASTER', 'admin_notices'));
-			self::$_hooked['admin_notices'] = true;
-		}
-		if(!isset(self::$_hooked['register_sources'])) {
-			add_action('init', array('THEWPMASTER', 'register_sources'), 100, 0);
-			self::$_hooked['register_sources'] = true;
-		}
-		if(!isset(self::$_hooked['print_jsVars'])) {
-			add_action('wp_head', array('THEWPMASTER', 'print_jsVars'), 0, 0);
-			add_action('admin_head', array('THEWPMASTER', 'print_adminJsVars'), 0, 0);
-			self::$_hooked['print_jsVars'] = true;
-		}
+		// TODO: REIMPLEMENT	
+		// if(!isset(self::$_hooked['masterVersionCheck'])) {
+		// 	$this->_versionCheck('themaster', $this);
+		// 	self::$_hooked['masterVersionCheck'] = true;
+		// }
+		
 	}
 
-	private function _versionCheck($slug, $obj) {
-		if($GLOBALS['pagenow'] != 'plugins.php' && $GLOBALS['pagenow'] != 'themes.php') return;
-		if( (defined(($name = 'THEVERSION_'.strtoupper($slug))) && ($version = constant($name)))
-		 || (isset($this->theversion) && ($version = $this->theversion))
-		) {
-			$name = strtolower($name);
-			if(version_compare(get_option($name), $version, '<')) {
-				if($name == 'theversion_themaster') {
-					$r = $this->_masterUpdate();
-				} else {
-					if(isset($obj->folderStructure) && is_array($obj->folderStructure)) {
-						$this->_check_folderStructure($obj->folderStructure, $obj->basePath);
+	/**
+	 * Registeres one-time hooks for thewpmaster.
+	 */
+	private static function s_hooks() {
+		// Return if Wordpress is not available.
+		if( !function_exists( 'add_action' ) ) return;
+
+		// Register verry own one time init when wp is available.
+		add_action( 'init', array( 'THEWPMASTER', 'twpm_wpinit' ), 100, 0 );
+
+		// Register callbacks for printing js-variables.
+		add_action( 'wp_head', array( 'THEWPMASTER', 'twpm_print_jsVars' ), 0, 0 );
+		add_action( 'admin_head', array( 'THEWPMASTER', 'twpm_print_adminJsVars' ), 0, 0 );
+
+		add_action( 'login_head', array( 'THEWPMASTER', 'twpm_login_head' ) );
+		add_action( 'wp_login', array( 'THEWPMASTER', 'twpm_wp_login' ) );
+		add_filter( 'login_message', array( 'THEWPMASTER', 'twpm_loginMsg' ) );
+		add_action( 'wp_ajax_twpm_hashRederect', array( 'THEWPMASTER', 'ajax_hashRederect' ));
+		add_action( 'wp_ajax_nopriv_twpm_hashRederect', array( 'THEWPMASTER', 'ajax_hashRederect' ));
+
+		// Register callback for admin notices.
+		add_action( 'admin_notices', array( 'THEWPMASTER', 'twpm_admin_notices' ) );
+
+		// Register callback for printing debugs from THEDEBUG.
+		add_action( 'shutdown', array( 'THEDEBUG', 'print_debugcounts' ), 0, 0 );
+		if( THEDEBUG::get_mode() === 'summed' ) {
+			add_action( 'shutdown', array( 'THEDEBUG', 'print_debug' ), 0, 0 );
+		}
+
+		// Register callback for plugin dependency check.
+		add_action( 'after_setup_theme', array( 'THEWPMASTER', 'check_initiated' ) );
+	}
+
+
+	/* ---------------- */
+	/*  PUBLIC METHODS  */
+	/* ---------------- */
+
+
+	public function check_initiated() {
+		if( count( ( $uninitiateds = THEMASTER::get_uninitiated() ) ) > 0 ) {
+			$uninit = array(
+				'theme' => array(),
+				'plugin' => array()
+			);
+			$required = array(
+				'theme' => array(),
+				'plugin' => array()
+			);
+			foreach( $uninitiateds as $k => $p ) {
+				$t = $p['type'];
+				foreach( $p['required'] as $req ) {
+					if( !in_array( $req, THEMASTER::get_initiated() )
+					 && !in_array( $req, $required[$t] )
+					) {
+						array_push( $required[$t], $req );
 					}
-					$r = $obj->update();
 				}
-				if($r === true) {
+				array_push( $uninit[$t], $k );
+			}
+			foreach( array( 'theme', 'plugin' ) as $t ) {
+				if( count( $uninit[$t] ) > 0 ) {
+					$singular = $t === 'theme' ? __( 'Theme', 'themaster' ) : __( 'Plugin', 'themaster' );
+					$plural = $t === 'theme' ? __( 'Themes', 'themaster' ) : __( 'Plugins', 'themaster' );
+
+					self::set_adminMessage( 
+						sprintf( 
+							__( '**Dependency Error:** The %1$s **%2$s** will most likely not be functional because of the unavailability of **%3$s**.', 'themaster' ),
+							( count( $uninit[$t] ) > 1 ? $plural : $singular ),
+							implode( ', ', $uninit[$t] ),
+							implode( ', ', $required[$t] )
+						),
+						'error'
+					);
+				}
+			}
+		}
+		// die();
+	}
+
+	private function _versionCheck() {
+		if( !isset( $GLOBALS['pagenow'])
+		 || ( $GLOBALS['pagenow'] != 'plugins.php' && $GLOBALS['pagenow'] != 'themes.php' )
+		 || !function_exists( 'get_option' )
+		 || !function_exists( 'update_option' )
+		) {
+			return;
+		}
+
+		if( ( defined( ( $name = 'THEVERSION_' . strtoupper( $this->textdomain ) ) ) && ( $version = constant( $name ) ) )
+		 || ( isset( $this->version ) && ( $version = $this->version ) )
+		) {
+			$name = strtolower( $name );
+			if( version_compare( get_option( $name ), $version, '<' ) ) {
+				if( isset( $this->folderStructure ) && is_array( $this->folderStructure ) ) {
+					THEBUILDER::check_folderStructure( $this->folderStructure, $this->basePath );
+				}
+
+				if( $this->update() ) {
 					update_option($name, $version);
 				} else {
 					throw new Exception('Error: Update method for "'.$name.'" failed. (return !== true)', 1);
@@ -124,49 +279,25 @@ class THEWPMASTER extends THEUPDATES {
 		$this->_check_folderStructure(self::$_folderStructure, dirname(dirname(__FILE__)).DS);
 		return true;
 	}
+
+
 	public function _masterActivate() {
 	}
 	
-	private function _check_folderStructure($structure, $basePath) {
-		if(!isset(self::$_ftp_conn_id) && defined('FTP_HOST') && defined('FTP_USER') && defined('FTP_PASS')) {
-			self::$_ftp_conn_id = ftp_connect(FTP_HOST);
-			$login_result = ftp_login(self::$_ftp_conn_id, FTP_USER, FTP_PASS);
-			$basePath = str_replace(FTP_WORKING_PATH, '', $basePath);
-		}
-		self::_check_folderStructureWalker($structure, '', $basePath);
-		if(isset(self::$_ftp_conn_id)) {
-			ftp_close(self::$_ftp_conn_id);
-		}
-	}
-	
-	private static function _check_folderStructureWalker($structure, $basedir, $root) {
-		foreach($structure as $folder => $chmod) {
-			$subfolders = null;
-			if(is_array($chmod)) {
-				$t = $chmod['chmod'];
-				unset($chmod['chmod']);
-				$subfolders = $chmod;
-				$chmod = $t;
-			}
-			$dir = $root.$basedir.DS.$folder.DS;
-			if(is_dir($dir)) {
-				if(!isset(self::$_ftp_conn_id)) {
-					chmod($dir, $chmod);
-				} else {
-					ftp_chmod(self::$_ftp_conn_id, $chmod, $dir);
-				}
-			} else {
-				if(!isset(self::$_ftp_conn_id)) {
-					mkdir($dir, $chmod);
-				} else {
-					ftp_mkdir(self::$_ftp_conn_id, $dir);
-					ftp_chmod(self::$_ftp_conn_id, $chmod, $dir);
-				}
-			}
-			
-			if(is_array($subfolders)) {
-				self::_check_folderStructureWalker($subfolders, $basedir.DS.$folder, $root);
-			}
+	public static function sTryError( $e ) {
+		$msg = sprintf( 
+			__( '**THEMASTER RUNTIME Exception:**/||Message: //%1$s///||In File: //%2$s// &bull; Line //%3$s//', 'themaster' ),
+			$e->getMessage(),
+			$e->getFile(),
+			$e->getLine()
+		);
+		if( !self::$adminNoticesSent ) {
+			self::set_adminMessage( 
+				$msg,
+				'error'
+			);
+		} else {
+			THEDEBUG::debug( $msg, 'error', 4 ); 
 		}
 	}
 	
@@ -193,22 +324,61 @@ class THEWPMASTER extends THEUPDATES {
 	    return $file;
 	}
 	
-	
-	public function print_adminJsVars() {
-		self::print_jsVars(true);
-	}
-	public function print_jsVars($admin = false) {
-		$HTML = self::inst()->get_HTML();
-		$source = $admin ? self::$registeredAdminJsVars : self::$registeredJsVars;
-		$HTML->sg_script();
-		foreach($source as $name => $var) {
-			$HTML->blank('var '.$name.' = '.json_encode($var).';');
+	public static function sMasterInitError( $e, $args ) {
+		switch( $e->getCode() ) {
+			case 1:
+				self::set_adminMessage( 
+					sprintf( __( '**!THE MASTER ERROR: Master Class File for Plugin "%1$s" not found.**/||The Plugin should have a ' . 
+						'file called "master.php" defining a class called %2$s located in/||//%3$s//.', 'themaster' ),
+						$args['projectName'],
+						strtoupper( $args['prefix'] ) . 'Master',
+						$args['basePath'] . DS . 'classes'
+					),
+					'error'
+				);
+				break;
+			case 4: 
+				self::set_adminMessage( 
+					sprintf( __( '**!THE MASTER ERROR: HTML is not available.**/||The Plugin "%s" should have ' . 
+						'been initiated along with it\'s own HTML-Class but !HTML seems to be unavailale.', 'themaster' ),
+						$args['projectName']
+					),
+					'error'
+				);
+				break;
+			default:
+				self::set_adminMessage( 
+					sprintf( __( '**!THE MASTER ERROR: Master Class for Plugin "%1$s" not found.**/||The Plugin should have a ' . 
+						'file called "master.php" defining a class called %2$s located in/||//%3$s//.', 'themaster' ),
+						$args['projectName'],
+						strtoupper( $args['prefix'] ) . 'Master',
+						$args['basePath'] . DS . 'classes'
+					),
+					'error'
+				);
+				break;
 		}
-		$HTML->end();
 	}
 	
-	public function register_sources() {
-		foreach(THEBASE::$registeredSources as $dest => $sources) {
+	public function twpm_print_adminJsVars() {
+		self::twpm_print_jsVars(true);
+	}
+	public function twpm_print_jsVars($admin = false) {
+		if( defined('HTMLCLASSAVAILABLE') ) {
+			$HTML = self::inst()->get_HTML();
+			$source = $admin ? THEBASE::sGet_registeredAdminJsVars() : THEBASE::sGet_registeredJsVars();
+			$HTML->sg_script();
+			foreach($source as $name => $var) {
+				$HTML->blank('var '.$name.' = '.json_encode($var).';');
+			}
+			$HTML->end();
+		}
+	}
+	
+	public function twpm_wpinit() {
+		wp_enqueue_script('jquery');
+
+		foreach( THEBASE::sGet_registeredSources() as $dest => $sources) {
 			foreach($sources as $type => $files) {
 				foreach($files as $file => $url) {
 					if($type == 'js') {
@@ -228,12 +398,33 @@ class THEWPMASTER extends THEUPDATES {
 	 * @access protected
 	 * @date Jul 28th 2011
 	 */
-	protected function _hooks($obj) {
-		parent::_hooks($obj);
-		if(method_exists($obj, 'wpinit')) {
-			$prio = isset($obj->wpinitPriority) ? $obj->wpinitPriority : null;
-			add_action('init', array($obj, 'wpinit'),$prio);
+	public function _hooks() {
+		parent::_hooks();
+		foreach( array( 'actions_', 'filters_' ) as $hooktype ) {
+			if( isset( $this->$hooktype ) && is_array( $this->$hooktype ) ) {
+				foreach ( $this->$hooktype as $k => $hook ) {
+					$e = explode( '|', $hook );
+					$method = is_int( $k ) ? $e[0] : $k;
+					$e[-1] = $e[0];
+					$e[0] = array( $this, $method );
+					if( method_exists( $this, $method ) ) {
+						ksort( $e );
+						call_user_func_array(
+							$hooktype === 'actions_' ? 'add_action' : 'add_filter',
+							$e
+						);
+					} else {
+						throw new Exception('THEMASTER ERROR: Should call Hook ' . $e[-1] . ' to unexistent method ' . $method . ' in class ' . get_class( $this ) . '.', 1);
+					}
+				}
+
+			} 
+			
 		}
+		// if( method_exists( $this, 'wpinit' ) ) {
+		// 	$prio = isset( $this->wpinitPriority ) ? $this->wpinitPriority : null;
+		// 	add_action( 'init', array( $this, 'wpinit' ), $prio );
+		// }
 	}
 	
 	/** Can be called to print Admin Messages setted via set_adminMessage()
@@ -242,16 +433,25 @@ class THEWPMASTER extends THEUPDATES {
 	 * @access public
 	 * @date Sep 22th 2011
 	 */
-	public static function admin_notices() {
+	public static function twpm_admin_notices() {
 		if(!isset($_SESSION['tm_admin_notes']) || !is_array($_SESSION['tm_admin_notes']))
 			$_SESSION['tm_admin_notes'] = array();
-		$messages = array_merge($_SESSION['tm_admin_notes'], self::$_notes);
+		$messages = array_merge( $_SESSION['tm_admin_notes'], self::$s_notes);
 		unset($_SESSION['tm_admin_notes']);
-		$HTML = self::sget_HTML();
-		
-		foreach($messages as $note) {
-			$HTML->s_div($note['attr'])->b_p($note['inner'])->end();
+
+		if( is_object( $HTML = self::sget_HTML(true) ) ){
+			foreach( $messages as $note ) {
+				$HTML->s_div( $note['attr'] )->b_p( $note['inner'] )->end();
+			}
+		} else {
+			echo '<div class="updated info">'.
+				'<p><strong>!THE MASTER INFO:</strong> !HTML Class is not available. Install the !HTML Plugin for full features.</p></div>';
+			
+			foreach( $messages as $note ) {
+				echo '<div class="updated" style="border-color: #dfdfdf; background-color: #fcfcfc;"><p>' . $note['inner'] . '</p></div>';
+			}
 		}
+		self::$adminNoticesSent = true;
 	}
 	
 	/** Setter for Admin Messages
@@ -262,11 +462,17 @@ class THEWPMASTER extends THEUPDATES {
 	 * @access protected
 	 * @date Jul 28th 2011
 	 */
-	protected function set_adminMessage($message, $attr = 'updated', $session = false) {
+	protected function set_adminMessage($message, $attr = 'blank', $session = false) {
+		if( is_string( $attr ) 
+		 && !strstr( $attr, '|' )
+		 && !in_array( $attr, array( 'updated', 'error' ))
+		) {
+			$attr .= ' updated';
+		}
 		if(empty($message))
 			return;
 		if(!$session)
-			self::$_notes[] = array('inner' => $message, 'attr' => $attr);
+			self::$s_notes[] = array('inner' => $message, 'attr' => $attr);
 		else {
 			$_SESSION['tm_admin_notes'][] = array('inner' => $message, 'attr' => $attr);
 		}
@@ -280,18 +486,18 @@ class THEWPMASTER extends THEUPDATES {
 	 * @date Jul 29th 2011
 	 */
 	public function get_user($key = null) {
-		if(!isset(self::$currentUser)) {
-			self::$currentUser = get_userdata($GLOBALS['user_ID']);
+		if(!isset(self::$sCurrentUser)) {
+			self::$sCurrentUser = get_userdata($GLOBALS['user_ID']);
 		}
 		if($key == null)
-			return self::$currentUser;
+			return self::$sCurrentUser;
 		else
-			return $this->recursive_get(self::$currentUser, $key);
+			return self::recursive_get(self::$sCurrentUser, $key);
 	}
 	
 	public function set_user($key, $value) {
 		$this->get_user();
-		self::$currentUser->$key = $value;
+		self::$sCurrentUser->$key = $value;
 	}
 	
 	/** returns "the_content()"
@@ -394,5 +600,121 @@ class THEWPMASTER extends THEUPDATES {
 		return false;
 	}
 	
-}	
+	public function get_models( $modelname, $conditions = null, $orderby = null, $oder = 'DESC', $modelInit = array() ) {
+		$fullModelname = strtoupper( $this->prefix ) . $modelname;
+		if( !class_exists( $fullModelname ) ) {
+			throw new Exception('Model "' . $fullModelname . '" not available/existing for THEBASE::get_models().', 1);
+			return false;
+		}
+		
+		if( !isset( $fullModelname::$table ) 
+		 || empty( $fullModelname::$table ) 
+		 || !is_string( ( $table = $fullModelname::$table ) )
+		) {
+			throw new Exception($fullModelname . '::$table not defined - unable to get models.', 1);
+			return false;
+		}
+		
+		$and = "\n";
+		if( is_array( $conditions ) ) {
+			foreach ($conditions as $key => $value) {
+				$value = (is_numeric( $value ) ? '' : '"') . $value . (is_numeric( $value ) ? '' : '"');
+				$and .= 'AND ' . $key . ' = ' . $value . "\n";
+			}
+		}
+		
+		$orderby = $orderby == null ? '' : 'ORDER BY ' . $orderby . ' ' . $oder;
+
+		global $wpdb;
+		$query = 'SELECT *
+			FROM ' . $table . '
+			WHERE 1 = 1' .
+			$and . $orderby .
+			';';
+		$r = array();
+		
+		// $this->diebug($query);
+		
+		foreach( $wpdb->get_results( $query ) as $result ) {
+			$temp = new $fullModelname( $result );
+			foreach( $modelInit as $func => $args ) {
+				call_user_func(array($temp, $func), $args);
+			}
+			array_push($r, $temp);
+		};
+		return $r;
+	}
+	
+	public function twpm_login_head() {
+		if(	isset($_GET['redirect_to']) 
+		 && isset($_GET['forceRederect'])
+		 && ( $_GET['forceRederect'] == 'true' || $_GET['forceRederect'] == 'hash' )
+		) {
+			$t = self::inst();
+			$t->reg_jsVar('ajaxurl', admin_url('admin-ajax.php'));
+			$t->reg_jsVar('twpm_rederect', true);
+			$t->echo_jsVars();
+			$t->session();
+			$_SESSION['twpm_loginrederect'] = $_GET['redirect_to'];
+			// self::inst()->debug( $_SESSION );
+		}
+	}
+	
+	private function _get_loginRederectUrl( $full = true ) {
+		self::inst()->session();
+		$t = false;
+		if( isset( $_SESSION['twpm_loginrederect'] ) ) {
+			$t = $_SESSION['twpm_loginrederect'];
+			if( $full && isset( $_SESSION['twpm_loginrederectHash'] ) ) {
+				$t .= '#'.$_SESSION['twpm_loginrederectHash'];
+			}
+		}
+		return $t;
+	}
+	
+	private function _del_loginRederectSession() {
+		self::inst()->session();
+		if( isset( $_SESSION['twpm_loginrederect'] ) ) 
+			unset( $_SESSION['twpm_loginrederect'] );
+		if( isset( $_SESSION['twpm_loginrederectHash'] ) ) 
+			unset( $_SESSION['twpm_loginrederectHash'] );
+	}
+	
+	public function twpm_wp_login() {
+			// self::inst()->diebug( $_SESSION );
+			// die();
+		if( ( $t = self::inst()->_get_loginRederectUrl() ) ) {
+
+			self::inst()->_del_loginRederectSession();
+			header('Location: '.$t);
+			exit();
+		}
+	}
+	
+	public function ajax_hashRederect() {
+		// $t = self::inst();
+		// $t->session();
+		$_SESSION['twpm_loginrederectHash'] = str_replace('#', '', $t->get_cleanedPath($_REQUEST['hash']));
+		$t->_exit('ok', '', 0);
+	}
+	
+	public function twpm_loginMsg( $msg ) {
+		if( ( $t = self::inst()->_get_loginRederectUrl( false ) ) ) {
+			$msg = self::inst()->get_HTML()->r_p(
+				sprintf( 
+					__('You will be redirected to %s after you\'ve successfully logged in.', 'themaster'),
+					'"'.$t.'<span id="twpm_hash"></span>"'
+				),
+				'message'
+			).$msg;
+		}
+		return $msg;
+	}
+		
+}
+if( !defined('THEMINIWPMASTERAVAILABLE') ) {
+	if( function_exists( 'xBP') ) xBP();
+	$GLOBALS['THEMINIWPMASTER'] = new THEWPMASTER('MINIMASTER');
+	define('THEMINIWPMASTERAVAILABLE', true);
+}
 ?>

@@ -1,13 +1,35 @@
 <?php
+// Include parent class.
 require_once('settings.php');
 
 class THEDEBUG extends THESETTINGS {
+
+	/* ------------------ */
+	/*  STATIC VARIABLES  */
+	/* ------------------ */
+
+	/* PRIVATE */
+
+	// Turns true after first initiation.
+	private static $s_initiated = false;	
+
+	private static $s_enabled = false;
+	private static $s_getMode = false;
+	private static $s_mode;
+	private static $s_debugEmail;
+	private static $s_debugEmailFrom;
+
+	private static $s_standardBtDeepth = 5;
+	private static $s_internalStandardBtDeepth;
+	private static $s_btDeepth;
 	
-	private $_debugs = array();
+	private static $s_debugs = array();
 	
-	private $_cDebug = array();
+	private static $s_cDebug = array();
+
+	private static $s_counts = array();
 	
-	private $_css = array(
+	private static $s_css = array(
 		array(
 			'b' => '#3a3',
 			'bg' => '#aea',
@@ -32,23 +54,111 @@ class THEDEBUG extends THESETTINGS {
 	);
 	
 	// Holders for $this->_sortDebugs() function used by summed outputs
-	private $_cSorting = 'type';
-	private $_cDirection = 'asc';
+	private static $s_cSorting = 'type';
+	private static $s_cDirection = 'asc';
 	
-	private $_names = array('OK', 'Debug', 'Info', 'Warning', 'Error');
+	private static $s_names;
 	
-	protected function _masterInit($initArgs) {
-		if($this->_get_setting('debugMode') == 'FirePHP') {
-			try {
-				require_once(dirname(dirname(__FILE__)).DS.'classes'.DS.'FirePHPCore'.DS.'fb.php');
-				ob_start();
-			} catch(exception $e) {
-				echo $this->get_debug('Debug mode setted to FirePHP but FirePHP could not be found', 4);
-			}
+
+	public function __construct( $initArgs ) {
+		if( !isset( $this->constructing ) || $this->constructing !== true ) {
+			throw new Exception("ERROR: THEDEBUG is not ment to be constructed directly.", 1);
+			return false;
 		}
-		return parent::_masterInit($initArgs);
+
+		if( !self::$s_initiated ) {
+			THEBASE::register_callback( 'afterBaseS_init', array( 'THEDEBUG', 'sinit' ), 1, null, null, 2 );
+		}
+
+		parent::__construct( $initArgs );
 	}
+
+	protected function _masterInit() {
+		if( !isset( $this ) ) {
+			throw new Exception("_masterInit should not be called staticaly.", 1);
+		}
+		if( isset( $this->_masterInitiated ) && $this->_masterInitiated === true ) {
+			return;
+		}
+
+		if( parent::_masterInit() ) {
+			return true;
+		}
+	}
+
+	public static function sInit() {
+		if( !self::$s_initiated ) {
+			self::$s_initiated = true;
+
+			if( THESETTINGS::get_setting( 'debug', self::$sTextID_ ) ) {
+				self::$s_mode = THESETTINGS::get_setting( 'debugMode', self::$sTextID_ );
+				self::$s_getMode = THESETTINGS::get_setting( 'debugGet', self::$sTextID_ );
+
+				self::$s_names = array(
+					__( 'OK', 'themaster' ),
+					__( 'Debug', 'themaster' ),
+					__( 'Info', 'themaster' ),
+					__( 'Warning', 'themaster' ),
+					__( 'Error', 'themaster' )
+				);
+
+				if( self::$s_mode === 'FirePHP' ) {
+					try {
+						require_once( self::$sBasePath_ . 'classes' . DS . 'FirePHPCore' . DS . 'fb.php' );
+						ob_start();
+						$FB = FirePHP::getInstance( true );
+					} catch( exception $e ) {
+						THESETTINGS::_set_setting( 'debugMode', 'themaster', 'inline' );
+						self::$s_mode = 'inline';
+						echo self::_get_debug( 'Debug mode reset to inline because FirePHP could not be initiated', 4 );
+					}
+				} elseif( self::$s_mode === 'mail' ) {
+
+					self::$s_debugEmail = THESETTINGS::get_setting( 'debugEmail', self::$sTextID_ );
+
+					if( !THEMASTER::isValidEmail( self::$s_debugEmail ) ) {
+						throw new Exception( __( 'THEMASTER ERROR: THEDEBUG Mode is set to Mail but no valid reciver is found.', 'themaster' ), 1);
+					}
+
+					if( function_exists( 'get_bloginfo' ) ) {
+						$baseFrom = get_bloginfo( 'siteurl' );
+					} else {
+						$baseFrom = THEMASTER::get_currentUrl();
+					}
+
+					$baseFrom = parse_url( $baseFrom, PHP_URL_HOST );
+					if( count( ( $e = explode( '.', $baseFrom ) ) ) > 2 ) {
+						unset( $e[0] );
+						$baseFrom = implode( '.', $e );
+					}
+					self::$s_debugEmailFrom = 'debug@' . $baseFrom;
+				}
+
+				self::$s_internalStandardBtDeepth = self::$s_standardBtDeepth;
+				self::_reset_btDeepth();
+
+			
+				self::$s_enabled = true;
+				self::debug( sprintf( __( 'Debug is on and Mode is set to %s.', 'themaster' ), self::$s_mode ), 2 );
+			} // ENDIF ( THESETTINGS::get_setting( 'debug', '_themaster' ) )
+		} // ENDIF ( !self::$s_initiated )
+	} // ENDMETHOD sInit
 	
+	public function print_debugcounts() {
+		if( !self::$s_enabled ) return;
+
+		foreach( self::$s_counts as $k => $count ) {
+			self::$s_cDebug = $count['debug'];
+			self::$s_cDebug['name'] = $count['key'];
+			self::$s_cDebug['var'] = $count['nr'] . ' times.';
+			self::$s_cDebug['nr'] = 2;
+			self::$s_cDebug['type'] = 'msg';
+
+			self::_inner_debug( 'pregenerated_Z3PnWVieHx7qKdnFnteL' );
+			unset( self::$s_counts[$k] );
+		}
+	}
+
 	/** Generates the Debug Array and allowes mixing positions of nr & name
 	 *
 	 * @param array $args the called debug args
@@ -56,53 +166,82 @@ class THEDEBUG extends THESETTINGS {
 	 * @access private
 	 * @date Nov 10th 2011
 	 */
-	private function _gen_debug($args) {
-		$this->_cDebug = array();
-		$this->_cDebug['type'] = gettype($args[0]);
-		$this->_cDebug['var'] = is_string($args[0]) ? htmlspecialchars($args[0]) : $args[0];
-		for ($i=1; $i <= 2 ; $i++) { 
-			if(isset($args[$i]) && is_int($args[$i])) {
-				$this->_cDebug['nr'] = $args[$i];
-			} elseif(isset($args[$i]) && is_string($args[$i])) {
-				$this->_cDebug['name'] = $args[$i];
+	private function _gen_debug( $args ) {
+		self::$s_cDebug = array();
+		self::$s_cDebug['type'] = gettype( $args[0] );
+		self::$s_cDebug['var'] = $args[0];
+
+		for( $i=1; $i <= 2 ; $i++ ) { 
+			if( isset( $args[$i] ) && is_int( $args[$i] ) ) {
+				self::$s_cDebug['nr'] = $args[$i];
+			} elseif( isset( $args[$i] ) && is_string( $args[$i] ) ) {
+				self::$s_cDebug['name'] = $args[$i];
 			}
 		}
-		if(!isset($this->_cDebug['nr']))
-			$this->_cDebug['nr'] = 1;
-		$bt = debug_backtrace();
-		$this->_cDebug['btLine'] = isset($bt[3]['line']) ? $bt[3]['line'] : null;
-		$this->_cDebug['btFile'] = isset($bt[3]['file']) ? $bt[3]['file'] : null;
 		
-		if(isset($this->_cDebug['name']))
-			$this->_cDebug['name'] = substr($this->_cDebug['name'], 0, 1) == '$' ? $this->_cDebug['name'] : '$'.$this->_cDebug['name'];
+		if( !isset( self::$s_cDebug['nr'] ) )
+			self::$s_cDebug['nr'] = 1;
+
+		$bt = debug_backtrace();
+
+		self::$s_cDebug['btLine'] = isset( $bt[self::$s_btDeepth]['line'] ) ? $bt[self::$s_btDeepth]['line'] : null;
+		self::$s_cDebug['btFile'] = isset( $bt[self::$s_btDeepth]['file'] ) ? $bt[self::$s_btDeepth]['file'] : null;
+		
+		if( isset( self::$s_cDebug['name'] ) )
+			self::$s_cDebug['name'] = substr( self::$s_cDebug['name'], 0, 1 ) == '$' ? self::$s_cDebug['name'] : '$' . self::$s_cDebug['name'];
 		else
-			$this->_cDebug['name'] = null;
+			self::$s_cDebug['name'] = null;
 	}
 	
-	private function callStack($depth = 3) {
-		$offset = 2;
-		$depth = $depth+$offset;
+	private function _callStack( $depth ) {
+		$offset = 4;
+		$depth = $depth + $offset;
 		$bt = debug_backtrace();
 		$stack = array();
-		for ($i = $offset; $i < $depth; $i++) {
-			if(isset($bt[$i])) {
+		for( $i = $offset; $i < $depth; $i++ ) {
+			if( isset( $bt[$i] ) ) {
 				$stack[$depth-$i] = array(
 					'function' => $bt[$i]['function'],
-					'called in File' => $bt[$i]['file'],
-					'line' => $bt[$i]['line'],
+					'called in File' => ( isset( $bt[$i]['file'] ) ? $bt[$i]['file'] : 'UNKNOWN' ),
+					'line' => ( isset( $bt[$i]['line'] ) ? $bt[$i]['line'] : 'UNKNOWN' ),
+					// 'class' => ( isset( $bt[$i]['class'] ) ? $bt[$i]['class'] : 'UNKNOWN' ),
 				);
 			}
 			
 		}
-		$this->_inner_debug($stack, 'Call Info', 2);
+		call_user_func( array( 
+				isset( $this ) ? $this : 'THEDEBUG',
+				'_inner_debug' 
+			),
+			array( $stack, 'Call Info', 2, 0 )
+		);
 	}
 	
-	public function debug($args = null) {
-		$obj = isset($this) ? $this : self::inst();
-		if(is_string($args) && strtolower($args) === 'callstack') $obj->callStack();
-		elseif(is_string($args) && strtolower($args) === 'calledBy') $obj->callStack(1);
-		else {
-			call_user_func(array($obj, '_inner_debug'), func_get_args());
+	public function _debug( $args = null, $deepth = null ) {
+		if( !self::$s_enabled ) return;
+
+		self::s_softReset_btDeepth();
+
+		if( is_string( $args ) && strtolower( $args ) === 'callstack' ) {
+			$deepth = !is_int( $deepth ) ? 3 : $deepth;
+			if( isset( $this ) ) {
+				$this->_callStack( $deepth );
+			} else {
+				self::_callStack( $deepth );
+			}
+		} elseif( is_string( $args ) && strtolower( $args ) === 'calledby' ) {
+			if( isset( $this ) ) {
+				$this->_callStack( 1 );
+			} else {
+				self::_callStack( 1 );
+			}
+		} else {
+			call_user_func( array(
+					isset( $this ) ? $this : 'THEDEBUG',
+					'_inner_debug' 
+				),
+				func_get_args()
+			);
 		}
 	}
 	
@@ -114,56 +253,78 @@ class THEDEBUG extends THESETTINGS {
 	 * @access public
 	 * @date Nov 10th 2011 
 	 */
-	public function _inner_debug($args = null) {
-		if(empty($args)) return;
-		if(!$this->_get_setting('debug')) return;
-		elseif($this->_get_setting('debug') === 'get' && (!isset($_GET['debug']) || $_GET['debug'] != 'true')) return;
+	public function _inner_debug( $args = null ) {
+		if( !self::$s_enabled ) return;
+		if( empty( $args ) ) return;
+
+		elseif( self::$s_getMode && ( !isset( $_GET['debug'] ) || $_GET['debug'] != 'true' )) return;
 		
-		$this->_gen_debug($args);
+		if( isset( $args[3] ) && is_int( $args[3] ) ) {
+			self::$s_btDeepth = self::$s_btDeepth + $args[3];
+		}
+		if( $args !== 'pregenerated_Z3PnWVieHx7qKdnFnteL' ) {
+			self::_gen_debug( $args );
+		}
 		
 		// TODO: Summed Mails + Summed Output;
-		switch ($this->_get_setting('debugMode')) {
+		switch( self::$s_mode ) {
 			case 'mail':
-				if(isset($this->projectName))
+				if( isset( $this ) && isset( $this->projectName ) )
 					$name = $this->projectName;
 				else
 					$name = 'THEDEBUG';
-					$header  = "MIME-Version: 1.0\r\n";
-					$header .= "Content-type: text/html; charset=iso-8859-1\r\n";
-					$header .= "From: ".$this->_get_setting('debugEmailFrom')."\r\n";
-					$header .= "Reply-To: ".$this->_get_setting('debugEmail')."\r\n";
-					$header .= "X-Mailer: PHP ". phpversion();
-					mail($this->_get_setting('debugEmail'), 'Debug from '.$name, $this->_get_debug($this->_cDebug), $header);
-					break;
+
+				$header  = "MIME-Version: 1.0\r\n";
+				$header .= "Content-type: text/html; charset=iso-8859-1\r\n";
+				$header .= "From: " . self::$s_debugEmailFrom . "\r\n";
+				$header .= "Reply-To: " . self::$s_debugEmail ."\r\n";
+				$header .= "X-Mailer: PHP ". phpversion();
+
+				mail(
+					self::$s_debugEmail,
+					'Debug from '.$name,
+					self::_get_debug( self::$s_cDebug ),
+					$header
+				);
+				break;
+
 			case 'FirePHP':
-				FB::setOptions(array('file' => $this->_cDebug['btFile'], 'line' => $this->_cDebug['btLine']));
-				if($this->_cDebug['type'] == 'boolean') {
-					$this->_cDebug['var'] = '(boolean) '.($this->_cDebug['var'] ? 'true' : 'false');
-				} elseif($this->_cDebug['type'] == 'NULL') {
-					$this->_cDebug['var'] = '(null) NULL';
-				} elseif($this->_cDebug['type'] == 'string') {
-					$this->_cDebug['var'] = '"'.$this->_cDebug['var'].'"';
+				ob_start();
+
+				FB::setOptions( array(
+					'file' => self::$s_cDebug['btFile'],
+					'line' => self::$s_cDebug['btLine']
+				));
+				$FB = FirePHP::getInstance( true );
+
+				if( self::$s_cDebug['type'] == 'boolean' ) {
+					self::$s_cDebug['var'] = '(boolean) ' . ( self::$s_cDebug['var'] ? 'true' : 'false' );
+				} elseif( self::$s_cDebug['type'] == 'NULL' ) {
+					self::$s_cDebug['var'] = '(null) NULL';
+				} elseif( self::$s_cDebug['type'] == 'string' ) {
+					self::$s_cDebug['var'] = '"' . self::$s_cDebug['var'] . '"';
 				}
-				switch ($this->_cDebug['nr']) {
+
+				switch( self::$s_cDebug['nr'] ) {
 					case 2:
-						FB::info($this->_cDebug['var'], $this->_cDebug['name']);
+						$FB->info( self::$s_cDebug['var'], self::$s_cDebug['name'] );
 						break;
 					case 3:
-						FB::warn($this->_cDebug['var'], $this->_cDebug['name']);
+						$FB->warn( self::$s_cDebug['var'], self::$s_cDebug['name'] );
 						break;
 					case 4:
-						FB::error($this->_cDebug['var'], $this->_cDebug['name']);
+						$FB->error( self::$s_cDebug['var'], self::$s_cDebug['name'] );
 						break;
 					default:
-						FB::log($this->_cDebug['var'], $this->_cDebug['name']);
+						$FB->log( self::$s_cDebug['var'], self::$s_cDebug['name'] );
 						break;
 				}
 				break;
 			case 'summed':
-				$this->_debugs[] = $this->_cDebug;
+				self::$s_debugs[] = self::$s_cDebug;
 				break;
 			default:
-				echo $this->_get_debug($this->_cDebug);
+				echo self::_get_debug( self::$s_cDebug );
 				break;
 		}
 		
@@ -177,44 +338,60 @@ class THEDEBUG extends THESETTINGS {
 	 * @access private
 	 * @date Jul 28th 2011
 	 */
-	private function _get_debug($debugArr) {
-		$r = '<div style="font-family: sans-serif; text-align: left; border: 1px solid '.$this->_css[$debugArr['nr']]['b'].';'.
-		 'background: '.$this->_css[$debugArr['nr']]['bg'].'; color: '.$this->_css[$debugArr['nr']]['f'].';'.
-		 ' padding: 10px; margin: 20px;"><h3 style="font-size: 30px;'.
-		 'text-transform: uppercase; float: left; margin: 0 10px 0 0;">'.
-		 $this->_names[$debugArr['nr']].'</h3><small style="position: relative; top: 4px; font-size: 11px;">'.
-		 'File: '.$debugArr['btFile'].' - Line <strong>'.$debugArr['btLine'].'</strong>'.
-		 '<br />Type: '.$debugArr['type'].'</small><br style="display: inline; clear: both;" />'.
-		 '<pre style="text-align: left; color: #000; background: rgba(255,255,255,0.2); padding: 5px; margin: 5px 0 0;">';
-		if(isset($debugArr['name']))
-			$r .= $debugArr['name'].': ';
-		$r .= var_export($debugArr['var'], true);
+	private function _get_debug( $debugArr ) {
+		$r = '<div style="font-family: sans-serif; text-align: left; border: 1px solid '
+				. self::$s_css[$debugArr['nr']]['b'] . ';'
+				. 'background: ' . self::$s_css[$debugArr['nr']]['bg'] . '; color: '
+				. self::$s_css[$debugArr['nr']]['f'] . ';'
+				. ' padding: 10px; margin: 20px;"><h3 style="font-size: 30px;'
+				. 'text-transform: uppercase; float: left; margin: 0 10px 0 0;">'
+			. self::$s_names[$debugArr['nr']]
+			. '</h3><small style="position: relative; top: 4px; font-size: 11px;">'
+			. 'File: ' . $debugArr['btFile'] . ' - Line <strong>' . $debugArr['btLine'] . '</strong>'
+			. '<br />Type: ' . $debugArr['type'] . '</small><br style="display: inline; clear: both;" />'
+			. '<pre style="text-align: left; color: #000; background: '
+			. 'rgba(255,255,255,0.2); padding: 5px; margin: 5px 0 0;">';
+
+		if( isset( $debugArr['name'] ) )
+			$r .= $debugArr['name'] . ': ';
+		$r .= var_export( $debugArr['var'], true );
 		$r .= '</pre></div>';
 		return $r;
 	}
 	
-	
-	private function _sortDebugs($x, $y) {
-		$c = $this->_cSorting;
+	private function _sortDebugs( $x, $y ) {
+		$c = self::$s_cSorting;
 		$c = $c == 'file' ? 'btFile' : $c == 'line' ? 'btLine' : $c;
-		if(in_array($c, array('name', 'type', 'btFile'))) {
-			$r = strcmp($x[$c], $y[$c]);
+		if( in_array( $c, array( 'name', 'type', 'btFile' ) ) ) {
+			$r = strcmp( $x[$c], $y[$c] );
 			
-		} elseif(in_array($c, array('nr', 'btLine'))) {
+		} elseif( in_array( $c, array( 'nr', 'btLine' ) ) ) {
 			$r = 0;
-			if($x[$c] > $y[$c])
+			if( $x[$c] > $y[$c] )
 				$r = 1;
-			elseif($y[$c] > $x[$c])
+			elseif( $y[$c] > $x[$c] )
 				$r = -1;
 		}
-		if($this->_cDirection == 'asc')
+		if( self::$s_cDirection == 'asc' )
 			return $r;
-		elseif($r > 0)
+		elseif( $r > 0 )
 			return -1;
-		elseif($r < 0)
+		elseif( $r < 0 )
 			return 1;
 		else
 			return 0;
+	}
+	
+	public function _reset_btDeepth() {
+		self::$s_standardBtDeepth = self::$s_internalStandardBtDeepth;
+		self::$s_btDeepth = self::$s_internalStandardBtDeepth;
+	}
+	public function _set_btDeepth( $deepth ) {
+		self::$s_standardBtDeepth = $deepth;
+		self::$s_btDeepth = $deepth;
+	}
+	private static function s_softReset_btDeepth() {
+		self::$s_btDeepth = self::$s_standardBtDeepth;
 	}
 	
 	/** The output function for summed Debugs
@@ -225,15 +402,19 @@ class THEDEBUG extends THESETTINGS {
 	 * @access public
 	 * @date Nov 10th 2011
 	 */
-	public function print_debug($sorting = null, $dir = 'asc') {
+	public function print_debug( $sorting = null, $dir = 'asc' ) {
+		if( !self::$s_enabled ) return;
 		
-		if($sorting && count($this->_debugs) > 1) {
-			$this->_cSorting = $sorting;
-			$this->_cDirection = $dir;
-			usort($this->_debugs, array($this, '_sortDebugs'));
+		if( $sorting && count( self::$s_debugs ) > 1 ) {
+			if( !$sorting !== null ) {
+				self::$s_cSorting = $sorting;
+			}
+			self::$s_cDirection = $dir;
+			usort( self::$s_debugs, array( 'THEDEBUG', '_sortDebugs' ) );
 		}
-		foreach($this->_debugs as $debug) {
-			echo $this->_get_debug($debug);
+		foreach( self::$s_debugs as $k => $debug ) {
+			echo self::_get_debug( $debug );
+			unset( self::$s_debugs[$k] );
 		}
 	}
 	
@@ -245,17 +426,106 @@ class THEDEBUG extends THESETTINGS {
 	 * @access public
 	 * @date Sep 22th 2011
 	 */
-	public function diebug() {
-		$obj = isset($this) ? $this : self::inst();
-		$args = func_get_args();
-		call_user_func_array(array($obj, 'debug'), $args);
+	public function diebug( $var = null ) {
+		if( !self::$s_enabled ) return;
+		
+		call_user_func_array( array( 
+				isset( $this ) ? $this : 'THEDEBUG',
+				'_debug' 
+			),
+			func_get_args()
+		);
+		call_user_func_array( array( 
+				isset( $this ) ? $this : 'THEDEBUG',
+				'_debug' 
+			),
+			array( 'Script got murdered by diebug.', 2 )
+		);
 		die();
 	}
-	public function rebug($var) {
-		$obj = isset($this) ? $this : self::inst();
-		$args = func_get_args();
-		call_user_func_array(array($obj, 'debug'), $args);
+
+	public function rebug( $var ) {
+		if( !self::$s_enabled ) return;
+		
+		call_user_func_array( array( 
+				isset( $this ) ? $this : 'THEDEBUG',
+				'_debug' 
+			),
+			func_get_args()
+		);
 		return $var;
+	}
+
+	public function debug( $var ) {
+		if( !self::$s_enabled ) return;
+		
+		call_user_func_array( array( 
+				isset( $this ) ? $this : 'THEDEBUG',
+				'_debug' 
+			),
+			func_get_args()
+		);
+	}
+
+	public function countbug($key) {
+		if( !self::$s_enabled ) return;
+
+		self::$s_btDeepth = 1;
+
+		if( isset( $this )) {
+			$this->_gen_debug( $key );
+		} else {
+			self::_gen_debug( $key );
+		}
+
+		$interkey = self::$s_cDebug['btFile'] . self::$s_cDebug['btLine'];
+
+		if( !isset( self::$s_counts[$interkey] ) ) {
+			self::$s_counts[$interkey] = array(
+				'nr' => 1,
+				'key' => $key,
+				'debug' => self::$s_cDebug
+			);
+		} else {
+			self::$s_counts[$interkey]['nr']++;
+		}
+	}
+
+	public function deprecated( $alternative, $continue = true, $bto = 0, $bto2 = 0 ) {
+		if( !self::$s_enabled ) return;
+		
+		$bto++;
+		
+		$bt = debug_backtrace();
+
+		$ac = self::$s_mode === 'FirePHP' ? '´' : '&acute;';
+
+		$msg = 'use of ' . $ac . $bt[$bto]['class'] . '::' . $bt[$bto]['function'] . '()' . $ac . '. '
+			.'Please use ' . $ac . $alternative . $ac . ' instead.';
+
+		$args = array(
+			$msg, 3, 'Deprecated', $bto2+2
+		);
+		$method = $continue ? 'debug' : 'diebug';
+
+		call_user_func_array(
+			array(
+				( isset( $this ) ? $this : 'THEDEBUG' ),
+				$method ),
+			$args
+		);
+	}
+
+	public function get_mode() {
+		return self::$s_mode;
+	}
+	
+}
+
+if( !class_exists('WP') ) {
+	register_shutdown_function( array( 'THEDEBUG', 'print_debugcounts' ) );
+	if( THEDEBUG::get_mode() === 'summed' ) {
+		register_shutdown_function( array( 'THEDEBUG', 'print_debug' ) );
 	}
 }
 ?>

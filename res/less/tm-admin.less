@@ -1,0 +1,92 @@
+// themaster //
+@import "elements.less";
+// End: themaster //
+
+
+.tm-setting-row {
+	background-color: #fafafa !important;
+	background-image: url('../img/str.png');
+	background-repeat: repeat;
+	box-shadow: 0 0 6px rgba(0, 0, 0, 0.1) inset;
+	td {
+		border-top: 0;
+	}
+	&.closed {
+		td {
+			padding: 0;
+			border: 0;
+		}
+		.tm-settingswrap {
+			margin: 0;
+			height: 0;
+		}
+	}
+	.tm-settingswrap {
+		margin: 10px 0;
+	}
+	.tm-settingwrap {
+		height: 26px;
+		line-height: 26px;
+		&.tm-savewrap {
+			margin-top: 15px;
+			border-top: 1px solid #dfdfdf;
+			margin-right: 2.2em;
+			padding-top: 10px;
+			button {
+				margin-left: 200px;
+			}
+		}
+	}
+	label {
+		display: inline-block;
+		width: 200px;
+	}
+	input, select {
+		position: relative;
+		top: -2px;
+	}
+	select {
+		height: 1.8em;
+	}
+	input[type='text'] {
+		top: -1px;
+		width: 35%;
+		&.ts-error {
+			border-color: #a50000;
+		}
+	}
+	.ts-errormsg {
+		margin: 0 0 0 10px;
+		color: #a50000;
+	}
+	.tm-loading {
+		img {
+			position: relative;
+			top: 3px;
+		}
+	}
+	.tm-message {
+		margin-left: 5px;
+	}
+	hr {
+		border: 0;
+		border-top: 1px solid #dfdfdf;
+		margin-right: 2.2em;
+	}
+}
+.wrap {
+	.updated {
+		&.success {
+			border-color: #009338;
+			background-color: #B8EDCC;
+		}
+		&.info {
+			border-color: #006ba5;
+			background-color: #dbefff;
+		}
+		&.blank {
+			border-color: #dfdfdf;
+			background-color: #fcfcfc;
+		}
+	} 
+}

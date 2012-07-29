@@ -1,126 +1,316 @@
-<?php 
-require_once('master.php');
-class THEUPDATES extends THEMASTER {
+<?php
+// Include parent class.
+require_once('wpsettings.php');
 
-	private static $_updatables = array();
-	private static $_hooked = false;
-	private static $_checked = false;
-	private static $_forced = false;
+class THEWPUPDATES extends THEWPSETTINGS {
+
+	/* ------------------ */
+	/*  STATIC VARIABLES  */
+	/* ------------------ */
 	
-	function __construct($initArgs) {
-		$this->requiredInitArgs[] = 'updatable';
-		parent::__construct($initArgs);
+
+	/* PRIVATE */
+
+	// Turns true after first initiation.
+	private static $s_initiated = false;
+
+	// The default update server. can be overwritten by updateServer initiation argument.
+	private static $s_defUpdateServer = 'http://plugins.red-thorn.de/api/';
+
+	// Holds all updatable plugins and themes.
+	private static $s_updatables = array();
+
+	// Flag to prevent constants from being checked twice.
+	private static $s_constantsChecked = false;
+
+
+	/* ---------------------- */
+	/*  CONSTRUCTION METHODS  */
+	/* ---------------------- */
+
+
+	/**
+	 * The Constructor method
+	 *
+	 * @param	array	$initArgs	the initiation arguments
+	 */
+	function __construct( $initArgs ) {
+		if ( !isset( $this->constructing ) || $this->constructing !== true ) {
+			throw new Exception("ERROR: THEWPUPDATES is not ment to be constructed directly.", 1);
+			return false;
+		}
+
+		// Register "updatable" as required initation key.
+		$this->add_requiredInitArgs_( array( 'updatable' ) );
+
+		if ( !self::$s_initiated ) {
+			THEBASE::register_callback( 'afterBaseS_init', array( 'THEWPUPDATES', 'sinit' ) );
+		}
+
+		// pass the Ball
+		parent::__construct( $initArgs );
+	}
+
+	/**
+	 * One time initiaton.
+	 */
+	public static function sinit() {
+		if ( !self::$s_initiated ) {
+			// Register one-time-hooks.
+			self::s_hooks();
+
+			// Check if 
+			self::_checkForcing();
+
+			// Prevent this from beeing executed twice.
+			self::$s_initiated = true;
+		}
+	}
+
+
+	/* -------------------- */
+	/*  INITIATION METHODS  */
+	/* -------------------- */
+
+
+	protected function _masterInit() {
+		if ( !isset( $this ) ) {
+			throw new Exception("_masterInit should not be called staticaly.", 1);
+		}
+		if ( isset( $this->_masterInitiated ) && $this->_masterInitiated === true ) {
+			return;
+		}
+
+		if ( parent::_masterInit() ) {
+			if ( isset( $this->updatable ) && $this->updatable == true ) {
+				$this->updatable(
+					$this->textID,
+					( isset( $this->updateServer ) ? $this->updateServer : null )
+				);
+			}
+
+			return true;
+		}
 	}
 	
-	public function updatable($slug) {
-		self::$_updatables[] = $slug;
-		$this->_updatehooks();
+	/**
+	 * Registeres one-time hooks for thewpupdates.
+	 */
+	private static function s_hooks() {
+		if ( function_exists( 'add_action' ) ) {
+			add_action( 'plugins_loaded', array( 'THEWPUPDATES', '_checkConstants' ) );
+		}
+
+		if ( function_exists( 'add_filter' ) ) {
+			add_filter( 'pre_set_site_transient_update_themes', array( 'THEWPUPDATES', '_check_for_project_update' ) );
+			add_filter( 'pre_set_site_transient_update_plugins', array( 'THEWPUPDATES', '_check_for_project_update' ) );
+			add_filter( 'themes_api', array( 'THEWPUPDATES', '_project_api_call' ), 10, 3);
+			add_filter( 'plugins_api', array( 'THEWPUPDATES', '_project_api_call' ), 10, 3);
+			// add_filter( 'upgrader_source_selection', array( 'THEWPUPDATES', 'sSourceSelection' ), 10, 3);
+			add_filter( 'plugins_api_result', function( $a ) {
+				THEDEBUG::debug( $a, 'pluginsApiResult' );
+				return $a;
+			} );
+			// add_filter( 'unzip_file_use_ziparchive', function() { return false; } );
+		}
 	}
-	
-	protected function _masterInit($initArgs) {
-		$obj = parent::_masterInit($initArgs);
-		
-		$this->_checkForcing();
-				
-		if(isset($this->updatable) && $this->updatable == true)
-			$this->updatable($this->textdomain);
-		
-		return $obj;
-	}
-	
-	protected function _hooks() {
-		parent::_hooks();
-		add_action('plugins_loaded', array($this, '_checkConstants'));
-	}
+
+	// public static function sSourceSelection( $source, $remote_source, $Upgrader ) {
+
+	// 	if( isset( $Upgrader->skin->plugin ) && $Upgrader->skin->plugin !== '' ) {
+	// 		$name = explode( '/', $Upgrader->skin->plugin );
+	// 		$name = $name[0];
+	// 	} elseif( isset( $Upgrader->skin->plugin_info['TextDomain'] )
+	// 	 && $Upgrader->skin->plugin_info['TextDomain'] !== ''
+	// 	) {
+	// 		$name = $Upgrader->skin->plugin_info['TextDomain'];
+	// 	}
+
+	// 	if( isset( $name ) && isset( self::$s_updatables[$name] ) ) {
+	// 		$newSource = explode( DS, str_replace( '/', DS, $source ) );
+	// 		$newSource[ count( $newSource ) -2 ] = $name;
+	// 		$newSource = implode( DS, $newSource );
+	// 		if( $newSource !== $source ) {
+	// 			rename( $source, $newSource );
+	// 			$source = $newSource;
+	// 		}
+	// 	}
+
+	// 	return $source;
+	// }
 	
 	private function _checkForcing() {
-		if(self::$_forced === true) return;
-		if($this->_get_Setting('forceUpdates'))
-			set_site_transient('update_plugins', null, 1);
-		self::$_forced = true;
+		if ( THEWPSETTINGS::_get_Setting( 'forceUpdates', self::$sTextID_ ) ) {
+			// set_site_transient( 'update_plugins', null );
+			set_site_transient( 'update_themes', null );
+		}
 	}
 	
 	public function _checkConstants() {
-		if(self::$_checked === true) return;
-		$const = get_defined_constants(true);
-		foreach($const['user'] as $const => $name) {
-			if(strstr($const, 'THEUPDATES_UPDATABLE')) {
-				$this->updatable($name);
+		if ( !self::$s_constantsChecked ) {
+			$const = get_defined_constants( true );
+			foreach ( $const['user'] as $const => $name ) {
+				if ( strstr( $const, 'THEUPDATES_UPDATABLE' )) {
+					if ( count( ( $e = explode( '|', $name ) ) ) == 2 ) {
+						self::updatable( THEBASE::get_textID( $e[0] ), $e[1] );
+					} else {
+						self::updatable( THEBASE::get_textID( $e[0] ) );
+					}
+				}
 			}
+			self::$s_constantsChecked = true;
 		}
-		self::$_checked = true;
+	}
+
+
+	/* ----------------- */
+	/*  PRIVATE METHODS  */
+	/* ----------------- */
+
+
+	private function _prepare_request( $action, $args, $textID ) {
+		global $wp_version;
+		
+		try {
+			$apiKey = THEWPSETTINGS::get_setting( 'updateApikey', $textID );
+		} catch ( Exception $e ) {
+			if( function_exists( 'get_bloginfo' ) )
+				$apiKey = md5( get_bloginfo('url') );
+			else 
+				$apiKey = '';
+		}
+
+		return array(
+			'body' => array_merge( $args, array(
+				'action' => $action, 
+				'apikey' => $apiKey
+			) ),
+			'user-agent' => 'WordPress/' . $wp_version . '; ' . get_bloginfo('url')
+		);	
+	}
+
+
+	/* ---------------- */
+	/*  PUBLIC METHODS  */
+	/* ---------------- */
+
+
+	public function updatable( $textID, $server = null ) {
+		self::$s_updatables[$textID] = isset( $server ) ? $server : self::$s_defUpdateServer;
 	}
 	
-	private function _updatehooks() {
-		if(self::$_hooked === true) return;
-		add_filter('pre_set_site_transient_update_plugins', array($this, '_check_for_plugin_update'));
-		add_filter('plugins_api', array($this, '_plugin_api_call'), 10, 3);
-		self::$_hooked = true;
-	}
 	
-	public function _check_for_plugin_update($checked_data) {
-		$this->_checkConstants();
-		if (empty($checked_data->checked))
+	public function _check_for_project_update( $checked_data ) {
+		self::_checkConstants();
+		// THEDEBUG::debug( $checked_data, 'check' );
+		if ( empty( $checked_data->checked ) )
 			return $checked_data;
 		
-		foreach(self::$_updatables as $plugin_slug) {
+		// $this->debug( $checked_data );
+		foreach ( self::$s_updatables as $textID => $server ) {
+
+			$fullTextID = $textID;
+			$isTheme = false;
+			if( basename( $textID ) === 'style.css' ) {
+				$textID = dirname( $textID );
+				$isTheme = true;
+			}
+
+			if ( !isset( $checked_data->checked[$textID] ) ) {
+				continue;
+			}
+
+			$pData = THEWPBUILDER::get_initArgs( ABSPATH . 'wp-content' . DS
+				. ( $isTheme ? 'themes' : 'plugins' ) . DS . $fullTextID );
+
+			// if( !$isTheme ) {
+				
+			// 	// $pData = get_plugin_data( ABSPATH . PLUGINDIR . DS . $textID );
+			// 	// $slug = isset( $pData['TextDomain'] ) && $pData['TextDomain'] !== ''
+			// 	// 	? $pData['TextDomain'] : pathinfo( $textID, PATHINFO_FILENAME );
+			// } else {
+			// 	$pData = THEWPBUILDER::get_initArgs( ABSPATH . 'wp-content' . DS . $textID );
+			// 	$slug = $textID;
+			// }
+
+
 			$request_args = array(
-				'slug' => $plugin_slug,
-				'version' => $checked_data->checked[$plugin_slug .'/'. $plugin_slug .'.php'],
+				'slug' => $pData['textdomain'],
+				'version' => $checked_data->checked[$textID],
 			);
-			
-			$request_string = $this->_prepare_request('basic_check', $request_args);
+			if( isset( $pData['branch'] ) ) {
+				$request_args['branch'] = $pData['branch'];
+			}
+
+			$request_string = self::_prepare_request( 'basic_check', $request_args, $fullTextID );
+			// THEDEBUG::debug( $request_string, 'request_string' );
 			
 			// Start checking for an update
-			$raw_response = wp_remote_post($this->updateApiUrl, $request_string);
+
+
+			$raw_response = wp_remote_post( $server, $request_string );
+			// THEDEBUG::debug( $raw_response, 'raw_response' );
 				
-			if (!is_wp_error($raw_response) && ($raw_response['response']['code'] == 200))
-				$response = unserialize($raw_response['body']);
-			
-			if (is_object($response) && !empty($response)) // Feed the update data into WP updater
-				$checked_data->response[$plugin_slug .'/'. $plugin_slug .'.php'] = $response;
+
+			if ( !is_wp_error( $raw_response ) && ( $raw_response['response']['code'] == 200 ) ) {
+				$response = @unserialize( $raw_response['body'] );
+			}
+
+			// Feed the update data into WP updater
+			if ( isset( $response )
+			 && !empty( $response )
+			 && ( is_object( $response ) || is_array( $response ) )
+			 && THEMASTER::rget( $response, 'new_version' ) !== null
+			) {
+				$checked_data->response[$textID] = $response;
+			}
 		}
+		THEDEBUG::debug( $checked_data, 'checked_data' );
+
 		return $checked_data;
 	}
 
-	public function _plugin_api_call($def, $action, $args) {
+	public function _project_api_call( $def, $action, $args ) {
+		THEDEBUG::debug( $def, 'def' );
+		THEDEBUG::debug( $action, 'action' );
+		THEDEBUG::debug( $args, 'args' );
 		
-		if(in_array($args->slug, self::$_updatables))
-			$plugin_slug = $args->slug;
-		else
-			return false;
-		
-		// Get the current version
-		$plugin_info = get_site_transient('update_plugins');
-		$current_version = $plugin_info->checked[$plugin_slug .'/'. $plugin_slug .'.php'];
-		$args->version = $current_version;
-		
-		$request_string = $this->_prepare_request($action, $args);
-		
-		$request = wp_remote_post($this->updateApiUrl, $request_string);
-		
-		if (is_wp_error($request)) {
-			$res = new WP_Error('plugins_api_failed', __('An Unexpected HTTP Error occurred during the API request.</p> <p><a href="?" onclick="document.location.reload(); return false;">Try again</a>'), $request->get_error_message());
+
+		if ( isset( self::$s_updatables[ $args->slug ] ) ) {
+			$slug = $args->slug;
+			extract( self::$s_updatables[ $args->slug ] );
 		} else {
-			$res = unserialize($request['body']);
+			return false;
+		}
+		
+		$domain = $folder .'/'. $slug;
+
+		$request_string = self::_prepare_request($action, array(
+			'slug' => $slug,
+		), $domain );
+		THEDEBUG::debug( $request_string, 'request_string' );
+		
+		
+		$raw_response = wp_remote_post($server, $request_string);
+
+		THEDEBUG::debug( $raw_response, 'raw_response' );
+
+		if ( is_wp_error($raw_response) ) {
+			$res = new WP_Error(
+				'plugins_api_failed',
+				__( 'An Unexpected HTTP Error occurred during the API request.</p>'
+					. '<p><a href="?" onclick="document.location.reload(); return'
+					. 'false;">Try again</a>'),
+				$raw_response->get_error_message()
+			);
+		} else {
+			$res = unserialize($raw_response['body']);
 			
 			if ($res === false)
-				$res = new WP_Error('plugins_api_failed', __('An unknown error occurred'), $request['body']);
+				$res = new WP_Error('plugins_api_failed', __('An unknown error occurred'), $raw_response['body']);
 		}
 		
 		return $res;
 	}
 	
-	private function _prepare_request($action, $args) {
-		global $wp_version;
-		
-		return array(
-			'body' => array(
-				'action' => $action, 
-				'request' => serialize($args),
-				'api-key' => md5(get_bloginfo('url'))
-			),
-			'user-agent' => 'WordPress/' . $wp_version . '; ' . get_bloginfo('url')
-		);	
-	}
 } ?>
