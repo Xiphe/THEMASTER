@@ -107,10 +107,10 @@ class THEWPUPDATES extends THEWPSETTINGS {
 			add_filter( 'themes_api', array( 'THEWPUPDATES', '_project_api_call' ), 10, 3);
 			add_filter( 'plugins_api', array( 'THEWPUPDATES', '_project_api_call' ), 10, 3);
 			// add_filter( 'upgrader_source_selection', array( 'THEWPUPDATES', 'sSourceSelection' ), 10, 3);
-			add_filter( 'plugins_api_result', function( $a ) {
-				THEDEBUG::debug( $a, 'pluginsApiResult' );
-				return $a;
-			} );
+			// add_filter( 'plugins_api_result', function( $a ) {
+			// 	THEDEBUG::debug( $a, 'pluginsApiResult' );
+			// 	return $a;
+			// } );
 			// add_filter( 'unzip_file_use_ziparchive', function() { return false; } );
 		}
 	}
@@ -141,7 +141,7 @@ class THEWPUPDATES extends THEWPSETTINGS {
 	
 	private function _checkForcing() {
 		if ( THEWPSETTINGS::_get_Setting( 'forceUpdates', self::$sTextID_ ) ) {
-			// set_site_transient( 'update_plugins', null );
+			set_site_transient( 'update_plugins', null );
 			set_site_transient( 'update_themes', null );
 		}
 	}
@@ -223,17 +223,6 @@ class THEWPUPDATES extends THEWPSETTINGS {
 			$pData = THEWPBUILDER::get_initArgs( ABSPATH . 'wp-content' . DS
 				. ( $isTheme ? 'themes' : 'plugins' ) . DS . $fullTextID );
 
-			// if( !$isTheme ) {
-				
-			// 	// $pData = get_plugin_data( ABSPATH . PLUGINDIR . DS . $textID );
-			// 	// $slug = isset( $pData['TextDomain'] ) && $pData['TextDomain'] !== ''
-			// 	// 	? $pData['TextDomain'] : pathinfo( $textID, PATHINFO_FILENAME );
-			// } else {
-			// 	$pData = THEWPBUILDER::get_initArgs( ABSPATH . 'wp-content' . DS . $textID );
-			// 	$slug = $textID;
-			// }
-
-
 			$request_args = array(
 				'slug' => $pData['textdomain'],
 				'version' => $checked_data->checked[$textID],
@@ -265,35 +254,46 @@ class THEWPUPDATES extends THEWPSETTINGS {
 				$checked_data->response[$textID] = $response;
 			}
 		}
-		THEDEBUG::debug( $checked_data, 'checked_data' );
+		// THEDEBUG::debug( $checked_data, 'checked_data' );
 
 		return $checked_data;
 	}
 
 	public function _project_api_call( $def, $action, $args ) {
-		THEDEBUG::debug( $def, 'def' );
-		THEDEBUG::debug( $action, 'action' );
-		THEDEBUG::debug( $args, 'args' );
-		
+		$found = 0;
+		foreach( self::$s_updatables as $textID => $server ) {
+			if( dirname( $textID ) === $args->slug
+			 || pathinfo( $textID , PATHINFO_FILENAME ) === $args->slug
+			) {
+				$found++;
+				$current = array( 'fullTextID' => $textID, 'server' => $server );
+			}
+		}
 
-		if ( isset( self::$s_updatables[ $args->slug ] ) ) {
-			$slug = $args->slug;
-			extract( self::$s_updatables[ $args->slug ] );
+		if ( $found === 1 ) {
+			extract( $current );
+		} elseif( $found > 1 ) {
+			throw new Exception("slug collision for \"{$args->slug}\"", 1);
 		} else {
 			return false;
 		}
 		
-		$domain = $folder .'/'. $slug;
+		$pData = THEWPBUILDER::get_initArgs( ABSPATH . 'wp-content' . DS
+				. 'plugins' . DS . $fullTextID );
 
-		$request_string = self::_prepare_request($action, array(
-			'slug' => $slug,
-		), $domain );
-		THEDEBUG::debug( $request_string, 'request_string' );
+		$request_args = array(
+			'slug' => $pData['textdomain'],
+		);
+		if( isset( $pData['branch'] ) ) {
+			$request_args['branch'] = $pData['branch'];
+		}
+		$request_string = self::_prepare_request( 'plugin_information', $request_args, $fullTextID );
+		// THEDEBUG::debug( $request_string, 'request_string' );
 		
 		
 		$raw_response = wp_remote_post($server, $request_string);
 
-		THEDEBUG::debug( $raw_response, 'raw_response' );
+		// THEDEBUG::debug( $raw_response, 'raw_response' );
 
 		if ( is_wp_error($raw_response) ) {
 			$res = new WP_Error(
