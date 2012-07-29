@@ -1,5 +1,7 @@
-THE MASTER - A base for plugins and themes
-==========================================
+THE MASTER
+==========
+
+A base for plugins and themes
 
 This plugin allocates THEWPMASTER Class which brings handy functionalety and presets
 for plugin and theme development in wordpress.
@@ -25,7 +27,7 @@ or whatever. Please use the [github issue system](https://github.com/Xiphe/-THE-
 and i will try to answer.
 
 
-Probs
+Props
 -----
 
 The update mechanics are inspired by:
