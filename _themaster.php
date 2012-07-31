@@ -63,19 +63,17 @@ function THEWPMASTERINIT( $initArgs = null, $file = null ) {
 	// if( function_exists( 'xBP' ) ) xBP();
 	
 	// If init args or key projectName is not set.
-	if( ( !is_array( $initArgs['projectName'] ) || !isset( $initArgs['projectName'] ) )
-	 && ( null === $initArgs
-	 || ( is_string( $initArgs ) && file_exists( $initArgs ) )
-	 || ( is_string( $file ) && file_exists( $file ) )
+	if( ( !is_array( $initArgs ) || !isset( $initArgs['projectName'] ) )
+	 && ( 	null === $initArgs
+		 || ( is_string( $initArgs ) && file_exists( $initArgs ) )
+		 || ( is_string( $file ) && file_exists( $file ) )
 	)) {
 		// Start parsing the initiation arguments
-
 		// Merge the passed arguments into the parsed.
 		$initArgs = array_merge( 
 			THEWPBUILDER::get_initArgs( $initArgs, $file ),
 			( is_array( $initArgs ) ? $initArgs : array() )
 		);
-
 		$initArgs['isMaster'] = true;
 	} 
 
