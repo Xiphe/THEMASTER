@@ -4,7 +4,6 @@ Plugin Name: __projectName__
 */
 // Description: 
 // Plugin URI: 
-// Text Domain: __textdomain__
 // Version: 
 // Tested: 
 // Requires: 
@@ -15,7 +14,7 @@ Plugin Name: __projectName__
 // *optional*
 // Update Server: 
 // Required Plugins: 
-
+// Branch: 
 // Please fill in additional Plugin information.
 
 // **EXTENDED_END** //

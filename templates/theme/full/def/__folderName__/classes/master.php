@@ -4,8 +4,8 @@
 
 	/* VARS */
 
-	protected $singleton = true; // Prevents the contruction of a second instance by THEBASE.
-	protected $HTML = true; // This Master Uses the !HTML Class.
+	public $singleton = true; // Prevents the contruction of a second instance by THEBASE.
+	public $HTML = true; // This Master Uses the !HTML Class.
 	
 	// **EXTENDED** //
 	/* 

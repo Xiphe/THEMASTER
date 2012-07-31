@@ -260,6 +260,10 @@ class THEWPUPDATES extends THEWPSETTINGS {
 	}
 
 	public function _project_api_call( $def, $action, $args ) {
+		if( !isset( $args->slug ) ) {
+			return false;
+		}
+
 		$found = 0;
 		foreach( self::$s_updatables as $textID => $server ) {
 			if( dirname( $textID ) === $args->slug

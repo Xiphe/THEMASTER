@@ -266,7 +266,7 @@ class THEWPBUILDER extends THEMASTER {
 	}
 
 	public static function sStartToBuild() {
-		THEDEBUG::debug( self::$s_buildArgs, 'buildArgs' );
+		// THEDEBUG::debug( self::$s_buildArgs, 'buildArgs' );
 		if( self::$s_access !== true ) { return false; }
 		foreach( self::$s_buildArgs as $type => $templates ) {
 		foreach( $templates as $template => $extOrNot ) {
