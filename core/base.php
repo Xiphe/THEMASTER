@@ -89,10 +89,6 @@ class THEBASE {
 			} else {
 				self::do_callback( 'initiated', $this, array( 'class' => get_class($this) ) );
 			}
-
-
-			// $this->_masterInit( $initArgs );
-			// $this->_masterInit( $initArgs );
 		} else {
 			throw new ErrorException('<strong>THEMASTER - Required args Error:</strong> ' . $err . ' in ' . ucfirst( $initArgs['projectType'] ). ' "' . $initArgs['projectName'] . '"' , 1);
 			return false;
@@ -430,51 +426,40 @@ class THEBASE {
 			}
 			if(is_array($view)) {
 				$temp = $view;
-				$view = $temp['args'][0];
-				unset($temp['args'][0]);
-				$args = isset($temp['args']) ? $temp['args'] : array();
+				if( is_array( $temp['args'] ) ) {
+					$view = $temp['args'][0];
+					unset($temp['args'][0]);
+					$args = isset($temp['args']) ? $temp['args'] : array();
+				} else {
+					$view = $temp['args'];
+					unset( $temp['args'] );
+					$args = $temp;
+				}
+				if( isset( $page ) ) {
+					$args['Page'] = $page;
+				}
 			}
 			
-			/** check for underscores and search for underfolders in view-folder **/
-			$e = explode('_', $view); 
-			switch(count($e)) {
-				case 1:
-					/** no underscores **/
-					if(is_dir($this->basePath.'/views/'.strtolower(get_class($this))))
-						/** folder with classname found **/
-						$folder = strtolower(get_class($this)).'/';
-					else
-						$folder = '';
-					$file = $e[0];
-					break;
-				case 2:
-					/** underscore fund **/
-					$folder = $e[0].'/';
-					$file = $e[1];
-					break;
-				default:
-					/** currently no support for multiple undersoces/folders TODO: enable deeper folder stacks **/
-					$folder = 'FALSE';
-					throw new Exception("Error: too Much '_' in $view", 1);
-					break;
+			foreach( array( $this->basePath, self::$sBasePath_ ) as $basePath ) {
+				$file = $basePath . 'views' . DS . $this->get_directPath( $view ) . '.php';
+
+				if( file_exists( $file ) ) {
+					if( !is_array( $args ) ) $args = array( $args );
+					$ar = array( get_class($this) => $this );
+					if( ( $HTML = $this->get_HTML() ) )
+						$ar['HTML'] = $HTML;
+					
+					extract(array_merge(
+						$ar, 
+						$args
+					));
+					ob_start();
+						include( $file );
+					return ob_get_clean();
+				}
 			}
-			$file = strtolower($file);
-			if(file_exists($this->basePath.'/views/'.$folder.$file.'.php')) {
-				if(!is_array($args)) $args = array($args);
-				$ar = array(get_class($this) => $this);
-				if(($HTML = $this->get_HTML()))
-					$ar['HTML'] = $HTML;
-				
-				extract(array_merge(
-					$ar, 
-					$args
-				));
-				ob_start();
-					include($this->basePath.'/views/'.$folder.$file.'.php');
-				return ob_get_clean();
-			} else {
-				throw new Exception('Error: View File not Found ('.$this->basePath.'/views/'.$folder.$file.'.php)', 1);
-			}
+
+			throw new Exception('Error: View File not Found (' . $file . ')', 1);
 		} catch(Exception $e) {
 			$this->debug($e);
 		}
@@ -635,7 +620,15 @@ class THEBASE {
 								$CSS = $LessC->parse();
 								$CSSfix = new CSSfix();
 								$CSSfix->from_string( $CSS );
-								file_put_contents( ( $target = $basePath . $path ), $CSSfix->generate( false ) );
+								if( !file_exists( ( $target = $basePath . $path ) ) ) {
+									if( !is_dir( dirname( $target ) ) ) {
+										mkdir( dirname( $target ) );
+									}
+									$h = fopen( $target, 'w' );
+									fclose( $h );
+									unset( $h );
+								}
+								file_put_contents( $target, $CSSfix->generate( false ) );
 
 								// lessc::ccompile($file, ($target = $basePath.$path));
 							} catch( Exception $e) {
