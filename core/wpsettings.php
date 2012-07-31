@@ -49,7 +49,7 @@ class THEWPSETTINGS extends THEWPBUILDER {
 			if( function_exists( 'get_option' ) ) {
 				self::$s_userSettings = unserialize( get_option( 'tm-allsettings', 'a:0:{}' ) );
 			}
-			THEBASE::register_callback( 'afterBaseS_init', array( 'THEWPSETTINGS', 'sinit' ), 1, null, null, 1 );
+			THEBASE::sRegister_callback( 'afterBaseS_init', array( 'THEWPSETTINGS', 'sinit' ), 1, null, null, 1 );
 		}
 
 		parent::__construct($initArgs);
@@ -63,7 +63,7 @@ class THEWPSETTINGS extends THEWPBUILDER {
 			// Register one-time-hooks.
 			self::s_hooks();
 
-			THEBASE::register_callback( 'beforeMasterInit', array(
+			THEBASE::sRegister_callback( 'beforeMasterInit', array(
 				'THEWPSETTINGS', 'sCheckSettings'
 			), '*' );
 
@@ -111,6 +111,10 @@ class THEWPSETTINGS extends THEWPBUILDER {
 		if( $textID === null && isset( $this ) ) {
 			$textID = $this->textID;
 		}
+		return self::_get_setting( $key, $textID );
+	}
+
+	public static function sGet_setting( $key, $textID = null ) {
 		return self::_get_setting( $key, $textID );
 	}
 

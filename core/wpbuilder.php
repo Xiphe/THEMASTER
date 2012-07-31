@@ -18,7 +18,7 @@ class THEWPBUILDER extends THEMASTER {
 	 */
 	public function __construct( $initArgs ) {
 		if( !self::$s_initiated ) {
-			THEBASE::register_callback( 'afterBaseS_init', array( 'THEWPBUILDER', 'sinit' ) );
+			THEBASE::sRegister_callback( 'afterBaseS_init', array( 'THEWPBUILDER', 'sinit' ) );
 		}
 
 		// Pass ball to parent.

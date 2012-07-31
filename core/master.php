@@ -96,7 +96,7 @@ class THEMASTER extends THEDEBUG {
 		) );
 
 		if( !self::$s_initiated ) {
-			THEBASE::register_callback( 'afterBaseS_init', array( 'THEMASTER', 'sinit' ) );
+			THEBASE::sRegister_callback( 'afterBaseS_init', array( 'THEMASTER', 'sinit' ) );
 		}
 
 		parent::__construct( $initArgs );
@@ -121,7 +121,11 @@ class THEMASTER extends THEDEBUG {
 		}
 	}
 
-	public function tryTo( $func ) {
+	final public function tryTo( $func ) {
+		self::sTryTo( $func );
+	}
+
+	final public static function sTryTo( $func ) {
 		$args = func_get_args();
 		unset( $args[0] );
 		try {

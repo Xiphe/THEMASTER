@@ -84,10 +84,10 @@ class THEBASE {
 			if( isset( $this->isMaster ) && $this->isMaster === true ) {
 				unset( $initArgs['isMaster'] );
 				$this->_mastersInitArgs = $initArgs;
-				self::do_callback( 'beforeMasterInit', $this );
+				self::sdo_callback( 'beforeMasterInit', $this );
 				$this->_masterInit();
 			} else {
-				self::do_callback( 'initiated', $this, array( 'class' => get_class($this) ) );
+				self::sdo_callback( 'initiated', $this, array( 'class' => get_class($this) ) );
 			}
 		} else {
 			throw new ErrorException('<strong>THEMASTER - Required args Error:</strong> ' . $err . ' in ' . ucfirst( $initArgs['projectType'] ). ' "' . $initArgs['projectName'] . '"' , 1);
@@ -134,7 +134,7 @@ class THEBASE {
 			}
 
 			self::$s_initiated = true;
-			self::do_callback( 'afterBaseS_init' );
+			self::sdo_callback( 'afterBaseS_init' );
 		}
 	}
 	
@@ -365,7 +365,7 @@ class THEBASE {
 
 	protected function _masterInitiated() {
 		if( $this->_masterInitiated  !== true ) {
-			self::do_callback( 'initiated', $this, array( 'class' => get_class($this) ) );
+			self::sdo_callback( 'initiated', $this, array( 'class' => get_class($this) ) );
 			$this->_masterInitiated = true;
 		}
 	}
@@ -827,7 +827,7 @@ class THEBASE {
 						array_merge( $this->_initArgs, $initArgs )
 				) : $initArgs;
 
-				self::register_callback(
+				self::sRegister_callback(
 					'initiated', 
 					function( $obj ) {
 						if( isset( $obj->singleton ) && $obj->singleton === true ) {
@@ -884,7 +884,11 @@ class THEBASE {
 		}
 	}
 
-	public function register_callback( $name, $cb, $times = 1, $condition = null, $conditionArgs = array(), $position = 10 ) {
+	final public function register_callback( $name, $cb, $times = 1, $condition = null, $conditionArgs = array(), $position = 10 ) {
+		self::sRegister_callback( $name, $cb, $times, $condition, $conditionArgs, $position );
+	}
+
+	final public static function sRegister_callback( $name, $cb, $times = 1, $condition = null, $conditionArgs = array(), $position = 10 ) {
 		self::$s_callbacks[$name][$position][] = array(
 			'condition' => $condition,
 			'cb' => $cb,
@@ -893,7 +897,11 @@ class THEBASE {
 		);
 	}
 
-	public function do_callback( $name, $callbackArgs = array(), $doConditionArgs = array() ) {
+	final public function do_callback( $name, $callbackArgs = array(), $doConditionArgs = array() ) {
+		self::sdo_callback(  $name, $callbackArgs, $doConditionArgs );
+	}
+
+	final public static function sdo_callback( $name, $callbackArgs = array(), $doConditionArgs = array() ) {
 		if( isset( self::$s_callbacks[$name] ) 
 		 && count( self::$s_callbacks[$name] ) > 0
 		) {
@@ -913,7 +921,7 @@ class THEBASE {
 					 || call_user_func_array( $condition, array( $doConditionArgs, $conditionArgs ) )
 					) {
 						array_unshift( $callbackArgs, $cb );
-						call_user_func_array( array( 'THEMASTER', 'tryTo' ), $callbackArgs );
+						call_user_func_array( array( 'THEMASTER', 'sTryTo' ), $callbackArgs );
 						
 						if( $times !== '*' ) {
 							$times--;

@@ -67,7 +67,7 @@ class THEDEBUG extends THESETTINGS {
 		}
 
 		if( !self::$s_initiated ) {
-			THEBASE::register_callback( 'afterBaseS_init', array( 'THEDEBUG', 'sinit' ), 1, null, null, 2 );
+			THEBASE::sRegister_callback( 'afterBaseS_init', array( 'THEDEBUG', 'sinit' ), 1, null, null, 2 );
 		}
 
 		parent::__construct( $initArgs );
@@ -90,9 +90,9 @@ class THEDEBUG extends THESETTINGS {
 		if( !self::$s_initiated ) {
 			self::$s_initiated = true;
 
-			if( THESETTINGS::get_setting( 'debug', self::$sTextID_ ) ) {
-				self::$s_mode = THESETTINGS::get_setting( 'debugMode', self::$sTextID_ );
-				self::$s_getMode = THESETTINGS::get_setting( 'debugGet', self::$sTextID_ );
+			if( THESETTINGS::sGet_setting( 'debug', self::$sTextID_ ) ) {
+				self::$s_mode = THESETTINGS::sGet_setting( 'debugMode', self::$sTextID_ );
+				self::$s_getMode = THESETTINGS::sGet_setting( 'debugGet', self::$sTextID_ );
 
 				self::$s_names = array(
 					__( 'OK', 'themaster' ),

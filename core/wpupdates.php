@@ -44,7 +44,7 @@ class THEWPUPDATES extends THEWPSETTINGS {
 		$this->add_requiredInitArgs_( array( 'updatable' ) );
 
 		if ( !self::$s_initiated ) {
-			THEBASE::register_callback( 'afterBaseS_init', array( 'THEWPUPDATES', 'sinit' ) );
+			THEBASE::sRegister_callback( 'afterBaseS_init', array( 'THEWPUPDATES', 'sinit' ) );
 		}
 
 		// pass the Ball

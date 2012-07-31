@@ -50,12 +50,17 @@ class THESETTINGS extends THEBASE {
 	}
 
 	public function get_setting( $key, $textID = null ) {
+		if( $textID === null && isset( $this ) ) {
+			$textID = $this->textID;
+		}
+		self::sGet_setting( $key, $textID );
+	}
+
+
+	public static function sGet_setting( $key, $textID = null ) {
 		if( class_exists( 'THEWPSETTINGS' ) ) {
-			return THEWPSETTINGS::get_setting( $key, $textID );
+			return THEWPSETTINGS::sGet_setting( $key, $textID );
 		} else {
-			if( $textID === null && isset( $this ) ) {
-				$textID = $this->textID;
-			}
 			return self::_get_setting( $key, $textID );
 		}
 	}
@@ -92,7 +97,7 @@ class THESETTINGS extends THEBASE {
 		return;
 	}
 
-	protected function _set_setting( $key, $textID, $value ) {
+	public function sSet_setting( $key, $textID, $value ) {
 		if( isset( self::$s_settings[$textID][$key] ) ) {
 			self::$s_forcedSettings[$textID][$key] = $value;
 		} else {

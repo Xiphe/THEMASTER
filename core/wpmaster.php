@@ -79,7 +79,7 @@ class THEWPMASTER extends THEWPUPDATES {
 		$this->add_requiredInitArgs_( 'version' );
 
 		if( !self::$s_initiated ) {
-			THEBASE::register_callback( 'afterBaseS_init', array( 'THEWPMASTER', 'sinit' ) );
+			THEBASE::sRegister_callback( 'afterBaseS_init', array( 'THEWPMASTER', 'sinit' ) );
 		}
 
 		// Pass ball to parent.
