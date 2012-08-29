@@ -131,7 +131,7 @@ class THEWPBUILDER extends THEMASTER {
 			unset($bt);
 		}
 		
-		$configFile = strstr( $file, 'wp-content' . DS . 'themes' ) ?
+		$configFile = strstr( $file, 'wp-content' . DS . 'themes' ) || strstr( $file, 'htdocs' . DS . '__THEMES' ) ?
 			dirname( $file ) . DS . 'style.css' : $file;
 
 		$textID = THEBASE::get_textID( $configFile );
@@ -156,7 +156,7 @@ class THEWPBUILDER extends THEMASTER {
 		$iA['folderName'] = basename( $iA['basePath'] );
 
 		// If path contains wp-content/themes project seems to be a theme.
-		$iA['projectType'] = ( strstr( $iA['basePath'], 'wp-content' . DS . 'themes' ) ) 
+		$iA['projectType'] = ( strstr( $iA['basePath'], 'wp-content' . DS . 'themes' ) || strstr( $iA['basePath'], 'htdocs' . DS . '__THEMES' ) ) 
 			? 'theme' : 'plugin';
 
 		// Set textdomain to foldername for themes and to filebasename for plugins.
@@ -325,6 +325,7 @@ class THEWPBUILDER extends THEMASTER {
 			if( $e === DS && !is_dir( $file ) ) {
 				mkdir( $file );
 			} elseif( $e !== DS ) {
+				debug( $file );
 				if( !file_exists( $file ) ) {
 					fclose( fopen( $file, 'x' ) );
 				}
@@ -345,6 +346,52 @@ class THEWPBUILDER extends THEMASTER {
 		THEWPMASTER::set_adminMessage( $msg, 'info' );
 	}
 
+	public static function sBuildClass( $className, $args, $Master ) {
+		$template = $Master->projectType . DS . 'full' . DS;
+		$extended = true;
+		if( $Master->buildMissingClasses == true ) {
+			$template .= 'def' . DS;
+		} elseif( is_string( $Master->buildMissingClasses ) ) {
+			if( count( ( $e = explode( '|', $Master->buildMissingClasses ) ) ) == 2 ) {
+				if( $e[1] == 'false' || strtolower( $e[1] ) == 'mini' ) {
+					$extended = 'mini';
+				}
+				unset( $e[1] );
+				$template .= $e[0] . DS;
+			} elseif( count( $e ) == 1 ) {
+				$template .= $e[0] . DS;
+			} else {
+				throw new Exception( 'To much variables in buildMissingClasses', 1 );
+			}
+		} else {
+			return false;
+		}
+
+		$template = array( DS . $Master->folderName . DS . 'classes' . DS . '__classname__.php' => file_get_contents( self::s_getBaseTemplatePath() . $template . '__foldername__'
+			. DS . 'classes' . DS . '-n- __classname__.php' ) );
+
+		$template = self::s_fillTemplate(
+			$template,
+			array_merge(
+				$Master->_mastersInitArgs,
+				array( 'ClassName' => $className )
+			),
+			$extended,
+			''
+		);
+
+		self::s_write_template( $template, $Master->_mastersInitArgs );
+		THEWPMASTER::set_adminMessage(
+			sprintf(
+				__( 'Successfully written Class **"%s"** for "%s".', 'themaster' ),
+				$className,
+				$Master->projectName
+			),
+			'success'
+		);
+		return $Master->get_instance( $className, $args );
+	}
+
 	private static function s_fillTemplate( $template, $args, $extended, $baseTemplateName ) {
 		$r = array();
 		foreach( $template as $k => $v ) {
@@ -356,10 +403,10 @@ class THEWPBUILDER extends THEMASTER {
 
 	private static function s_replaceTemplateTags( $string, $args, $extended, $baseTemplateName ) {
 		if( $extended === 'mini' ) {
-			$string = preg_replace( '/(\t)*(\/\/ \*\*EXTENDED\*\* \/\/)+(.*?)(\*\*EXTENDED_END\*\* \/\/\n)+/ims', '', $string );
+			$string = preg_replace( '/(\t)*(\/\/ \*\*EXTENDED\*\* \/\/)+(.*?)(\*\*EXTENDED_END\*\* \/\/[\n|\r|\r\n])+/ims', '', $string );
 		} else {
-			$string = preg_replace( '/(\t)*(\/\/ \*\*EXTENDED\*\* \/\/\n)+/', '', $string );
-			$string = preg_replace( '/(\t)*(\/\/ \*\*EXTENDED_END\*\* \/\/\n)+/', '', $string );
+			$string = preg_replace( '/(\t)*(\/\/ \*\*EXTENDED\*\* \/\/[\n|\r|\r\n])+/', '', $string );
+			$string = preg_replace( '/(\t)*(\/\/ \*\*EXTENDED_END\*\* \/\/[\n|\r|\r\n])+/', '', $string );
 		}
 		preg_match_all( '/__(\w[^_]*)__/', $string, $m );
 		foreach( $m[1] as $var ) {
@@ -371,7 +418,16 @@ class THEWPBUILDER extends THEMASTER {
 
 	private static function s_additionalArg( $key, $args, $extended, $baseTemplateName ) {
 		// THEDEBUG::diebug( get_option('gmt_offset') );
+		if( !isset( $args['ClassName'] ) ) {
+			$args['ClassName'] = 'Foo';
+		}
 		switch( $key ) {
+			case 'classname':
+				return strtolower( $args['ClassName'] );
+				break;
+			case 'ClassName':
+				return $args['ClassName'];
+				break;
 			case 'tmminimal':
 				$r = $extended === 'mini' ? ' false' : '';
 				return $r . ( $baseTemplateName === 'def' ? ' ' : '' );
@@ -416,7 +472,7 @@ class THEWPBUILDER extends THEMASTER {
 		}
 	}
 
-	private static function s_get_template( $path, $relpath = '', $extended ) {
+	private static function s_get_template( $path, $relpath = '', $extended, $n = false ) {
 		$r = array();
 
 		if( file_exists( ( $dir = self::s_getBaseTemplatePath() . $path ) ) 
@@ -424,6 +480,10 @@ class THEWPBUILDER extends THEMASTER {
 		) {
 			foreach( THEBASE::get_dirArray( $dir, null, array( 9, array( '.', '..', '.DS_Store' ) ) ) as $file ) {
 				$target = $file;
+				if( substr( $file, 0, 4 ) === '-n- ' ) {
+					if( $n == false ) { continue; }
+					$target = substr( $file, 4, strlen( $file ) );
+				}
 				if( substr( $file, 0, 4 ) === '-e- ' ) {
 					if( $extended === 'mini' ) { continue; }
 					$target = substr( $file, 4, strlen( $file ) );

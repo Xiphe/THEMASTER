@@ -22,6 +22,8 @@ class THEWPSETTINGS extends THEWPBUILDER {
 	// Holds all registered setting options.
 	private static $s_settings = array();
 
+	private static $s_themeSettings;
+
 
 	/* ---------------------- */
 	/*  CONSTRUCTION METHODS  */
@@ -33,7 +35,7 @@ class THEWPSETTINGS extends THEWPBUILDER {
 	 *
 	 * @param	array	$initArgs	the initiation arguments
 	 */
-	function __construct($initArgs) {
+	function __construct( $initArgs ) {
 		if( !isset( $this->constructing ) || $this->constructing !== true ) {
 			throw new Exception( "ERROR: THEWPSETTINGS is not ment to be constructed directly.", 1 );
 			return false;
@@ -78,6 +80,7 @@ class THEWPSETTINGS extends THEWPBUILDER {
 	private static function s_hooks() {
 		if( function_exists( 'add_action' ) ) {
 			add_action( 'admin_init', array( 'THEWPSETTINGS', 'sAdmin_init' ) );
+			add_action( 'admin_menu', array( 'THEWPSETTINGS', 'sAdmin_menu' ) );
 		}
 	}
 		
@@ -96,12 +99,10 @@ class THEWPSETTINGS extends THEWPBUILDER {
 
 	public static function sCheckSettings( $obj ) {
 		if( method_exists( $obj, 'settings' ) ) {
-			self::$s_settings[ $obj->folderName . '/' . $obj->textdomain ]
+			self::$s_settings[ $obj->textID ]
 				= array(
-					'domain' => $obj->textdomain,
 					'name' => $obj->projectName,
-					'settings' => array( $obj, 'settings' ),
-					'type' => $obj->projectType
+					'settings' => array( $obj, 'settings' )
 				);
 		}
 	}
@@ -118,7 +119,7 @@ class THEWPSETTINGS extends THEWPBUILDER {
 		return self::_get_setting( $key, $textID );
 	}
 
-	public static function _get_setting( $key, $textID = null ) {
+	public static function _get_setting( $key, $textID = null, $noDefaults = false, $silent = false ) {
 		if( $textID === null ) {
 			throw new Exception( 'Tried to get setting "' . $key . '" without textID.' );
 			return;
@@ -155,7 +156,7 @@ class THEWPSETTINGS extends THEWPBUILDER {
 	}
 
 	private static function s_getSettings( $textID ) {
-		if( isset( self::$s_settings[$textID]['settings'] ) ) {
+		if ( isset( self::$s_settings[$textID]['settings'] ) ) {
 			if ( is_callable( self::$s_settings[$textID]['settings'] ) ) {
 				self::$s_settings[$textID]['settings'] =
 					call_user_func( self::$s_settings[$textID]['settings'] );
@@ -166,17 +167,86 @@ class THEWPSETTINGS extends THEWPBUILDER {
 	}
 
 	public static function sAdmin_init() {
-		add_action( 'wp_ajax_tm-savesetting', array( 'THEWPSETTINGS', 'sSave_settings' ));
-		if( $GLOBALS['pagenow'] === 'plugins.php' && current_user_can( 'manage_options' ) ) {
+		add_action( 'wp_ajax_tm-savesetting', array( 'THEWPSETTINGS', 'sSave_settings' ) );
+	}
+
+	public static function sAdmin_menu() {
+		if( current_user_can( 'manage_options' ) ) {
 			foreach( self::$s_settings as $k => $s ) {
-				add_filter( 'plugin_action_links_' . $k , array('THEWPSETTINGS', 'sInject_settingsLink' ), 10, 2 );
-				add_action( 'after_plugin_row_' . $k, array('THEWPSETTINGS', 'inject_settingsRow'), 10, 3 );
+				if( pathinfo( $k, PATHINFO_EXTENSION ) !== 'css' && $GLOBALS['pagenow'] === 'plugins.php'  ) {
+					add_filter( 'plugin_action_links_' . $k , array( 'THEWPSETTINGS', 'sInject_settingsLink' ), 10, 2 );
+					add_action( 'after_plugin_row_' . $k, array( 'THEWPSETTINGS', 'inject_settingsRow'), 10, 3 );
+				} elseif( pathinfo( $k, PATHINFO_EXTENSION ) == 'css' ) {
+					self::$s_themeSettings = $k;
+					add_theme_page(
+						__( 'Settings', 'themaster' ),
+						__( 'Settings', 'themaster' ),
+						'manage_options',
+						'tm_themesettings',
+						array( 'THEWPSETTINGS', 'sAdd_themeSettings' )
+					);
+				}
 			}
+		}
+	}
+
+	public static function sAdd_themeSettings() {
+
+		if( isset( self::$s_themeSettings ) && ( $k = self::$s_themeSettings ) !== false
+		 && ( $allSettings = self::s_getSettings( $k ) ) !== false
+		 && is_object( ( $HTML = self::get_HTML( true ) ) )
+		) {
+			$HTML->s_div( '.tm-settings body' )
+				->h1( __( 'Theme Settings', 'themaster' ) )
+				->s_div( '.tm-settingswrap' );
+				// ->s_form( 'action=' . $GLOBALS['pagenow'] . '?page\=tm_themesettings' );
+
+			$args = self::$s_settings[ $k ];
+
+			foreach( $allSettings as $key => $setting ) {
+				if( is_string( $setting ) ) {
+					if( $setting === 'sep' || $setting === 'seperator' )
+						$setting = array( 'type' => 'seperator' );
+					elseif( is_string( $key ) ) {
+						$setting = array(
+							'type' => $key,
+							'value' => $setting
+						);
+					} else {
+						$setting = array(
+							'type' => 'text',
+							'value' => $setting
+						);
+					}
+					$key = false;
+				}
+				self::s_buildSettingsRow( $key, $setting, $k, $HTML, $args );
+			}
+
+			$HTML->s_div( '.tm-settingwrap tm-savewrap' )
+				->button( __( 'Save', 'themaster' ), 'button' )
+				->s_span( 'tm-loading hidden' )
+					->img( 'alt=loading...|src=' . get_admin_url() . 'images/wpspin_light.gif' )
+				->end()
+				->span( null, 'tm-message' )
+				->hidden( 'name=tm-nonce|value=' . wp_create_nonce( 
+					$k . 'tmsaveSettings'
+				) )
+				->hidden( 'name=tm-settingkey|value=' . $k )
+				->hidden( 'name=action|value=tm-savesetting' )
+
+			// $HTML
+			// 	->s_div( '.tm-savewrap' )
+			// 	->button( __( 'Save', 'themaster' ), '.button-primary|type=submit' )
+
+				->end( '.tm-settings' );
 		}
 	}
 
 	public static function sSave_settings() {
 		$obj = self::inst();
+
+		$obj->debug( 'saving Settings' );
 
 		// var_dump( $_REQUEST );
 		if( !isset( $_REQUEST['tm-settingkey'] ) ) {
@@ -267,10 +337,10 @@ class THEWPSETTINGS extends THEWPBUILDER {
 		$args = self::$s_settings[ $k ];
 		$allSettings = self::s_getSettings( $k );
 
-		if( is_object( ( $HTML = self::get_HTML(true) ) ) ) {
+		if ( is_object( ( $HTML = self::get_HTML( true ) ) ) ) {
 			$id = '#' . preg_replace( '/[^a-z0-9-_]/', '', str_replace( ' ', '-', strtolower( $args['name'] ))) . '-settings';
 
-			$HTML->s_tr( $id . '|.tm-setting-row closed' )->td()->s_td('colspan=2')->s_div('.tm-settingswrap');
+			$HTML->s_tr( $id . '|.tm-setting-row closed tm-settings' )->td()->s_td('colspan=2')->s_div('.tm-settingswrap');
 			foreach( $allSettings as $key => $setting ) {
 				if( is_string( $setting ) ) {
 					if( $setting === 'sep' || $setting === 'seperator' )
@@ -291,8 +361,8 @@ class THEWPSETTINGS extends THEWPBUILDER {
 				self::s_buildSettingsRow( $key, $setting, $k, $HTML, $args );
 			}
 			$HTML->s_div( '.tm-settingwrap tm-savewrap' )
-				->button(__('Save', 'themaster'), 'button')
-				->s_span('tm-loading hidden')
+				->button( __( 'Save', 'themaster' ), 'button' )
+				->s_span( 'tm-loading hidden' )
 					->img( 'alt=loading...|src=' . get_admin_url() . 'images/wpspin_light.gif' )
 				->end()
 				->span( null, 'tm-message' )
@@ -305,7 +375,8 @@ class THEWPSETTINGS extends THEWPBUILDER {
 		}
 	}
 
-	private static function s_buildSettingsRow( $name, $setting, $k, $HTML, $ags ) {
+	public static function s_buildSettingsRow( $name, $setting = null, $k = null, $HTML = null, $ags = null ) {
+
 		extract( $setting );
 		
 		if( $name !== false ) {

@@ -224,33 +224,214 @@ class THEMASTER extends THEDEBUG {
 		return preg_match( "/^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,3})$/", $email );
 	}
 	
-	/** Tries to get a deeper array or object variable
+	/**
+	 * Handy function to dive into an array or object without knowing what it is
+	 * nested keys can be separated by a pipe so it's possible to get a deeper
+	 * key with only one call
 	 *
-	 * @param mixed $obj the array or object
-	 * @param string $path the variable path (foo|bar|x will search for $obj->foo['bar']['x'])
-	 * @return mixes the found variable or null
-	 * @date Dez 20th 2011
+	 * @access public
+	 * @param  mixed $obj   array or object
+	 * @param  string $path the key or key-path (foo|bar)
+	 * @return mixed        the keys value or null if not found
 	 */
-	public function recursive_get($obj, $path) {		
-		foreach(explode('|', $path) as $key) {
-			if(is_object($obj)) {
-				if(isset($obj->$key))
+	final public function recursive_get( $obj, $path ) {	
+		foreach( explode( '|', $path ) as $key ) {
+			if( is_object( $obj ) ) {
+				if( isset( $obj->$key ) )
 					$obj = $obj->$key;
 				else
 					return null;
 			}
-			elseif(isset($obj[$key]))
+			elseif( isset( $obj[$key] ) )
 				$obj = $obj[$key];
-			else
+			else {
 				return null;
-				// throw new Exception("tried to get undefined path: ".$path, 1);
+			}
 		}
 		return $obj;
 	}
-	public function rget( $obj, $path ) {
+
+	/**
+	 * Shorthand for Basics::recursive_get()
+	 *
+	 * @access public
+	 * @param  mixed $obj   array or object
+	 * @param  string $path the key or key-path (foo|bar)
+	 * @return mixed        the keys value or null if not found
+	 */
+	final public function rget( $obj, $path ) {
 		return self::recursive_get( $obj, $path );
 	}
+
+	/**
+	 * Handy function to insert deeper data into an array or object.
+	 * Functionality is similar to recursive_get.
+	 * keys will be generated if they do not exist and $format == 'stdClass' || 'array'
+	 *
+	 * @access public
+	 * @param  mixed  &$obj   the array or object in which the data should be inserted
+	 * @param  string $path   the key or key-path (foo|bar|some|thing)
+	 * @param  mixed  $value  the variable to set to the end of the path
+	 * @param  string $type   the type of the new generated sub-keys set to something other
+	 *                        than array or stdClass to prevent generation
+	 * @return mixed          the object with new data
+	 */
+	final public function recursive_set( &$obj, $path, $value, $type = 'stdClass' ) {
+		foreach( explode( '|', $path ) as $key ) {
+			if( is_object( $obj ) ) {
+				if( !isset( $obj->$key ) ) {
+					if( $type = 'stdClass' ) {
+						$obj->$key = new stdClass;
+					} elseif( $type = 'array' ) {
+						$obj->$key = array();;
+					} else {
+						return false;
+					}
+				}
+				$obj = &$obj->$key;
+			} else {
+				if( !isset( $obj[$key] ) ) {
+					if( $type = 'stdClass' ) {
+						$obj[$key] = new stdClass;
+					} elseif( $type = 'array' ) {
+						$obj[$key] = array();;
+					} else {
+						return false;
+					}
+				}
+				$obj = &$obj[$key];
+			}	
+			
+		}
+		return $obj = $value;
+	}
+
+	/**
+	 * Shorthand for THEMASTER::recursive_set().
+	 *
+	 * @access public
+	 * @param  mixed  &$obj   the array or object in which the data should be inserted
+	 * @param  string $path   the key or key-path (foo|bar|some|thing)
+	 * @param  mixed  $value  the variable to set to the end of the path
+	 * @param  string $type   the type of the new generated sub-keys set to something other
+	 *                        than array or stdClass to prevent generation
+	 * @return mixed          the object with new data
+	 */
+	final public function rset( &$obj, $path, $value, $type = 'stdClass' ) {
+		self::recursive_set( $obj, $path, $value, $type );
+	}
+
+	/**
+	 * Handy function to unset a deep value of a class or an array.
+	 *
+	 * @access public
+	 * @param  mixed  $obj  the class or array containing the value to be unset.
+	 * @param  string $path the key or key-path (foo|bar|some|thing)
+	 * @return mixed        true if unset, false if key does not exist, null if key is invalid.
+	 */
+	final public function recursive_unset( &$obj, $path ) {
+		$i = 1;
+		foreach( ( $l = explode( '|', $path ) ) as $key ) {
+			if( is_object( $obj ) ) {
+				if( isset( $obj->$key ) ) {
+					if( count( $l ) === $i ) {
+						unset( $obj->$key );
+						return true;
+					}
+					$obj = &$obj->$key;
+				} else {
+					return false;
+				}
+			} else {
+				if( isset( $obj[$key] ) ) {
+					if( count( $l ) === $i ) {
+						unset( $obj[$key] );
+						return true;
+					}
+					$obj = &$obj[$key];
+				} else {
+					return false;
+				}
+			}	
+			$i++;
+		}
+		return null;
+	}
+
+	/**
+	 * Shorthand for THEMASTER::recursive_unset()
+	 *
+	 * @access public
+	 * @param  mixed  $obj  the class or array containing the value to be unset.
+	 * @param  string $path the key or key-path (foo|bar|some|thing)
+	 * @return mixed        true if unset, false if key does not exist, null if key is invalid.
+	 */
+	final public function runset( &$obj, $path ) {
+		return self::recursive_unset( $obj, $path );
+	}
+
+
 	
+	/**
+	 * remove potential slash from the end of the string.
+	 *
+	 * @access public
+	 * @param  string $str the string to be unslashed
+	 * @param  string $slash the slash can be set to backslash or whatever here.
+	 * @return string      the unslashed string
+	 */
+	final public function unSlash( $str, $slash = '/' ) {
+		if( substr( $str, strlen( $str ) - 1, strlen( $str ) ) === $slash ) {
+			return substr( $str, 0, strlen( $str ) - 1 );
+		}
+		return $str;
+	}
+
+	/**
+	 * add slash to the end of the string.
+	 *
+	 * @access public
+	 * @param  string $str   the string to be slashed
+	 * @param  string $slash the slash can be set to backslash or whatever here.
+	 * @return string        the slashed string
+	 */
+	final public function slash( $str, $slash = '/' ) {
+		if( substr( $str, strlen( $str ) - 1, strlen( $str ) ) !== $slash ) {
+			return $str . $slash;
+		}
+		return $str;
+	}
+
+	/**
+	 * remove potential slash from the front of the string.
+	 *
+	 * @access public
+	 * @param  string $str the string to be unslashed
+	 * @param  string $slash the slash can be set to backslash or whatever here.
+	 * @return string      the unslashed string
+	 */
+	final public function unPreslash( $str, $slash = '/' ) {
+		if( substr( $str, 0, 1 ) === $slash ) {
+			return substr( $str, 1, strlen( $str ) );
+		}
+		return $str;
+	}
+
+	/**
+	 * add slash to the front of the string.
+	 *
+	 * @access public
+	 * @param  string $str   the string to be slashed
+	 * @param  string $slash the slash can be set to backslash or whatever here.
+	 * @return string        the slashed string
+	 */
+	final public function preslash( $str, $slash = '/' ) {
+		if( substr( $str, 0, 1 ) !== $slash ) {
+			return $slash . $str;
+		}
+		return $str;
+	}
+
 	/** curPageURL returns the current url
 	 * 
 	 * @by http://www.webcheatsheet.com/PHP/get_current_page_url.php
@@ -392,12 +573,13 @@ class THEMASTER extends THEDEBUG {
 	}
 	
 	public function get_classConstant($sClassName, $sConstantName) {
-	    $oClass = new ReflectionClass($sClassName);
-	    return $oClass->getConstant($sConstantName);
+		$oClass = new ReflectionClass($sClassName);
+		return $oClass->getConstant($sConstantName);
 	}
 	
 	
-	/** Determines if the script is called from an iPad device
+	/** 
+	 * Determines if the script is called from an iPad device
 	 *
 	 * @return bool
 	 * @access public
@@ -513,6 +695,47 @@ class THEMASTER extends THEDEBUG {
 			echo json_encode($this->_r);
 		}
 		exit;
+	}
+
+	public function post( $url, $params ) {
+		if( !is_array( $params ) ) {
+			$params = $this->ar( $params );
+		}
+
+		$query = http_build_query( $params );
+
+		//open connection
+		$ch = curl_init();
+
+		//set the url, number of POST vars, POST data
+		curl_setopt( $ch, CURLOPT_URL, $url );
+		curl_setopt( $ch, CURLOPT_POST, count( $params ) );
+		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+		curl_setopt( $ch, CURLOPT_POSTFIELDS, $query );
+
+		//execute post
+		$r = curl_exec( $ch );
+
+		//close connection
+		curl_close($ch);
+
+		return $r;
+	}
+
+	public function ar( $a, $b = null ) {
+		$r = array();
+		if( is_array( $a ) || is_object( $a ) ) {
+			foreach( $a as $k => $v ) {
+				$r[$k] = $v;
+			}
+		} elseif( is_string( $a ) ) {
+			if( $b !== null ) {
+				$r[$a] = $b;
+			} else {
+				$r = array_push( $r, $a );
+			}
+		}
+		return $r;
 	}
 
 	public function sc( $a, $b = null ) {

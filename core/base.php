@@ -4,55 +4,209 @@ require_once('model.php');
 
 class THEBASE {
 
-	/* ------------------ */
-	/*  STATIC VARIABLES  */
-	/* ------------------ */
+	/* ------------------ *
+	 *  STATIC VARIABLES  *
+	 * ------------------ */
 
 	/* PRIVATE */
-	// Turns true after first initiation.
-	private static $s_initiated = false;
 
-	private static $s_registeredSources = array();
-	private static $s_registeredJsVars = array();
-	private static $s_registeredAdminJsVars = array();
+	/**
+	 * Turns true after first initiation.
+	 *
+	 * @access private
+	 * @var    boolean
+	 */
+	final private static $s_initiated = false;
 
-	private static $s_callbacks = array(); // HOLDS CALLBACK METHODS 
-	private static $_singletons = array();
+	/**
+	 * Holds the js/css files that will be echoed in the header.
+	 * 
+	 * @access private
+	 * @var    array
+	 */
+	final private static $s_registeredSources = array();
 
-	protected static $sBasePath_;
-	protected static $sFolderName_;
-	protected static $sProjectFile_;
-	protected static $sTextdomain_;
-	protected static $sBaseUrl_;
-	protected static $sTextID_;
+	/**
+	 * Holder for js-variables that will be echoed in the frontend-header.
+	 *
+	 * @access private
+	 * @var    array
+	 */
+	final private static $s_registeredJsVars = array();
 
-	public static $THECLASSES = array('THEWPMASTER', 'THEWPSETTINGS', 'THEWPUPDATES', 'THEMASTER', 'THEDEBUG', 'THESETTINGS', 'THEBASE');
+	/**
+	 * Holder for js-variables that will be echoed in the backend-header.
+	 *
+	 * @access private
+	 * @var    array
+	 */
+	final private static $s_registeredAdminJsVars = array();
 
-	// The Args needed by the Object to get initiated
-	private $_masterInitiated = false;
-	private $_requiredInitArgs = array();
+	/**
+	 * Holder for !THEMASTERs internal callbacks
+	 *
+	 * @access private
+	 * @var    array
+	 */
+	final private static $s_callbacks = array();
+
+	/**
+	 * Holder for all singleton classes. Populated by THEBASE::get_instance().
+	 *
+	 * @access private
+	 * @var    array
+	 */
+	final private static $_singletons = array();
+
+
+	/* PROTECTED */
+
+	/**
+	 * The basepath for !THEMASTER.
+	 *
+	 * @access protected
+	 * @var    string
+	 */
+	final protected static $sBasePath_;
+
+	/**
+	 * The foldername of !THEMASTER
+	 *
+	 * @access protected
+	 * @var    string
+	 */
+	final protected static $sFolderName_;
+
+	/**
+	 * The projectfile of !THEMASTER
+	 *
+	 * @access protected
+	 * @var    string
+	 */
+	final protected static $sProjectFile_;
+
+	/**
+	 * The textdomain of !THEMASTER
+	 *
+	 * @access protected
+	 * @var    string
+	 */
+	final protected static $sTextdomain_;
+
+	/**
+	 * The baseurl of !THEMASTER
+	 *
+	 * @access protected
+	 * @var    string
+	 */
+	final protected static $sBaseUrl_;
+
+	/**
+	 * The textid of !THEMASTER
+	 *
+	 * @access protected
+	 * @var    string
+	 */
+	final protected static $sTextID_;
+
+	/* PUBLIC */
+
+	/**
+	 * Array of all classes based on THEBASE
+	 *
+	 * @access public
+	 * @var    array
+	 */
+	final public static $THECLASSES = array(
+		'THEWPMASTER',
+		'THEWPSETTINGS',
+		'THEWPUPDATES',
+		'THEWPBUILDER',
+		'THEMASTER',
+		'THEDEBUG',
+		'THESETTINGS',
+		'THEBASE'
+	);
+
+
+	/* -------------------- *
+	 *  INSTANCE VARIABLES  *
+	 * -------------------- */
+
+	/* PRIVATE */
+
+	/**
+	 * Flag to identify if the master has been initiated.
+	 * Set in THEBASE::_masterInitiated() method.
+	 *
+	 * @access private
+	 * @var    boolean
+	 */
+	final private $_masterInitiated = false;
+
+	/**
+	 * Array of keys that will be required on a master init.
+	 * New keys can be passed by THEBASE::add_requiredInitArgs_().
+	 *
+	 * @access private
+	 * @var    array
+	 */
+	final private $_requiredInitArgs = array();
+
+	/**
+	 * ?!?
+	 *
+	 * @access private
+	 * @var array
+	 */
+	final private $_initArgs = array();
+
+	/**
+	 * Array of temporary globals used by THEBASE::_unset_temp_globals(),
+	 * THEBASE::_set_temp_globals() and THEMASE::_register_temp_global()
+	 *
+	 * @access private
+	 * @var array 
+	 */
+	private $_temp_globals = array();
+
+
+	/* PROTECTED */
+
+	/**
+	 * Backup for new class definitions.
+	 * A Master can overwrite this variable to add his own required
+	 * initiation keys.
+	 *
+	 * @access protected
+	 * @var array
+	 */
 	protected $requiredInitArgs = array();
 	
-	protected $_mastersInitArgs = array();
-	private $_initArgs = array();
+	/**
+	 * Holds the original Array of initiation arguments passed on construction.
+	 *
+	 * @access protected
+	 * @var array
+	 */ 
+	final protected $_mastersInitArgs = array();
 	
-	// This is the Place of all Singleton Instances
+
+	/* ---------------------- *
+	 *  CONSTRUCTION METHODS  *
+	 * ---------------------- */
+
 	
-	// Temporary Globales Used by: 
-	private $_temp_globals = array();
-	
-	
-	/** The Constructor gets called by every subclass
+	/** 
+	 * The Constructor gets called by every subclass
 	 *
 	 * @param array $initArgs
 	 * @return mixed returns false if a required init Arg is missing or Instance if Subclass is Singleton
 	 * @access public
-	 * @package base
-	 * @date Nov 10th 2011
 	 */
 	function __construct( $initArgs ) {
 		if( !isset( $this->constructing ) || $this->constructing !== true ) {
-			throw new Exception("ERROR: THEBASE is not ment to be constructed directly.", 1);
+			throw new Exception( "ERROR: THEBASE is not ment to be constructed directly.", 1 );
 			return false;
 		} else {
 			unset( $this->constructing );
@@ -65,7 +219,7 @@ class THEBASE {
 		}
 		
 		
-		// cjeck for required Init args (defined by protected $requiredInitArgs = array();)
+		// check for required Init args (defined by protected $requiredInitArgs = array();)
 		$err = $this->get_requiredArgsError(
 			$initArgs,
 			array_merge(
@@ -95,6 +249,34 @@ class THEBASE {
 		}
 	}
 
+	private static function s_init() {
+		if( !self::$s_initiated ) {
+			self::sSession();
+
+			self::$sProjectFile_ = THEMASTER_PROJECTFILE;
+			self::$sBasePath_ = dirname( self::$sProjectFile_ ) . DS;
+			self::$sFolderName_ = basename( self::$sBasePath_ );
+			self::$sTextdomain_ = pathinfo( self::$sProjectFile_, PATHINFO_FILENAME );
+			self::$sTextID_ = self::$sFolderName_ . '/' . basename( self::$sProjectFile_ );
+
+			if( function_exists( 'plugins_url' )) {
+				self::$sBaseUrl_ = plugins_url( self::$sTextdomain_ );
+			}
+			
+			if( THESETTINGS::sGet_setting( 'errorReporting', self::$sTextID_ ) === true ) {
+				// error_reporting( E_ALL );
+				error_reporting( E_ALL & ~E_DEPRECATED & ~E_STRICT );
+				ini_set('display_errors', 1);
+			} else {
+				error_reporting(0);
+				ini_set('display_errors', 0);
+			}
+
+			self::$s_initiated = true;
+			self::sdo_callback( 'afterBaseS_init' );
+		}
+	}
+
 	protected static function check_singleton_( $name = null ) {
 		/* check if Called Class is meant to be a Singleton (Subclass: static $singleton = true;)
 		 * and if it is stored in THEMASTERs private $singletons array
@@ -111,31 +293,12 @@ class THEBASE {
 		}
 	}
 
-	private static function s_init() {
-		if( !self::$s_initiated ) {
-			self::session();
+	protected static function _masterUpdate() {
+		return true;
+	}
 
-			self::$sProjectFile_ = THEMASTER_PROJECTFILE;
-			self::$sBasePath_ = dirname( self::$sProjectFile_ ) . DS;
-			self::$sFolderName_ = basename( self::$sBasePath_ );
-			self::$sTextdomain_ = pathinfo( self::$sProjectFile_, PATHINFO_FILENAME );
-			self::$sTextID_ = self::$sFolderName_ . '/' . basename( self::$sProjectFile_ );
-
-			if( function_exists( 'plugins_url' )) {
-				self::$sBaseUrl_ = plugins_url( self::$sTextdomain_ );
-			}
-			
-			if( THESETTINGS::get_setting( 'errorReporting', self::$sTextID_ ) === true ) {
-				error_reporting(E_ALL);
-				ini_set('display_errors', 1);
-			} else {
-				error_reporting(0);
-				ini_set('display_errors', 0);
-			}
-
-			self::$s_initiated = true;
-			self::sdo_callback( 'afterBaseS_init' );
-		}
+	public static function _masterActivate() {
+		return true;
 	}
 	
 	/** Adds required Init Args to Masters required args
@@ -273,7 +436,7 @@ class THEBASE {
 		) {
 			$inst = self::$_singletons[strtolower($called)];
 		} elseif(class_exists($called) && ($inst = THEBASE::inst()))
-			$inst = $inst->get_instance($called);
+			$inst = $inst->get_instance( $called );
 		else 
 			return false;
 		
@@ -314,18 +477,21 @@ class THEBASE {
 	    }
 	}
 	
+	public function session() {
+		self::sSession();
+	}
+
 	/** Checks for an existing Session and Starts a new one if nothing is found
 	 *
 	 * @return void
 	 * @date Nov 10th 2011
 	 */
-	public function session() {
-		// TODO: UNCOMMENT
-		// if( !isset( $_SESSION ) && !headers_sent() )
-		// 	session_start();
+	public static function sSession() {
+		if( !isset( $_SESSION ) && !headers_sent() )
+			session_start();
 
-		// if( isset( $_SESSION ) )
-		// 	return $_SESSION;
+		if( isset( $_SESSION ) )
+			return $_SESSION;
 	}
 	
 	/** Initiation for a new Instance of THEMASTER, generates a new Submaster XYMaster
@@ -539,7 +705,6 @@ class THEBASE {
 	private function _reg_source( $source, $filename, $vars = false, $admin = false ) {
 		$foa = ( $admin ? 'admin' : 'front' );
 
-
 		$lfn = strtolower($filename);
 		if( isset( self::$s_registeredSources[$foa][$source][$lfn] ) )
 			return true;
@@ -640,14 +805,10 @@ class THEBASE {
 					}
 					
 					$path = str_replace( DS, '/', $path );
-					$url = $baseUrl . '/' . $path;
+					$url = THEMASTER::slash( $baseUrl ) . THEMASTER::unPreslash( $path );
 					$url .= is_array($vars) ? '?' . $this->arrayToGet($vars) : '';
 
 					if( defined('HTMLCLASSAVAILABLE') ) {
-						if( !is_object( self::get_HTML() ) ) {
-							THEDEBUG::debug( 'callstack' );
-							THEDEBUG::diebug( $lfn );
-						}
 						self::$s_registeredSources[$foa][$source][$lfn] = self::get_HTML()->escape_mBB( $url );
 					} else {
 						self::$s_registeredSources[$foa][$source][$lfn] = $url;
@@ -757,7 +918,7 @@ class THEBASE {
 		if( class_exists( ( $fullModelname = strtoupper( $this->prefix ) . $modelname ) ) ) return true;
 		try {
 			if( file_exists( 
-				( $inclPath = $this->basePath . DS . 'models' . DS . strtolower( $modelname ) . '.php' ) 
+				( $inclPath = $this->basePath . 'models' . DS . strtolower( $modelname ) . '.php' ) 
 			) ) {
 				include( $inclPath );
 				if( is_array( $staticInits ) ) {
@@ -765,7 +926,11 @@ class THEBASE {
 						$fullModelname::$$key = $value;
 					}
 				}
-				return true;
+				if( !class_exists( $fullModelname ) ) {
+					throw new Exception('Model not found: '.$fullModelname.' | ' . $inclPath);
+				} else {
+					return true;
+				}
 			} else {
 				throw new Exception('Model File not found: '.$fullModelname.' | ' . $inclPath);
 			}
@@ -775,6 +940,15 @@ class THEBASE {
 		}
 	}
 	
+	public function new_model( $modelname, $initArgs = null ) {
+		if( !class_exists( ( $fullModelname = strtoupper( $this->prefix ) . $modelname ) ) ) {
+			$this->reg_model( $modelname );
+		}
+		if( class_exists( $fullModelname ) ) {
+			return new $fullModelname( $initArgs );
+		}
+	}
+
 	/** Trys to get a class File named example.php from 
 	 * "classes"-Subfolder of defined basePath and return a 
 	 * instance of Example
@@ -866,12 +1040,17 @@ class THEBASE {
 				return $obj;
 			} 
 		}
-		throw new Exception( '<strong>!THE MASTER ERROR:</strong> Class File for ' . $classname
-			. ' not found --- Should be '
-			. '<em>' . $basePath . 'classes' . DS . strtolower($classname) . '.php</em>'
-			. ' or <em>' . self::$sBasePath_ . 'classes' . DS . strtolower($classname) . '.php</em>.',
-			1
-		);
+
+		if( isset( $this ) && class_exists( 'THEWPBUILDER' ) && $this->buildMissingClasses === true ) {
+			return THEWPBUILDER::sBuildClass( $classname, $initArgs, $this );
+		} else {
+			throw new Exception( '<strong>!THE MASTER ERROR:</strong> Class File for ' . $classname
+				. ' not found --- Should be '
+				. '<em>' . $basePath . 'classes' . DS . strtolower($classname) . '.php</em>'
+				. ' or <em>' . self::$sBasePath_ . 'classes' . DS . strtolower($classname) . '.php</em>.',
+				1
+			);
+		}
 	}
 
 	public static function sRegSingleton( $obj ) {
@@ -1044,12 +1223,12 @@ class THEBASE {
 	}
 }
 
-if(!function_exists('__')) {
+if ( !function_exists('__') ) {
 	function __( $text ) {
 		return $text;
 	}
 }
-if(!function_exists('_e')) {
+if ( !function_exists('_e') ) {
 	function _e( $text ) {
 		echo $text;
 	}

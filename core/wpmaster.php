@@ -1,9 +1,40 @@
 <?php
-// Include parent class.
-require_once('wpupdates.php');
-// Include Model class.
-require_once('wpmodel.php');
+/*
+ !THE MASTER - a base for plugins and themes
+ Copyright (C) 2012 Hannes Diercks
 
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License along
+ with this program; if not, write to the Free Software Foundation, Inc.,
+ 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+*/
+
+/*
+ * Include parent class.
+ * Include the model basic class
+ */
+require_once( 'wpupdates.php' );
+require_once( 'wpmodel.php' );
+
+/**
+ * THEWPMASTER is the last class inside !THE MASTER and the one that
+ * Wordpress plugins and themes should extend.
+ *
+ * @copyright Copyright (c) 2012, Hannes Diercks
+ * @author  Hannes Diercks <xiphe@gmx.de>
+ * @version 3.0.0
+ * @link    https://github.com/Xiphe/-THE-MASTER/
+ * @package !THE MASTER
+ */
 class THEWPMASTER extends THEWPUPDATES {
 
 
@@ -14,8 +45,12 @@ class THEWPMASTER extends THEWPUPDATES {
 
 	/* PUBLIC */
 
-
-	// Holds the current User Object if available.
+	/**
+	 * Holds the current User Object if available.
+	 *
+	 * @access public
+	 * @var    object
+	 */
 	public static $sCurrentUser;
 
 
@@ -24,25 +59,48 @@ class THEWPMASTER extends THEWPUPDATES {
 
 	/* PRIVATE */
 
-
-	// turns true after first initiation.
+	/**
+	 * turns true after first initiation.
+	 *
+	 * @access private
+	 * @var    bool
+	 */
 	private static $s_initiated = false;
 
-	// Array of passed Notes to be printet via print_adminMessages()
+	/**
+	 * Array of passed Notes to be printet via print_adminMessages()
+	 *
+	 * @access private
+	 * @var    array
+	 */
 	private static $s_notes = array(); 
 
-	// Array of Posts
-	private static $s_postCache = array();
+	/**
+	 * Array of Posts
+	 *
+	 * TODO: Check if needed.
+	 * @access private
+	 * @var    array
+	 */
+	// private static $s_postCache = array();
 	
-	// List of hooked actions and filters.
-	private static $s_hooked = array();
 
-	// Available registered content tags.
+	/**
+	 * Available registered content tags.
+	 *
+	 * @access private
+	 * @var    array
+	 */
 	private static $s_contentTags = array();
 
-	private static $adminNoticesSent = false;
+	/**
+	 * Flag to check if the admin notices had allready been sent out.
+	 *
+	 * @access private
+	 * @var    bool
+	 */
+	private static $s_adminNoticesSent = false;
 	
-	//
 	private static $s_ftp_conn_id;
 	private static $s_folderStructure = array(
 		'classes' => 0755,
@@ -62,11 +120,12 @@ class THEWPMASTER extends THEWPUPDATES {
 	/*  CONSTRUCTION METHODS  */
 	/* ---------------------- */
 
-
 	/**
 	 * The Constructor method
 	 *
-	 * @param	array	$initArgs	the initiation arguments
+	 * @param  array $initArgs the initiation arguments.
+	 * @access public
+	 * @return void
 	 */
 	final public function __construct( $initArgs ) {
 		if( is_object( ( $r = THEBASE::check_singleton_( get_class( $this ) ) ) ) ) {
@@ -75,25 +134,32 @@ class THEWPMASTER extends THEWPUPDATES {
 			$this->constructing = true;
 		}
 
-		// Register "theversion" as required initiation argument.
+		/*
+		 * Register "theversion" as required initiation argument.
+		 */
 		$this->add_requiredInitArgs_( 'version' );
 
 		if( !self::$s_initiated ) {
 			THEBASE::sRegister_callback( 'afterBaseS_init', array( 'THEWPMASTER', 'sinit' ) );
 		}
 
-		// Pass ball to parent.
+		/*
+		 * Pass ball to parent.
+		 */
 		parent::__construct( $initArgs );
 	}
 	
-
 	/**
-	 * One time initiaton.
+	 * One time initiaton. Called by THE BASE after construction.
+	 *
+	 * @access public
+	 * @return void
 	 */
 	public static function sinit() {
 		if( !self::$s_initiated ) {
-			// Register one-time-hooks.
-
+			/*
+			 * Register basic less and js files.
+			 */
 			if( function_exists( 'is_admin' ) ) {
 				if( !is_admin() ) {
 					THEBASE::reg_less( 'base' );
@@ -101,33 +167,80 @@ class THEWPMASTER extends THEWPUPDATES {
 					THEBASE::reg_adminLess( 'tm-admin' );
 					THEBASE::reg_adminJs( 'tm-admin' );
 				}
-			} 
+			}
 
+			/*
+			 * Call aditional hooks.
+			 */
 			self::s_hooks();
 
-			// Register hash rederect for login.
+			/*
+			 * Register hash rederect for login.
+			 */
 			if( isset( $GLOBALS['pagenow'] )
 			 && $GLOBALS['pagenow'] == 'wp-login.php'
 			 && isset($_GET['redirect_to']) 
 			 && isset($_GET['forceRederect'])
 			 && $_GET['forceRederect'] == 'hash'
 			) {
-				$this->reg_js('twpm_login');
+				self::reg_js('twpm_login');
 			}
 
-			// Define availability constant.
+			/*
+			 * Define availability constant.
+			 */
 			define( 'WPMASTERAVAILABE', true );
 
-			// Prevent this from beeing executed twice.
+			/*
+			 * Prevent this from beeing executed twice.
+			 */
 			self::$s_initiated = true;
 		}
 	}
 
-	/* -------------------- */
-	/*  INITIATION METHODS  */
-	/* -------------------- */
+	/**
+	 * Registeres one-time hooks for thewpmaster.
+	 *
+	 * @access private
+	 * @return void
+	 */
+	private static function s_hooks() {
+		// Return if Wordpress is not available.
+		if( !function_exists( 'add_action' ) ) return;
+
+		// Register verry own one time init when wp is available.
+		add_action( 'init', array( 'THEWPMASTER', 'twpm_wpinit' ), 100, 0 );
+
+		// Register callbacks for printing js-variables.
+		add_action( 'wp_head', array( 'THEWPMASTER', 'twpm_print_jsVars' ), 0, 0 );
+		add_action( 'admin_head', array( 'THEWPMASTER', 'twpm_print_adminJsVars' ), 0, 0 );
+
+		add_action( 'login_head', array( 'THEWPMASTER', 'twpm_login_head' ) );
+		add_action( 'wp_login', array( 'THEWPMASTER', 'twpm_wp_login' ) );
+		add_filter( 'login_message', array( 'THEWPMASTER', 'twpm_loginMsg' ) );
+		add_action( 'wp_ajax_twpm_hashRederect', array( 'THEWPMASTER', 'ajax_hashRederect' ));
+		add_action( 'wp_ajax_nopriv_twpm_hashRederect', array( 'THEWPMASTER', 'ajax_hashRederect' ));
+
+		// Register callback for admin notices.
+		add_action( 'admin_notices', array( 'THEWPMASTER', 'twpm_admin_notices' ) );
+
+		// Register callback for printing debugs from THEDEBUG.
+		add_action( 'shutdown', array( 'THEDEBUG', 'print_debugcounts' ), 0, 0 );
+		if( THEDEBUG::get_mode() === 'summed' ) {
+			add_action( 'shutdown', array( 'THEDEBUG', 'print_debug' ), 0, 0 );
+		}
+
+		// Register callback for plugin dependency check.
+		add_action( 'after_setup_theme', array( 'THEWPMASTER', 'check_initiated' ) );
+	}
+
+
+	/* --------------------------- */
+	/*  MASTER INITIATION METHODS  */
+	/* --------------------------- */
 	
-	/** Initiation for a new Instance of THEWPMASTER, generates a new Submaster XYMaster
+	/**
+	 * Initiation for a new Instance of THEWPMASTER, generates a new Submaster XYMaster
 	 *
 	 * @param array $initArgs see $this->requiredInitArgs for required keys
 	 * @return void
@@ -169,44 +282,47 @@ class THEWPMASTER extends THEWPUPDATES {
 	}
 
 	/**
-	 * Registeres one-time hooks for thewpmaster.
+	 * Checks the last stored version from db against the current project version
+	 * and calls the "update" method if the project is newer.
+	 * The update method should return true to get it's new version stored to db.
+	 *
+	 * @access private
+	 * @return void
 	 */
-	private static function s_hooks() {
-		// Return if Wordpress is not available.
-		if( !function_exists( 'add_action' ) ) return;
-
-		// Register verry own one time init when wp is available.
-		add_action( 'init', array( 'THEWPMASTER', 'twpm_wpinit' ), 100, 0 );
-
-		// Register callbacks for printing js-variables.
-		add_action( 'wp_head', array( 'THEWPMASTER', 'twpm_print_jsVars' ), 0, 0 );
-		add_action( 'admin_head', array( 'THEWPMASTER', 'twpm_print_adminJsVars' ), 0, 0 );
-
-		add_action( 'login_head', array( 'THEWPMASTER', 'twpm_login_head' ) );
-		add_action( 'wp_login', array( 'THEWPMASTER', 'twpm_wp_login' ) );
-		add_filter( 'login_message', array( 'THEWPMASTER', 'twpm_loginMsg' ) );
-		add_action( 'wp_ajax_twpm_hashRederect', array( 'THEWPMASTER', 'ajax_hashRederect' ));
-		add_action( 'wp_ajax_nopriv_twpm_hashRederect', array( 'THEWPMASTER', 'ajax_hashRederect' ));
-
-		// Register callback for admin notices.
-		add_action( 'admin_notices', array( 'THEWPMASTER', 'twpm_admin_notices' ) );
-
-		// Register callback for printing debugs from THEDEBUG.
-		add_action( 'shutdown', array( 'THEDEBUG', 'print_debugcounts' ), 0, 0 );
-		if( THEDEBUG::get_mode() === 'summed' ) {
-			add_action( 'shutdown', array( 'THEDEBUG', 'print_debug' ), 0, 0 );
+	private function _versionCheck() {
+		if( !isset( $GLOBALS['pagenow'])
+		 || ( $GLOBALS['pagenow'] != 'plugins.php' && $GLOBALS['pagenow'] != 'themes.php' )
+		 || !function_exists( 'get_option' )
+		 || !function_exists( 'update_option' )
+		) {
+			return;
 		}
 
-		// Register callback for plugin dependency check.
-		add_action( 'after_setup_theme', array( 'THEWPMASTER', 'check_initiated' ) );
+		if( ( defined( ( $name = 'THEVERSION_' . strtoupper( $this->textdomain ) ) ) && ( $version = constant( $name ) ) )
+		 || ( isset( $this->version ) && ( $version = $this->version ) )
+		) {
+			$name = strtolower( $name );
+			if( version_compare( get_option( $name ), $version, '<' ) ) {
+				if( isset( $this->folderStructure ) && is_array( $this->folderStructure ) ) {
+					THEBUILDER::check_folderStructure( $this->folderStructure, $this->basePath );
+				}
+
+				if( $this->update() ) {
+					update_option($name, $version);
+				} else {
+					throw new Exception('Error: Update method for "'.$name.'" failed. (return !== true)', 1);
+				}
+			}
+		}
 	}
 
-
-	/* ---------------- */
-	/*  PUBLIC METHODS  */
-	/* ---------------- */
-
-
+	/**
+	 * Checks if some plugins could not be initiated caused by unavailable
+	 * required plugins.
+	 *
+	 * @access public
+	 * @return void
+	 */
 	public function check_initiated() {
 		if( count( ( $uninitiateds = THEMASTER::get_uninitiated() ) ) > 0 ) {
 			$uninit = array(
@@ -245,45 +361,41 @@ class THEWPMASTER extends THEWPUPDATES {
 				}
 			}
 		}
-		// die();
 	}
 
-	private function _versionCheck() {
-		if( !isset( $GLOBALS['pagenow'])
-		 || ( $GLOBALS['pagenow'] != 'plugins.php' && $GLOBALS['pagenow'] != 'themes.php' )
-		 || !function_exists( 'get_option' )
-		 || !function_exists( 'update_option' )
-		) {
-			return;
-		}
+	/* ------------------------- */
+	/*  PUBLIC INTERNAL METHODS  */
+	/* ------------------------- */
+	
+	/**
+	 * This method is called if !THE MASTER is being updated.
+	 *
+	 * @access private
+	 * @return bool always true
+	 */
+	protected static function _masterUpdate() {
+		$this->debug( 'THEWPMASTER::_masterUpdate called' );
+		$this->_check_folderStructure( self::$s_folderStructure, dirname( THEMASTER_PROJECTFILE ) . DS );
+		return parent::_masterUpdate();
+	}
 
-		if( ( defined( ( $name = 'THEVERSION_' . strtoupper( $this->textdomain ) ) ) && ( $version = constant( $name ) ) )
-		 || ( isset( $this->version ) && ( $version = $this->version ) )
-		) {
-			$name = strtolower( $name );
-			if( version_compare( get_option( $name ), $version, '<' ) ) {
-				if( isset( $this->folderStructure ) && is_array( $this->folderStructure ) ) {
-					THEBUILDER::check_folderStructure( $this->folderStructure, $this->basePath );
-				}
-
-				if( $this->update() ) {
-					update_option($name, $version);
-				} else {
-					throw new Exception('Error: Update method for "'.$name.'" failed. (return !== true)', 1);
-				}
-			}
-		}
+	/**
+	 * Activation method for !THE MASTER
+	 *
+	 * @access private
+	 * @return void
+	 */
+	public static function _masterActivate() {
+		return parent::_masterActivate();
 	}
 	
-	private function _masterUpdate() {
-		$this->_check_folderStructure(self::$_folderStructure, dirname(dirname(__FILE__)).DS);
-		return true;
-	}
-
-
-	public function _masterActivate() {
-	}
-	
+	/**
+	 * This method catches errors from THEMASTER::sTryTo() method
+	 * and prints them as admin messages.
+	 *
+	 * @access public
+	 * @return void
+	 */
 	public static function sTryError( $e ) {
 		$msg = sprintf( 
 			__( '**THEMASTER RUNTIME Exception:**/||Message: //%1$s///||In File: //%2$s// &bull; Line //%3$s//', 'themaster' ),
@@ -291,7 +403,7 @@ class THEWPMASTER extends THEWPUPDATES {
 			$e->getFile(),
 			$e->getLine()
 		);
-		if( !self::$adminNoticesSent ) {
+		if( !self::$s_adminNoticesSent ) {
 			self::set_adminMessage( 
 				$msg,
 				'error'
@@ -301,7 +413,12 @@ class THEWPMASTER extends THEWPUPDATES {
 		}
 	}
 	
+	/**
+	 * TODO: CHECK IF NEEDED AND GIVE CREDITS IF TRUE.
+	 *
+	 */
 	private function _get_pluginSymlinkPath($file) {
+		$this->debug( 'THEDBMASTER::_get_pluginSymlinkPath() called.' );
 	    // If the file is already in the plugin directory we can save processing time.
 	    if ( preg_match( '/'.preg_quote( WP_PLUGIN_DIR, '/' ).'/i', $file ) ) return $file;
 	
@@ -391,12 +508,11 @@ class THEWPMASTER extends THEWPUPDATES {
 		}
 	}
 	
-	/** Default Hooks addet to every subclass called via get_instance()
+	/**
+	 * Default Hooks addet to every subclass called via get_instance()
 	 *
-	 * @param object $obj the new instance
+	 * @access public
 	 * @return void
-	 * @access protected
-	 * @date Jul 28th 2011
 	 */
 	public function _hooks() {
 		parent::_hooks();
@@ -451,7 +567,7 @@ class THEWPMASTER extends THEWPUPDATES {
 				echo '<div class="updated" style="border-color: #dfdfdf; background-color: #fcfcfc;"><p>' . $note['inner'] . '</p></div>';
 			}
 		}
-		self::$adminNoticesSent = true;
+		self::$s_adminNoticesSent = true;
 	}
 	
 	/** Setter for Admin Messages
@@ -516,9 +632,9 @@ class THEWPMASTER extends THEWPUPDATES {
 	}
 	
 	public function fireContentTag($tag) {
-		foreach(self::$_contentTags as $cTag) {
-			if($tag == $cTag['tag']) {
-				echo call_user_func($cTag['cb']);
+		foreach(self::$s_contentTags as $cTag) {
+			if( $tag == $cTag['tag'] ) {
+				echo call_user_func( $cTag['cb'] );
 				break;
 			}
 		}		
@@ -560,7 +676,7 @@ class THEWPMASTER extends THEWPUPDATES {
 	 * @return void
 	 * @date Dez 15th 2011
 	 */
-	public function echo_sources() {
+	public function echo_sources( $admin = false ) {
 	}
 	public function force_echo_sources() {
 		parent::echo_sources();
@@ -712,9 +828,8 @@ class THEWPMASTER extends THEWPUPDATES {
 	}
 		
 }
-if( !defined('THEMINIWPMASTERAVAILABLE') ) {
-	if( function_exists( 'xBP') ) xBP();
-	$GLOBALS['THEMINIWPMASTER'] = new THEWPMASTER('MINIMASTER');
-	define('THEMINIWPMASTERAVAILABLE', true);
+if( !defined( 'THEMINIWPMASTERAVAILABLE' ) ) {
+	$GLOBALS['THEMINIWPMASTER'] = new THEWPMASTER( 'MINIMASTER' );
+	define( 'THEMINIWPMASTERAVAILABLE', true );
 }
 ?>

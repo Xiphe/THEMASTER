@@ -10,11 +10,40 @@ Author URI: http://red-thorn.de/
 Update Server: http://plugins.red-thorn.de/api/
 Branch: 3.0_Alpha
 */
+/*
+ Copyright (C) 2012 Hannes Diercks
 
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License along
+ with this program; if not, write to the Free Software Foundation, Inc.,
+ 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+*/
+
+/*
+ * In development i use one central symlinked version of this plugin.
+ * Whenever something seems to be wrong i always uncomment this line
+ * to check if i use the latest version or if the link was broken
+ * throu a sync process.
+ */
 // die( 'THEMASTER SYMLINKED' );
 
-// xBP();
+/*
+ * A quick breakpoint for xdebug.
+ */ 
+// xdebugBreak();
 
+/*
+ * Some settings for development (if anything inside the master is broken).
+ */
 // $tmTextID = basename( dirname( __FILE__ ) ) . '/' . basename( __FILE__ );
 // $tmSettingsID = 'THEMASTER_' . strtoupper( $tmTextID );
 // error_reporting(E_ALL);
@@ -23,26 +52,43 @@ Branch: 3.0_Alpha
 // define( $tmSettingsID . '_DEBUG', true );
 // define( $tmSettingsID . '_DEBUGMODE', 'FirePHP' );
 
-// Define shorthand for DIRECTORY_SEPARATOR.
-if( !defined( 'DS' ))
+/*
+ * I am using the DS constant as a shorthand for DIRECTORY_SEPARATOR.
+ */
+if( !defined( 'DS' ) ) {
 	define( 'DS', DIRECTORY_SEPARATOR );
+} elseif( DS !== DIRECTORY_SEPARATOR ) {
+	add_action( 'admin_notices', function() {
+		$msg = __( 'The required constant "DS" is not available so !themaster will be deactivated.', 'themaster' );
+		echo '<div class="error"><p>' . $msg . '</p></div>';
+	});
+	deactivate_plugins( __FILE__ );
+}
 
-// Register itself to be updatable.
+/*
+ * Register itself to be updatable.
+ * This is the easyest way to enable the update logic of THEWPUPDATES
+ * to a plugin that does not use !THE MASTER.
+ */
 define( 'THEUPDATES_UPDATABLE_THEMASTER', __FILE__ );
 
+/*
+ * save the path to this file.
+ */
 define( 'THEMASTER_PROJECTFILE', __FILE__ );
 
-// Register activation hook.
+/*
+ * Register activation hook.
+ */
 if( function_exists( 'register_activation_hook' )) {
-	register_activation_hook( __FILE__, '_masterActivate' );
+	register_activation_hook( __FILE__, function() {
+		require_once( __DIR__ . DS . 'core' . DS . 'wpmaster.php' );
+		THEWPMASTER::_masterActivate();
+	});
 }
-
-function _masterActivate() {
-	require_once( __DIR__ . DS . 'core' . DS . 'wpmaster.php' );
-	THEWPMASTER::_masterActivate();
-}
-
-// Include core File - automaticaly includes required core files and instantiates a base instance.
+/*
+ * Include core File - automaticaly includes required core files and instantiates a base instance.
+ */
 if( !defined( 'WPMASTERAVAILABE' )) {
 	require_once( __DIR__ . DS . 'core' . DS . 'wpmaster.php' );
 }
@@ -52,24 +98,30 @@ if( !defined( 'WPMASTERAVAILABE' )) {
  * Automaticaly parses initiation args from main plugin file or 
  * theme style.
  *
- * @param	array	$initArgs	optional additional initiation arguments. 
- * 								Keys are overwriting parsed init args.
- *								Set Key "projectName" to prevent auto parsing.
- * @package	THEWPMASTER
- * @author	Hannes Diercks
- * @return	object				Instance of THEWPMASTER or false if error.
+ * @param   mixed  $initArgs optional additional initiation arguments. 
+ *                           Keys are overwriting parsed init args.
+ *                           Set Key "projectName" to prevent auto parsing.
+ *                           This can also be a path to the projects info
+ *                           file so the debug backtrace is not required
+ *                           to get the called file.
+ * @param   string $file     This can be a path to infofile if the first
+ *                           param contains additional init args.    
+ * @return	object           Instance of THEWPMASTER or false if error.
  */
 function THEWPMASTERINIT( $initArgs = null, $file = null ) {
-	// if( function_exists( 'xBP' ) ) xBP();
 	
-	// If init args or key projectName is not set.
+	/*
+	 * If init args or key projectName is not set.
+	 */
 	if( ( !is_array( $initArgs ) || !isset( $initArgs['projectName'] ) )
 	 && ( 	null === $initArgs
 		 || ( is_string( $initArgs ) && file_exists( $initArgs ) )
 		 || ( is_string( $file ) && file_exists( $file ) )
 	)) {
-		// Start parsing the initiation arguments
-		// Merge the passed arguments into the parsed.
+		/*
+		 * Start parsing the initiation arguments
+		 * Merge the passed arguments into the parsed.
+		 */
 		$initArgs = array_merge( 
 			THEWPBUILDER::get_initArgs( $initArgs, $file ),
 			( is_array( $initArgs ) ? $initArgs : array() )
@@ -77,15 +129,18 @@ function THEWPMASTERINIT( $initArgs = null, $file = null ) {
 		$initArgs['isMaster'] = true;
 	} 
 
-	// Try to build a new Master with the initiation arguments.
+	/*
+	 * Try to build a new Master with the initiation arguments.
+	 */
 	try {
 		$r = THEWPMASTER::get_instance( 'Master', $initArgs );
 	} catch( Exception $e ) {
-		// Errors Occured -> write an admin notice.
+		/*
+		 * Errors Occured -> write an admin notice.
+		 */
 		if( !isset( $GLOBALS['THEWPMASTERINITERRORS'] )) {
-			$GLOBALS['THEWPMASTERINITERRORS'] = array();
-
 			if( function_exists( 'add_action' ) ) {
+				$GLOBALS['THEWPMASTERINITERRORS'] = array();
 				add_action( 'admin_notices', function() {
 					foreach( $GLOBALS['THEWPMASTERINITERRORS'] as $e ) {
 						echo '<div class="error"><p>' . $e->getMessage() . '<br />File:' . $e->getFile() . ' Line:' . $e->getLine() . '</p></div>';
@@ -96,12 +151,31 @@ function THEWPMASTERINIT( $initArgs = null, $file = null ) {
 			}
 		}
 		array_push( $GLOBALS['THEWPMASTERINITERRORS'], $e );
-		// Do not return the object because it was not initated correctly.
+		/*
+		 * Do not return the object because it was not initated correctly.
+		 */
 		$r = false;
 	}
 	return $r;
 }
 
+/**
+ * This function can be used to automaticaly build skeletion projects.
+ *
+ * 1.  Check out `wp-content/plugins/_themaster/templates/new`.
+ * 2.  Copy the theme or plugin folder into your wp-content/themes 
+ *     or wp-content/plugins folder.
+ * 3.  Rename the projects foldername
+ * 3.b If you are generating a plugin also rename the plugin file.
+ * 4.  Set the Project name in style.css or plugin file.
+ * 5.  Activate the Project.
+ * 6.  Revisit the style.css or project file and fill in additional informations.
+ *
+ * @param  bool   $extended set false if the project should just contain the absolute basic files and logic.
+ * @param  string $template the name of the template that should be used. Default is "def" and it's the
+ *                         only one that's delivered at the time of 3.0
+ * @return void
+ */
 function BUILDTHEMASTER( $extended = true, $template = 'def' ) {
 	$args = THEWPBUILDER::get_initArgs();
 

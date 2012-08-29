@@ -15,7 +15,7 @@ class THEWPUPDATES extends THEWPSETTINGS {
 	private static $s_initiated = false;
 
 	// The default update server. can be overwritten by updateServer initiation argument.
-	private static $s_defUpdateServer = 'http://plugins.red-thorn.de/api/';
+	private static $s_defUpdateServer = 'http://plugins.red-thorn.de/v2/api/';
 
 	// Holds all updatable plugins and themes.
 	private static $s_updatables = array();

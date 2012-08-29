@@ -60,6 +60,10 @@ class THEDEBUG extends THESETTINGS {
 	private static $s_names;
 	
 
+	public static function get_btDeepth() {
+		return self::$s_btDeepth;
+	}
+
 	public function __construct( $initArgs ) {
 		if( !isset( $this->constructing ) || $this->constructing !== true ) {
 			throw new Exception("ERROR: THEDEBUG is not ment to be constructed directly.", 1);
@@ -104,9 +108,11 @@ class THEDEBUG extends THESETTINGS {
 
 				if( self::$s_mode === 'FirePHP' ) {
 					try {
-						require_once( self::$sBasePath_ . 'classes' . DS . 'FirePHPCore' . DS . 'fb.php' );
-						ob_start();
-						$FB = FirePHP::getInstance( true );
+						if( !class_exists( 'FirePHP' ) ) {
+							require_once( self::$sBasePath_ . 'classes' . DS . 'FirePHPCore' . DS . 'fb.php' );
+							ob_start();
+							$FB = FirePHP::getInstance( true );
+						}
 					} catch( exception $e ) {
 						THESETTINGS::_set_setting( 'debugMode', 'themaster', 'inline' );
 						self::$s_mode = 'inline';
@@ -148,6 +154,7 @@ class THEDEBUG extends THESETTINGS {
 		if( !self::$s_enabled ) return;
 
 		foreach( self::$s_counts as $k => $count ) {
+
 			self::$s_cDebug = $count['debug'];
 			self::$s_cDebug['name'] = $count['key'];
 			self::$s_cDebug['var'] = $count['nr'] . ' times.';
@@ -387,8 +394,16 @@ class THEDEBUG extends THESETTINGS {
 		self::$s_btDeepth = self::$s_internalStandardBtDeepth;
 	}
 	public function _set_btDeepth( $deepth ) {
-		self::$s_standardBtDeepth = $deepth;
-		self::$s_btDeepth = $deepth;
+		if( $deepth === '--' ) {
+			self::$s_standardBtDeepth--;
+			self::$s_btDeepth--;
+		} elseif( $deepth === '++' ) {
+			self::$s_standardBtDeepth++;
+			self::$s_btDeepth++;
+		} else {
+			self::$s_standardBtDeepth = $deepth;
+			self::$s_btDeepth = $deepth;
+		}
 	}
 	private static function s_softReset_btDeepth() {
 		self::$s_btDeepth = self::$s_standardBtDeepth;
@@ -470,30 +485,35 @@ class THEDEBUG extends THESETTINGS {
 	public function countbug($key) {
 		if( !self::$s_enabled ) return;
 
-		self::$s_btDeepth = 1;
-
+		self::$s_btDeepth -= 4;
 		if( isset( $this )) {
 			$this->_gen_debug( $key );
 		} else {
 			self::_gen_debug( $key );
 		}
+		$debug = self::$s_cDebug;
+		self::$s_btDeepth += 4;
 
-		$interkey = self::$s_cDebug['btFile'] . self::$s_cDebug['btLine'];
+
+		$interkey = $debug['btFile'] . $debug['btLine'];
 
 		if( !isset( self::$s_counts[$interkey] ) ) {
 			self::$s_counts[$interkey] = array(
 				'nr' => 1,
 				'key' => $key,
-				'debug' => self::$s_cDebug
+				'debug' => $debug
 			);
 		} else {
 			self::$s_counts[$interkey]['nr']++;
 		}
+
+
 	}
 
 	public function deprecated( $alternative, $continue = true, $bto = 0, $bto2 = 0 ) {
 		if( !self::$s_enabled ) return;
 		
+		self::_set_btDeepth( '++' );
 		$bto++;
 		
 		$bt = debug_backtrace();
@@ -514,6 +534,7 @@ class THEDEBUG extends THESETTINGS {
 				$method ),
 			$args
 		);
+		self::_set_btDeepth( '--' );
 	}
 
 	public function get_mode() {
@@ -522,6 +543,46 @@ class THEDEBUG extends THESETTINGS {
 	
 }
 
+if( !function_exists( 'debug' ) ) {
+	function debug() {
+		THEDEBUG::_set_btDeepth( 7 );
+		call_user_func_array( array( 'THEDEBUG', 'debug' ), func_get_args() );
+		THEDEBUG::_reset_btDeepth();
+	}
+}
+if( !function_exists( 'diebug' ) ) {
+	function diebug() {
+		THEDEBUG::_set_btDeepth( 7 );
+		call_user_func_array( array( 'THEDEBUG', 'diebug' ), func_get_args() );
+	}
+}
+if( !function_exists( 'rebug' ) ) {
+	function rebug() {
+		THEDEBUG::_set_btDeepth( 7 );
+		$r = call_user_func_array( array( 'THEDEBUG', 'rebug' ), func_get_args() );
+		THEDEBUG::_reset_btDeepth();
+		return $r;
+	}
+}
+if( !function_exists( 'countbug' ) ) {
+	function countbug() {
+		THEDEBUG::_set_btDeepth( 7 );
+		call_user_func_array(array('THEDEBUG', 'countbug'), func_get_args() );
+		THEDEBUG::_reset_btDeepth();
+	}
+}
+
+if( !function_exists( 'deprecated' ) ) {
+	function deprecated( $alternative, $contunue = true, $bto = 0 ) {
+		THEDEBUG::_set_btDeepth( 7 );
+		$bto = $bto+2;
+		return call_user_func_array(
+			array('THEDEBUG', 'deprecated'),
+			array( $alternative, $contunue, $bto )
+		);
+		THEDEBUG::_reset_btDeepth();
+	}
+}
 if( !class_exists('WP') ) {
 	register_shutdown_function( array( 'THEDEBUG', 'print_debugcounts' ) );
 	if( THEDEBUG::get_mode() === 'summed' ) {

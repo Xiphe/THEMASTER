@@ -57,27 +57,37 @@ class THEMODEL {
 	}
 	
 	public function debug() {
-		return call_user_func_array(array('THEDEBUG', 'debug'), self::_debug( func_get_args() ) );
+		THEDEBUG::_set_btDeepth( 7 );
+		call_user_func_array( array( 'THEDEBUG', 'debug' ), func_get_args() );
+		THEDEBUG::_reset_btDeepth();
 	}
 	
 	public function diebug() {
-		return call_user_func_array(array('THEDEBUG', 'diebug'), self::_debug( func_get_args() ) );
+		THEDEBUG::_set_btDeepth( 7 );
+		call_user_func_array( array( 'THEDEBUG', 'diebug' ), func_get_args() );
 	}
 	
 	public function rebug() {
-		return call_user_func_array(array('THEDEBUG', 'rebug'), self::_debug( func_get_args() ) );
+		THEDEBUG::_set_btDeepth( 7 );
+		$r = call_user_func_array( array( 'THEDEBUG', 'rebug' ), func_get_args() );
+		THEDEBUG::_reset_btDeepth();
+		return $r;
 	}
 
 	public function countbug() {
-		return call_user_func_array(array('THEDEBUG', 'countbug'), self::_debug( func_get_args() ) );
+		THEDEBUG::_set_btDeepth( 7 );
+		call_user_func_array(array('THEDEBUG', 'countbug'), func_get_args() );
+		THEDEBUG::_reset_btDeepth();
 	}
 	
-	public function deprecated( $alternative, $contunue = true, $bto = 0) {
+	public function deprecated( $alternative, $contunue = true, $bto = 0 ) {
+		THEDEBUG::_set_btDeepth( 7 );
 		$bto = $bto+2;
 		return call_user_func_array(
 			array('THEDEBUG', 'deprecated'),
-			array( $alternative, $contunue, $bto, 7 )
+			array( $alternative, $contunue, $bto )
 		);
+		THEDEBUG::_reset_btDeepth();
 	}
 	
 } ?>
