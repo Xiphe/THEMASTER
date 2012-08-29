@@ -1,8 +1,8 @@
 <?php
 // Include parent class.
-require_once('debug.php');
+require_once('settings.php');
 
-class THEMASTER extends THEDEBUG {	
+class THEMASTER extends THESETTINGS {	
 
 	/* ------------------ */
 	/*  STATIC VARIABLES  */

@@ -1,8 +1,8 @@
 <?php
 // Include parent class.
-require_once('settings.php');
 
-class THEDEBUG extends THESETTINGS {
+
+class THEDEBUG {
 
 	/* ------------------ */
 	/*  STATIC VARIABLES  */
@@ -12,6 +12,8 @@ class THEDEBUG extends THESETTINGS {
 
 	// Turns true after first initiation.
 	private static $s_initiated = false;	
+
+	private static $s_singleton;
 
 	private static $s_enabled = false;
 	private static $s_getMode = false;
@@ -64,29 +66,11 @@ class THEDEBUG extends THESETTINGS {
 		return self::$s_btDeepth;
 	}
 
-	public function __construct( $initArgs ) {
-		if( !isset( $this->constructing ) || $this->constructing !== true ) {
-			throw new Exception("ERROR: THEDEBUG is not ment to be constructed directly.", 1);
-			return false;
-		}
-
-		if( !self::$s_initiated ) {
+	public function __construct() {
+		if( isset( self::$s_singleton ) && is_object( self::$s_singleton ) ) {
+			return self::$s_singleton;
+		} elseif( !self::$s_initiated ) {
 			THEBASE::sRegister_callback( 'afterBaseS_init', array( 'THEDEBUG', 'sinit' ), 1, null, null, 2 );
-		}
-
-		parent::__construct( $initArgs );
-	}
-
-	protected function _masterInit() {
-		if( !isset( $this ) ) {
-			throw new Exception("_masterInit should not be called staticaly.", 1);
-		}
-		if( isset( $this->_masterInitiated ) && $this->_masterInitiated === true ) {
-			return;
-		}
-
-		if( parent::_masterInit() ) {
-			return true;
 		}
 	}
 
@@ -94,9 +78,9 @@ class THEDEBUG extends THESETTINGS {
 		if( !self::$s_initiated ) {
 			self::$s_initiated = true;
 
-			if( THESETTINGS::sGet_setting( 'debug', self::$sTextID_ ) ) {
-				self::$s_mode = THESETTINGS::sGet_setting( 'debugMode', self::$sTextID_ );
-				self::$s_getMode = THESETTINGS::sGet_setting( 'debugGet', self::$sTextID_ );
+			if( THESETTINGS::sGet_setting( 'debug', THEBASE::$sTextID_ ) ) {
+				self::$s_mode = THESETTINGS::sGet_setting( 'debugMode', THEBASE::$sTextID_ );
+				self::$s_getMode = THESETTINGS::sGet_setting( 'debugGet', THEBASE::$sTextID_ );
 
 				self::$s_names = array(
 					__( 'OK', 'themaster' ),
@@ -109,7 +93,7 @@ class THEDEBUG extends THESETTINGS {
 				if( self::$s_mode === 'FirePHP' ) {
 					try {
 						if( !class_exists( 'FirePHP' ) ) {
-							require_once( self::$sBasePath_ . 'classes' . DS . 'FirePHPCore' . DS . 'fb.php' );
+							require_once( THEBASE::$sBasePath_ . 'classes' . DS . 'FirePHPCore' . DS . 'fb.php' );
 							ob_start();
 							$FB = FirePHP::getInstance( true );
 						}
@@ -120,7 +104,7 @@ class THEDEBUG extends THESETTINGS {
 					}
 				} elseif( self::$s_mode === 'mail' ) {
 
-					self::$s_debugEmail = THESETTINGS::get_setting( 'debugEmail', self::$sTextID_ );
+					self::$s_debugEmail = THESETTINGS::get_setting( 'debugEmail', THEBASE::$sTextID_ );
 
 					if( !THEMASTER::isValidEmail( self::$s_debugEmail ) ) {
 						throw new Exception( __( 'THEMASTER ERROR: THEDEBUG Mode is set to Mail but no valid reciver is found.', 'themaster' ), 1);
@@ -409,13 +393,13 @@ class THEDEBUG extends THESETTINGS {
 		self::$s_btDeepth = self::$s_standardBtDeepth;
 	}
 	
-	/** The output function for summed Debugs
+	/** 
+	 * The output function for summed Debugs
 	 *
-	 * @param string $sorting null or name/nr/type/file/line
-	 * @param string $dir null for asc or asc/desc
-	 * @return void
 	 * @access public
-	 * @date Nov 10th 2011
+	 * @param  string $sorting null or name/nr/type/file/line
+	 * @param  string $dir     null for asc or asc/desc
+	 * @return void
 	 */
 	public function print_debug( $sorting = null, $dir = 'asc' ) {
 		if( !self::$s_enabled ) return;
@@ -433,13 +417,13 @@ class THEDEBUG extends THESETTINGS {
 		}
 	}
 	
-	/** Wrapper for $this->debug adds die() to the end.
+	/** 
+	 * Wrapper for $this->debug adds die() to the end.
 	 *
-	 * @param mixed $var the variable to be debugged
-	 * @param string $name optional name of the variable
-	 * @return void
 	 * @access public
-	 * @date Sep 22th 2011
+	 * @param  mixed  $var  the variable to be debugged
+	 * @param  string $name optional name of the variable
+	 * @return void
 	 */
 	public function diebug( $var = null ) {
 		if( !self::$s_enabled ) return;
@@ -506,8 +490,6 @@ class THEDEBUG extends THESETTINGS {
 		} else {
 			self::$s_counts[$interkey]['nr']++;
 		}
-
-
 	}
 
 	public function deprecated( $alternative, $continue = true, $bto = 0, $bto2 = 0 ) {
@@ -540,8 +522,10 @@ class THEDEBUG extends THESETTINGS {
 	public function get_mode() {
 		return self::$s_mode;
 	}
-	
 }
+
+define( 'THEDEBUGAVAILABLE', true );
+$GLOBALS['THEDEBUG'] = new THEDEBUG;
 
 if( !function_exists( 'debug' ) ) {
 	function debug() {

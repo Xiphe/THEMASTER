@@ -1,6 +1,8 @@
 <?php
 // Register base model file.
 require_once('model.php');
+require_once('debug.php');
+require_once('tools.php');
 
 class THEBASE {
 
@@ -16,7 +18,7 @@ class THEBASE {
 	 * @access private
 	 * @var    boolean
 	 */
-	final private static $s_initiated = false;
+	private static $s_initiated = false;
 
 	/**
 	 * Holds the js/css files that will be echoed in the header.
@@ -24,7 +26,7 @@ class THEBASE {
 	 * @access private
 	 * @var    array
 	 */
-	final private static $s_registeredSources = array();
+	private static $s_registeredSources = array();
 
 	/**
 	 * Holder for js-variables that will be echoed in the frontend-header.
@@ -32,7 +34,7 @@ class THEBASE {
 	 * @access private
 	 * @var    array
 	 */
-	final private static $s_registeredJsVars = array();
+	private static $s_registeredJsVars = array();
 
 	/**
 	 * Holder for js-variables that will be echoed in the backend-header.
@@ -40,7 +42,7 @@ class THEBASE {
 	 * @access private
 	 * @var    array
 	 */
-	final private static $s_registeredAdminJsVars = array();
+	private static $s_registeredAdminJsVars = array();
 
 	/**
 	 * Holder for !THEMASTERs internal callbacks
@@ -48,7 +50,7 @@ class THEBASE {
 	 * @access private
 	 * @var    array
 	 */
-	final private static $s_callbacks = array();
+	private static $s_callbacks = array();
 
 	/**
 	 * Holder for all singleton classes. Populated by THEBASE::get_instance().
@@ -56,60 +58,58 @@ class THEBASE {
 	 * @access private
 	 * @var    array
 	 */
-	final private static $_singletons = array();
+	private static $_singletons = array();
 
 
-	/* PROTECTED */
+	/* PUBLIC */
 
 	/**
 	 * The basepath for !THEMASTER.
 	 *
-	 * @access protected
+	 * @access public
 	 * @var    string
 	 */
-	final protected static $sBasePath_;
+	public static $sBasePath;
 
 	/**
 	 * The foldername of !THEMASTER
 	 *
-	 * @access protected
+	 * @access public
 	 * @var    string
 	 */
-	final protected static $sFolderName_;
+	public static $sFolderName;
 
 	/**
 	 * The projectfile of !THEMASTER
 	 *
-	 * @access protected
+	 * @access public
 	 * @var    string
 	 */
-	final protected static $sProjectFile_;
+	public static $sProjectFile;
 
 	/**
 	 * The textdomain of !THEMASTER
 	 *
-	 * @access protected
+	 * @access public
 	 * @var    string
 	 */
-	final protected static $sTextdomain_;
+	public static $sTextdomain;
 
 	/**
 	 * The baseurl of !THEMASTER
 	 *
-	 * @access protected
+	 * @access public
 	 * @var    string
 	 */
-	final protected static $sBaseUrl_;
+	public static $sBaseUrl;
 
 	/**
 	 * The textid of !THEMASTER
 	 *
-	 * @access protected
+	 * @access public
 	 * @var    string
 	 */
-	final protected static $sTextID_;
-
-	/* PUBLIC */
+	public static $sTextID;
 
 	/**
 	 * Array of all classes based on THEBASE
@@ -117,7 +117,7 @@ class THEBASE {
 	 * @access public
 	 * @var    array
 	 */
-	final public static $THECLASSES = array(
+	public static $THECLASSES = array(
 		'THEWPMASTER',
 		'THEWPSETTINGS',
 		'THEWPUPDATES',
@@ -142,7 +142,7 @@ class THEBASE {
 	 * @access private
 	 * @var    boolean
 	 */
-	final private $_masterInitiated = false;
+	private $_masterInitiated = false;
 
 	/**
 	 * Array of keys that will be required on a master init.
@@ -151,7 +151,7 @@ class THEBASE {
 	 * @access private
 	 * @var    array
 	 */
-	final private $_requiredInitArgs = array();
+	private $_requiredInitArgs = array();
 
 	/**
 	 * ?!?
@@ -159,7 +159,7 @@ class THEBASE {
 	 * @access private
 	 * @var array
 	 */
-	final private $_initArgs = array();
+	private $_initArgs = array();
 
 	/**
 	 * Array of temporary globals used by THEBASE::_unset_temp_globals(),
@@ -189,7 +189,7 @@ class THEBASE {
 	 * @access protected
 	 * @var array
 	 */ 
-	final protected $_mastersInitArgs = array();
+	protected $_mastersInitArgs = array();
 	
 
 	/* ---------------------- *
@@ -253,14 +253,14 @@ class THEBASE {
 		if( !self::$s_initiated ) {
 			self::sSession();
 
-			self::$sProjectFile_ = THEMASTER_PROJECTFILE;
-			self::$sBasePath_ = dirname( self::$sProjectFile_ ) . DS;
-			self::$sFolderName_ = basename( self::$sBasePath_ );
-			self::$sTextdomain_ = pathinfo( self::$sProjectFile_, PATHINFO_FILENAME );
-			self::$sTextID_ = self::$sFolderName_ . '/' . basename( self::$sProjectFile_ );
+			self::$sProjectFile = THEMASTER_PROJECTFILE;
+			self::$sBasePath = dirname( self::$sProjectFile ) . DS;
+			self::$sFolderName = basename( self::$sBasePath );
+			self::$sTextdomain = pathinfo( self::$sProjectFile, PATHINFO_FILENAME );
+			self::$sTextID = self::$sFolderName . '/' . basename( self::$sProjectFile );
 
 			if( function_exists( 'plugins_url' )) {
-				self::$sBaseUrl_ = plugins_url( self::$sTextdomain_ );
+				self::$sBaseUrl = plugins_url( self::$sTextdomain );
 			}
 			
 			if( THESETTINGS::sGet_setting( 'errorReporting', self::$sTextID_ ) === true ) {
@@ -313,77 +313,6 @@ class THEBASE {
 		} elseif( is_string( $initArgs )) {
 			array_push( $this->_requiredInitArgs, $initArgs );
 		}
-	}
-	
-	public function delete_invalidPathChars($path, $regex = '!_-\w\/\\\ ') {
-		return preg_replace('/[^'.$regex.']/', '', $path);
-	}
-	
-	/** Checks if the path has invalid characters.
-	 *
-	 * @param string $path
-	 * @param bool $clean set true to call self::get_directPath() on $path
-	 * @param string $regex the regex of forbidden chars
-	 * @return void
-	 * @date Jan 22th 2012
-	 */
-	public function is_cleanPath($path, $clean = false, $regex = '!_-\w\/\\\ ') {
-		if($clean === true)
-			$path = $this->get_directPath($path);
-		if(preg_match('/[^'.$regex.']/', $path)) {
-			return false;
-		}
-		return $path;
-	}
-	
-	public function get_verryCleanedDirectPath($path) {
-		return $this->delete_invalidPathChars($this->get_directPath($path));
-	}
-	
-	/** Deletes ../ in pathes and cleans it with self::get_cleanedPath()
-	 *
-	 * @param string $path input path
-	 * @return string
-	 * @date Jan 22th 2012
-	 */
-	public function get_directPath($path) {
-		// $this->debug('call of get_directPath');
-		return str_replace('..'.DS, '', $this->get_cleanedPath($path));
-	}
-	
-	// public function get_directPath($sPath) {
-		// return str_replace(array('..'.DS, '.'.DS), '', str_replace(array(
-			// '/_', '\\_', '/', '\\', 
-		// ), DS, strtolower(preg_replace('/[^\w\_\.]+/', '', $sPath))));
-	// }
-
-	
-	// Deprecated since 2.1.0
-	public function cleanupPath($path)  {
-		$this->deprecated('THEBASE::get_cleanedPath()');
-		return $this->get_cleanedPath($path);
-	}
-	
-	/** Replaces / & \ to DIRECTORY_SEPERATOR in $path
-	 *
-	 * @param string $path input path
-	 * @return string
-	 * @date Jan 22th 2012
-	 */
-	public function get_cleanedPath($path) {
-		return preg_replace("/[\/\\\]+/", DS, $path);
-	}
-	
-	/** Getter for Static Variables of Named Classes
-	 *
-	 * @param string $classname
-	 * @param string $key
-	 * @return mixed
-	 * @date Nov 10th 2011
-	 */
-	function get_static_var($classname, $key) {
-		$vars = get_class_vars($classname);
-		return $vars[$key];
 	}
 	
 	/** Getter for the Singleton Instance of Class
@@ -448,52 +377,6 @@ class THEBASE {
 	
 	
 	
-	/** returns an array of files in a specific folder, excluding files starting with . or _
-	 *
-	 * @param string $dir the
-	 * @param mixed $key option for the array key of each file number or filename possible, default: the filename
-	 * @return array
-	 * @access public
-	 * @date Jul 29th 2011
-	 */
-	public function get_dirArray(
-		$dir,
-		$key = 'filename',
-		$filter = array(
-			1, array('.', '_')
-		)
-	) {
-		if ( $handle = opendir( $dir ) ) {
-			$r = array();
-			$i = 0;
-			while ( false !== ( $file = readdir( $handle ) ) ) {
-				if ( !in_array( substr( $file, 0, $filter[0] ), $filter[1] ) ) {
-					$k = $key == 'filename' ? $file : $i;
-					$r[$k] = $file;
-					$i++;
-				}
-			}
-			return $r;
-	    }
-	}
-	
-	public function session() {
-		self::sSession();
-	}
-
-	/** Checks for an existing Session and Starts a new one if nothing is found
-	 *
-	 * @return void
-	 * @date Nov 10th 2011
-	 */
-	public static function sSession() {
-		if( !isset( $_SESSION ) && !headers_sent() )
-			session_start();
-
-		if( isset( $_SESSION ) )
-			return $_SESSION;
-	}
-	
 	/** Initiation for a new Instance of THEMASTER, generates a new Submaster XYMaster
 	 *
 	 * @param array $initArgs see $this->requiredInitArgs for required keys
@@ -536,27 +419,6 @@ class THEBASE {
 		}
 	}
 
-	/** Checks if Array 1 has all required keys, specified by Array 2
-	 * 
-	 * @param Array $args
-	 * @param Array $requiredArgs
-	 * @return String/False Error string or False if no Error found
-	 * @access protected
-	 * @date Jul 29th 2011
-	 */
-	protected function get_requiredArgsError($args, $requiredArgs) {
-		if(!is_array($args))
-			return '$args is not an array';
-		if(!is_array($requiredArgs))
-			return '$required is not an array';
-		foreach($requiredArgs as $req) {
-			if(!isset($args[$req])) {
-				return $req.' is required.';
-			}
-		}
-		return FALSE;
-	}
-	
 	/** wrapping function to directly echo a view
 	 *
 	 * @param String $view the view name
@@ -566,22 +428,22 @@ class THEBASE {
 	 * @access public
 	 * @date Jul 29th 2011
 	 */
-	public function view($view, $args = null, $temp = null) {
-		echo $this->get_view($view, $args, $temp);	
+	public function view( $view, $args = null, $temp = null ) {
+		echo $this->get_view( $view, $args, $temp );	
 	}
 		
-	/** Trys to get a view File named example.php from 
+	/**
+	 * Trys to get a view File named example.php from 
 	 * "views"-Subfolder of defined basePath and return its output
 	 * automaticly searches in a subfolder with classname then in 
 	 * root view folder. Other foldernames can be specified with 
 	 * underscores folder_file - this will be taken at first.
 	 * 
-	 * @param String $view the view name
-	 * @param Array/Empty $args optional args passed to the view
-	 * @param mixed $temp catching param for wordpress calls
-	 * @return String View String
 	 * @access public
-	 * @date Jul 29th 2011
+	 * @param  string      $view the view name
+	 * @param  array/Empty $args optional args passed to the view
+	 * @param  mixed       $temp catching param for wordpress calls
+	 * @return string      View String
 	 */
 	public function get_view($view, $args = array(), $temp = null) {
 		try {
@@ -606,7 +468,7 @@ class THEBASE {
 				}
 			}
 			
-			foreach( array( $this->basePath, self::$sBasePath_ ) as $basePath ) {
+			foreach( array( $this->basePath, self::$sBasePath ) as $basePath ) {
 				$file = $basePath . 'views' . DS . $this->get_directPath( $view ) . '.php';
 
 				if( file_exists( $file ) ) {
@@ -746,8 +608,8 @@ class THEBASE {
 				) );
 			}
 			array_push( $paths, array(
-				'basePath' => self::$sBasePath_,
-				'baseUrl' => self::$sBaseUrl_
+				'basePath' => self::$sBasePath,
+				'baseUrl' => self::$sBaseUrl
 			) );
 			
 			foreach( $paths as $k => $p ) {
@@ -764,8 +626,8 @@ class THEBASE {
 						if( !file_exists( ( $target ) ) 
 						 || filemtime( $file ) > filemtime( $target )
 						) {
-							require_once( self::$sBasePath_ . 'classes' . DS . 'lessPHP' . DS . 'lessc.inc.php' );
-							require_once( self::$sBasePath_ . 'classes' . DS . 'CSSfix' . DS . 'CSSfix.php' );
+							require_once( self::$sBasePath . 'classes' . DS . 'lessPHP' . DS . 'lessc.inc.php' );
+							require_once( self::$sBasePath . 'classes' . DS . 'CSSfix' . DS . 'CSSfix.php' );
 							$content = file( $file );
 							
 							// if($content[0] !== ($import = '@import "../../../../plugins/themaster/res/less/elements.less";'."\n")) {
@@ -874,38 +736,18 @@ class THEBASE {
 	}
 	
 	
-	public function incl($sSource, $include = false) {
-		$sSource = $this->get_verryCleanedDirectPath($sSource).'.php';
+	public function incl( $source, $include = false ) {
+		$source = THETOOLS::get_verryCleanedDirectPath( $sSource ).'.php';
 		
-		if(file_exists(($path = $this->basePath.DS.'res'.DS.'includes'.DS.$sSource))) {
-			return $include ? include($path) : $path;
-		} elseif(file_exists(($path = dirname(dirname(__FILE__)).DS.'res'.DS.'includes'.DS.$sSource))) {
-			return $include ? include($path) : $path;
+		foreach( array( $this->basePath, self::$sBasePath ) as $path ) {
+			if( file_exists( ( $path = $path . 'res' . DS . 'includes' . DS . $source ) ) ) {
+				return $include ? include( $path ) : $path;
+			}
 		}
-		return false;
+
+		throw new Exception( 'Tryed to include unexistent file "' . $source . '"', 1 );
 	}
 	
-	// from: http://codeaid.net/php/convert-size-in-bytes-to-a-human-readable-format-%28php%29
-	function bytesToSize($bytes, $precision = 2) {  
-	    $kilobyte = 1024;
-	    $megabyte = $kilobyte * 1024;
-	    $gigabyte = $megabyte * 1024;
-	    $terabyte = $gigabyte * 1024;
-	   
-	    if (($bytes >= 0) && ($bytes < $kilobyte)) {
-	        return $bytes . ' B';
-	    } elseif (($bytes >= $kilobyte) && ($bytes < $megabyte)) {
-	        return round($bytes / $kilobyte, $precision) . ' KB';
-	    } elseif (($bytes >= $megabyte) && ($bytes < $gigabyte)) {
-	        return round($bytes / $megabyte, $precision) . ' MB';
-	    } elseif (($bytes >= $gigabyte) && ($bytes < $terabyte)) {
-	        return round($bytes / $gigabyte, $precision) . ' GB';
-	    } elseif ($bytes >= $terabyte) {
-	        return round($bytes / $terabyte, $precision) . ' TB';
-	    } else {
-	        return $bytes . ' B';
-	    }
-	}
 	
 	/** Includes a Model File from basePath/models/
 	 *
@@ -914,7 +756,7 @@ class THEBASE {
 	 * @access public
 	 * @date Dez 15th 2011
 	 */
-	public function reg_model( $modelname, $staticInits = null ) {
+	final public function reg_model( $modelname, $staticInits = null ) {
 		if( class_exists( ( $fullModelname = strtoupper( $this->prefix ) . $modelname ) ) ) return true;
 		try {
 			if( file_exists( 
@@ -940,12 +782,20 @@ class THEBASE {
 		}
 	}
 	
-	public function new_model( $modelname, $initArgs = null ) {
+	final public function new_model( $modelname, $initArgs = null ) {
 		if( !class_exists( ( $fullModelname = strtoupper( $this->prefix ) . $modelname ) ) ) {
 			$this->reg_model( $modelname );
 		}
 		if( class_exists( $fullModelname ) ) {
 			return new $fullModelname( $initArgs );
+		}
+	}
+
+	final public function gi( $classname, $initArgs = array() ) {
+		if( isset( $this ) ) {
+			return $this->get_instance( $classname, $initArgs );
+		} else {
+			return self::get_instance( $classname, $initArgs );
 		}
 	}
 
@@ -959,7 +809,7 @@ class THEBASE {
 	 * @access public
 	 * @date Jul 29th 2011
 	 */
-	public function get_instance( $classname, $initArgs = array() ) {
+	final public function get_instance( $classname, $initArgs = array() ) {
 
 		if( $classname === 'Master' ) {
 			if( isset( $initArgs['prefix'] )
@@ -986,7 +836,7 @@ class THEBASE {
 		if(isset(self::$_singletons[$lcn]) && is_object(self::$_singletons[$lcn]))
 			return self::$_singletons[$lcn];
 
-		foreach( array( $basePath, self::$sBasePath_ ) as $k => $basePath ) {
+		foreach( array( $basePath, self::$sBasePath ) as $k => $basePath ) {
 			if( file_exists( ( $file = $basePath . 'classes' . DS . $filename . '.php' ) ) ) {
 				include_once( $file );
 				
@@ -1047,17 +897,17 @@ class THEBASE {
 			throw new Exception( '<strong>!THE MASTER ERROR:</strong> Class File for ' . $classname
 				. ' not found --- Should be '
 				. '<em>' . $basePath . 'classes' . DS . strtolower($classname) . '.php</em>'
-				. ' or <em>' . self::$sBasePath_ . 'classes' . DS . strtolower($classname) . '.php</em>.',
+				. ' or <em>' . self::$sBasePath . 'classes' . DS . strtolower($classname) . '.php</em>.',
 				1
 			);
 		}
 	}
 
-	public static function sRegSingleton( $obj ) {
+	final public static function sRegSingleton( $obj ) {
 		$name = get_class( $obj );
 		$lcn = strtolower( $name );
 		if( isset( self::$_singletons[ $lcn ] ) ) {
-			throw new Exception('Invalid double construction of singleton "' . $name . '"', 1 );
+			throw new Exception( 'Invalid double construction of singleton "' . $name . '"', 1 );
 		} else {
 			self::$_singletons[ $lcn ] = $obj;
 		}
@@ -1119,107 +969,28 @@ class THEBASE {
 	// end of hooking chain.
 	protected function _hooks() { }
 
-	/** returns an array containing the keys of $data, starting with the given prefix
-	 *  $data = array( 'foo_bar1' => 'bar, 'bar_bar2' => 'foo' );
-	 *  filtered by $match = 'foo' will return array( 'foo_bar1' => 'bar );
-	 *
-	 * @param string $match the beginning of the $data keys that should be returned
-	 * @param array|class $data
-	 * @return array
-	 * @access public
-	 * @date Feb 29th 2012
-	 */
-	public function filter_data_by( $match, $data ) {
-		$args = array();
-		foreach($data as $key => $value) {
-			if(substr($key, 0, 1) == '_')
-				$key = substr($key, 1, strlen($key));			
-			if(strlen($key) > strlen($match) && substr($key, 0, strlen($match)) == $match)
-				$args[str_replace($match.'_', '', $key)] = $value;
-		}
-		return $args;
-	}
-	
-	
-	public function filter_post_data_by( $string ) {
-		$this->deprecated('THEBASE::filter_postDataBy()');
-		return $this->filter_data_by( $string, $_POST );
-	}
-	/** returns an array containing the keys of $_POST, starting with the given prefix
-	 *  $_POST = array( 'foo_bar1' => 'bar, 'bar_bar2' => 'foo' );
-	 *  filtered by $match = 'foo' will return array( 'foo_bar1' => 'bar );
-	 *
-	 * @param string $match the beginning of the $_POST keys that should be returned
-	 * @return array
-	 * @access public
-	 * @date Feb 29th 2012
-	 */
-	public function filter_postDataBy( $string ) {
-		return $this->filter_data_by( $string, $_POST );
-	}
-	/** returns an array containing the keys of $_GET, starting with the given prefix
-	 *  $_GET = array( 'foo_bar1' => 'bar, 'bar_bar2' => 'foo' );
-	 *  filtered by $match = 'foo' will return array( 'foo_bar1' => 'bar );
-	 *
-	 * @param string $match the beginning of the $_GET keys that should be returned
-	 * @return array
-	 * @access public
-	 * @date Feb 29th 2012
-	 */
-	public function filter_getDataBy( $string ) {
-		return $this->filter_data_by( $string, $_GET );
-	}
-	/** returns an array containing the keys of $_REQUEST, starting with the given prefix
-	 *  $_REQUEST = array( 'foo_bar1' => 'bar, 'bar_bar2' => 'foo' );
-	 *  filtered by $match = 'foo' will return array( 'foo_bar1' => 'bar );
-	 *
-	 * @param string $match the beginning of the $_REQUEST keys that should be returned
-	 * @return array
-	 * @access public
-	 * @date Feb 29th 2012
-	 */
-	public function filter_requestDataBy( $string ) {
-		return $this->filter_data_by( $string, $_REQUEST );
-	}
 	
 	// end of update chain.
 	public function update() {
 		return true;
 	}
 
-	public function get_textID( $file ) {
-		return basename( dirname( $file ) ) . '/' . basename( $file );
-	}
-	
-	public function arrayToGet(array $arr) {
-		$r = array();
-		foreach($arr as $key => $value) {
-			$r[] = $key.'='.$value;
+	final public function __call( $method, $args ) {
+		if( isset( $this ) && method_exists( $this, 'call' ) ) {
+			return call_user_func_array( array( $this, 'call' ), $args );
+		} elseif( class_exists( 'THETOOLS' ) && method_exists( 'THETOOLS', $method ) ) {
+			return call_user_func_array( array( 'THETOOLS', $method ), $args );
+		} elseif( class_exists( 'THEDEBUG' ) && method_exists( 'THEDEBUG', $method ) ) {
+			THEDEBUG::_set_btDeepth( 7 );
+			return call_user_func_array( array( 'THEDEBUG', $method ), $args );
+			THEDEBUG::_reset_btDeepth();
+		} elseif( $method == 'debug' ) {
+			echo '<pre>Debug:'."\n";
+			var_dump( $args );
+			echo '<pre>';
+		} else {
+			throw new Exception( 'Call to undefined method ' . $method, 1 );
 		}
-		return implode('&', $r);
-	}
-	
-	/** slices the given string by the last . and returns the last characters.
-	 *
-	 * @param string $file a url, path or filename
-	 * @return string the suffix
-	 * @date Mrz 27th 2012
-	 */
-	public function get_suffix($file) {
-		return substr( $file, strrpos( $file, '.' )+1, strlen( $file ) );
-	}
-
-	/** fallback method for THEDEBUG
-	 *
-	 * @param mixed $var the variable to be debugged
-	 * @return void
-	 * @access public
-	 * @date Jan 21th 2012
-	 */
-	public function debug($var) {
-		echo '<pre>Debug:'."\n";
-		var_dump($var);
-		echo '<pre>';
 	}
 }
 
