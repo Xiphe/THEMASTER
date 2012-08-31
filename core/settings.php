@@ -1,5 +1,20 @@
 <?php
-require_once('base.php');
+namespace Xiphe\THEMASTER;
+
+/*
+ * Include parent class.
+ */
+require_once(THEMASTER_COREFOLDER.'base.php');
+
+/**
+ * THESETTINGS is used to manage Master settings set by constants 
+ *
+ * @copyright Copyright (c) 2012, Hannes Diercks
+ * @author    Hannes Diercks <xiphe@gmx.de>
+ * @version   3.0.0
+ * @link      https://github.com/Xiphe/-THE-MASTER/
+ * @package   !THE MASTER
+ */
 class THESETTINGS extends THEBASE {
 
 	// Turns true after first initiation.
@@ -58,7 +73,7 @@ class THESETTINGS extends THEBASE {
 
 
 	public static function sGet_setting( $key, $textID = null ) {
-		if( class_exists( 'THEWPSETTINGS' ) ) {
+		if( class_exists( 'Xiphe\THEMASTER\THEWPSETTINGS' ) ) {
 			return THEWPSETTINGS::sGet_setting( $key, $textID );
 		} else {
 			return self::_get_setting( $key, $textID );
@@ -85,7 +100,7 @@ class THESETTINGS extends THEBASE {
 				}
 			}
 		} elseif( !$silent ) {
-			throw new Exception( 'Tried to get non-existent setting "' . $textID . ': ' . $key . '".' );
+			throw new \Exception( 'Tried to get non-existent setting "' . $textID . ': ' . $key . '".' );
 		}
 		return;
 	}

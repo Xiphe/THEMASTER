@@ -1,7 +1,21 @@
 <?php
-// Include parent class.
-require_once('wpbuilder.php');
+namespace Xiphe\THEMASTER;
 
+/*
+ * Include parent class.
+ */
+require_once(THEMASTER_COREFOLDER.'wpbuilder.php');
+
+/**
+ * THEWPSETTINGS is used to manage Master Settings stored in the Wordpress DB.
+ * Can fall back to THESETTINGS.
+ *
+ * @copyright Copyright (c) 2012, Hannes Diercks
+ * @author    Hannes Diercks <xiphe@gmx.de>
+ * @version   3.0.0
+ * @link      https://github.com/Xiphe/-THE-MASTER/
+ * @package   !THE MASTER
+ */
 class THEWPSETTINGS extends THEWPBUILDER {
 	// TODO: ADD FUNCTIONALITY TO DELETE SETTINGS
 
@@ -44,14 +58,14 @@ class THEWPSETTINGS extends THEWPBUILDER {
 		if( !self::$s_initiated ) {
 			self::$s_settings[ THEBASE::get_textID( THEMASTER_PROJECTFILE ) ] = array(
 				'name' => 'THE MASTER',
-				'settings' => array( 'THEWPSETTINGS', 'tmgl_settings' )
+				'settings' => array( 'Xiphe\THEMASTER\THEWPSETTINGS', 'tmgl_settings' )
 			);
 
 			// Get all options from database.
 			if( function_exists( 'get_option' ) ) {
 				self::$s_userSettings = unserialize( get_option( 'tm-allsettings', 'a:0:{}' ) );
 			}
-			THEBASE::sRegister_callback( 'afterBaseS_init', array( 'THEWPSETTINGS', 'sinit' ), 1, null, null, 1 );
+			THEBASE::sRegister_callback( 'afterBaseS_init', array( 'Xiphe\THEMASTER\THEWPSETTINGS', 'sinit' ), 1, null, null, 1 );
 		}
 
 		parent::__construct($initArgs);
@@ -66,7 +80,7 @@ class THEWPSETTINGS extends THEWPBUILDER {
 			self::s_hooks();
 
 			THEBASE::sRegister_callback( 'beforeMasterInit', array(
-				'THEWPSETTINGS', 'sCheckSettings'
+				'Xiphe\THEMASTER\THEWPSETTINGS', 'sCheckSettings'
 			), '*' );
 
 			// Prevent this from beeing executed twice.
@@ -79,8 +93,8 @@ class THEWPSETTINGS extends THEWPBUILDER {
 	 */
 	private static function s_hooks() {
 		if( function_exists( 'add_action' ) ) {
-			add_action( 'admin_init', array( 'THEWPSETTINGS', 'sAdmin_init' ) );
-			add_action( 'admin_menu', array( 'THEWPSETTINGS', 'sAdmin_menu' ) );
+			add_action( 'admin_init', array( 'Xiphe\THEMASTER\THEWPSETTINGS', 'sAdmin_init' ) );
+			add_action( 'admin_menu', array( 'Xiphe\THEMASTER\THEWPSETTINGS', 'sAdmin_menu' ) );
 		}
 	}
 		
@@ -167,15 +181,15 @@ class THEWPSETTINGS extends THEWPBUILDER {
 	}
 
 	public static function sAdmin_init() {
-		add_action( 'wp_ajax_tm-savesetting', array( 'THEWPSETTINGS', 'sSave_settings' ) );
+		add_action( 'wp_ajax_tm-savesetting', array( 'Xiphe\THEMASTER\THEWPSETTINGS', 'sSave_settings' ) );
 	}
 
 	public static function sAdmin_menu() {
 		if( current_user_can( 'manage_options' ) ) {
 			foreach( self::$s_settings as $k => $s ) {
 				if( pathinfo( $k, PATHINFO_EXTENSION ) !== 'css' && $GLOBALS['pagenow'] === 'plugins.php'  ) {
-					add_filter( 'plugin_action_links_' . $k , array( 'THEWPSETTINGS', 'sInject_settingsLink' ), 10, 2 );
-					add_action( 'after_plugin_row_' . $k, array( 'THEWPSETTINGS', 'inject_settingsRow'), 10, 3 );
+					add_filter( 'plugin_action_links_' . $k , array( 'Xiphe\THEMASTER\THEWPSETTINGS', 'sInject_settingsLink' ), 10, 2 );
+					add_action( 'after_plugin_row_' . $k, array( 'Xiphe\THEMASTER\THEWPSETTINGS', 'inject_settingsRow'), 10, 3 );
 				} elseif( pathinfo( $k, PATHINFO_EXTENSION ) == 'css' ) {
 					self::$s_themeSettings = $k;
 					add_theme_page(
@@ -183,7 +197,7 @@ class THEWPSETTINGS extends THEWPBUILDER {
 						__( 'Settings', 'themaster' ),
 						'manage_options',
 						'tm_themesettings',
-						array( 'THEWPSETTINGS', 'sAdd_themeSettings' )
+						array( 'Xiphe\THEMASTER\THEWPSETTINGS', 'sAdd_themeSettings' )
 					);
 				}
 			}

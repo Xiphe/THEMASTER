@@ -1,5 +1,21 @@
 <?php
-require_once( 'master.php' );
+namespace Xiphe\THEMASTER;
+
+/*
+ * Include parent class.
+ */
+require_once(THEMASTER_COREFOLDER.'master.php');
+
+/**
+ * THEWPBUILDER can extract Masters initiation arguments from Plug-in and Theme files
+ * and build new skeletons from the template folder.
+ *
+ * @copyright Copyright (c) 2012, Hannes Diercks
+ * @author    Hannes Diercks <xiphe@gmx.de>
+ * @version   3.0.0
+ * @link      https://github.com/Xiphe/-THE-MASTER/
+ * @package   !THE MASTER
+ */
 class THEWPBUILDER extends THEMASTER {
 
 	private static $s_baseTemplatePath;
@@ -18,7 +34,7 @@ class THEWPBUILDER extends THEMASTER {
 	 */
 	public function __construct( $initArgs ) {
 		if( !self::$s_initiated ) {
-			THEBASE::sRegister_callback( 'afterBaseS_init', array( 'THEWPBUILDER', 'sinit' ) );
+			THEBASE::sRegister_callback( 'afterBaseS_init', array( 'Xiphe\THEMASTER\THEWPBUILDER', 'sinit' ) );
 		}
 
 		// Pass ball to parent.
@@ -40,7 +56,7 @@ class THEWPBUILDER extends THEMASTER {
 			 && function_exists( 'is_admin' ) && is_admin()
 			) {
 				self::$s_access = true;
-				add_action( 'init', array( 'THEWPBUILDER', 'sStartToBuild' ) );	
+				add_action( 'init', array( 'Xiphe\THEMASTER\THEWPBUILDER', 'sStartToBuild' ) );	
 			}
 			// Prevent this from beeing executed twice.
 			self::$s_initiated = true;
@@ -134,7 +150,7 @@ class THEWPBUILDER extends THEMASTER {
 		$configFile = strstr( $file, 'wp-content' . DS . 'themes' ) || strstr( $file, 'htdocs' . DS . '__THEMES' ) ?
 			dirname( $file ) . DS . 'style.css' : $file;
 
-		$textID = THEBASE::get_textID( $configFile );
+		$textID = THETOOLS::get_textID( $configFile );
 
 		if( isset( self::$s_initArgsCache[ $textID ] )
 		 && self::$s_initArgsCache[ $textID ]['time'] >= ( filemtime( $configFile ) + filemtime( $file ) ) / 2
@@ -220,8 +236,8 @@ class THEWPBUILDER extends THEMASTER {
 							array_push( $iA['requiredPlugins'], trim($rqrd) );
 						}
 						break;
-					case 'prefix':
-						$iA['prefix'] = trim( $p[1] );
+					case 'namespace':
+						$iA['namespace'] = trim( $p[1] );
 						break;
 					default:
 						break;
@@ -233,12 +249,11 @@ class THEWPBUILDER extends THEMASTER {
 		}
 
 		// Check if a prefix is set or generate it from the first two uppercase chars of the projectName.
-		if( !isset( $iA['prefix'] ) && isset( $iA['projectName'] ) && isset( $iA['author'] ) ) {
-			$px = preg_replace( '/[^A-Z]/', '', $iA['author'] );
-			$px .= preg_replace( '/[^A-Z]/', '', $iA['projectName'] );
-			if( strlen( $px ) >= 4 ) {
-				$iA['prefix'] = $px . '_';
-			}
+		if( !isset( $iA['namespace'] ) && isset( $iA['projectName'] ) && isset( $iA['author'] ) ) {
+			$ns = preg_replace( '/[^A-Za-z]/', '', $iA['author'] ) . '\\';
+			$ns .= preg_replace( '/[^A-Za-z]/', '', $iA['projectName'] );
+			
+			$iA['namespace'] = $ns;
 		}
 
 		if( !isset( $iA['updatable'] ) ) {
@@ -246,7 +261,7 @@ class THEWPBUILDER extends THEMASTER {
 		}
 
 		if( !isset( $iA['textID'] ) ) {
-			$iA['textID'] =  THEBASE::get_textID( $iA['configFile'] );
+			$iA['textID'] =  THETOOLS::get_textID( $iA['configFile'] );
 		}
 
 		self::$s_initArgsCache[ $iA['textID'] ] = array(

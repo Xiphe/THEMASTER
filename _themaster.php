@@ -10,6 +10,7 @@ Author URI: http://red-thorn.de/
 Update Server: http://plugins.red-thorn.de/api/
 Branch: 3.0_Alpha
 */
+
 /*
  Copyright (C) 2012 Hannes Diercks
 
@@ -28,41 +29,51 @@ Branch: 3.0_Alpha
  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-/*
- * In development i use one central symlinked version of this plugin.
- * Whenever something seems to be wrong i always uncomment this line
- * to check if i use the latest version or if the link was broken
- * throu a sync process.
- */
-// die( 'THEMASTER SYMLINKED' );
+namespace Xiphe\THEMASTER;
 
-/*
- * A quick breakpoint for xdebug.
- */ 
-// xdebugBreak();
+    /* -------------------- *
+     *  DEVELOPMENMT STUFF  *
+     * -------------------- */
+    
+    /*
+     * In development i use one central symlinked version of this plugin.
+     * Whenever something seems to be wrong i always uncomment this line
+     * to check if i use the latest version or if the link was broken
+     * throu a sync process.
+     */
+    // die('THEMASTER SYMLINKED');
 
-/*
- * Some settings for development (if anything inside the master is broken).
- */
-// $tmTextID = basename( dirname( __FILE__ ) ) . '/' . basename( __FILE__ );
-// $tmSettingsID = 'THEMASTER_' . strtoupper( $tmTextID );
-// error_reporting(E_ALL);
-// ini_set('display_errors', 1);
-// define( $tmSettingsID . '_ERRORREPORTING', true );
-// define( $tmSettingsID . '_DEBUG', true );
-// define( $tmSettingsID . '_DEBUGMODE', 'FirePHP' );
+    /*
+     * A quick breakpoint for xdebug.
+     */ 
+    // \xdebugBreak();
+
+    /*
+     * Some settings for development (if anything inside the master is broken).
+     */
+    // $tmTextID = basename(dirname(__FILE__)).'/'.basename(__FILE__);
+    // $tmSettingsID = 'THEMASTER_' . strtoupper($tmTextID);
+    // error_reporting(E_ALL);
+    // ini_set('display_errors', 1);
+    // define($tmSettingsID.'_ERRORREPORTING', true);
+    // define($tmSettingsID.'_DEBUG', true);
+    // define($tmSettingsID.'_DEBUGMODE', 'FirePHP');
+
 
 /*
  * I am using the DS constant as a shorthand for DIRECTORY_SEPARATOR.
  */
-if( !defined( 'DS' ) ) {
-	define( 'DS', DIRECTORY_SEPARATOR );
-} elseif( DS !== DIRECTORY_SEPARATOR ) {
-	add_action( 'admin_notices', function() {
-		$msg = __( 'The required constant "DS" is not available so !themaster will be deactivated.', 'themaster' );
-		echo '<div class="error"><p>' . $msg . '</p></div>';
-	});
-	deactivate_plugins( __FILE__ );
+if (!defined('DS')) {
+    define('DS', DIRECTORY_SEPARATOR);
+} elseif (DS !== DIRECTORY_SEPARATOR) {
+    add_action(
+        'admin_notices',
+        function () {
+            $msg = __('The required constant "DS" is not available so !themaster will be deactivated.', 'themaster');
+            echo "<div class=\"error\"><p>$msg</p></div>";
+        }
+    );
+    deactivate_plugins(__FILE__);
 }
 
 /*
@@ -70,28 +81,48 @@ if( !defined( 'DS' ) ) {
  * This is the easyest way to enable the update logic of THEWPUPDATES
  * to a plugin that does not use !THE MASTER.
  */
-define( 'THEUPDATES_UPDATABLE_THEMASTER', __FILE__ );
+define('THEUPDATES_UPDATABLE_THEMASTER', __FILE__);
 
 /*
- * save the path to this file.
+ * Save the path to this file.
  */
-define( 'THEMASTER_PROJECTFILE', __FILE__ );
+define('THEMASTER_PROJECTFILE', __FILE__);
+
+/*
+ * Save the path to this file.
+ */
+define('THEMASTER_PROJECTFOLDER', dirname(__FILE__).DS);
+
+/*
+ * Save the path to this file.
+ */
+define('THEMASTER_COREFOLDER', dirname(__FILE__).DS.'core'.DS);
+
 
 /*
  * Register activation hook.
  */
-if( function_exists( 'register_activation_hook' )) {
-	register_activation_hook( __FILE__, function() {
-		require_once( __DIR__ . DS . 'core' . DS . 'wpmaster.php' );
-		THEWPMASTER::_masterActivate();
-	});
+if (function_exists('register_activation_hook')) {
+    register_activation_hook(
+        __FILE__,
+        function () {
+            require_once(THEMASTER_COREFOLDER.'wpmaster.php');
+            THEWPMASTER::_masterActivate();
+        }
+    );
 }
+
 /*
  * Include core File - automaticaly includes required core files and instantiates a base instance.
  */
-if( !defined( 'WPMASTERAVAILABE' )) {
-	require_once( __DIR__ . DS . 'core' . DS . 'wpmaster.php' );
+if (!defined('THEWPMASTERAVAILABE')) {
+    if (!defined('THEMINIWPMASTERAVAILABLE')) {
+        require_once(THEMASTER_COREFOLDER.'wpmaster.php');
+        $GLOBALS['THEMINIWPMASTER'] = new THEWPMASTER('MINIMASTER');
+        define('THEMINIWPMASTERAVAILABLE', true);
+    }
 }
+
 
 /**
  * initiation for Plugins and Themes that want to use THE MASTER.
@@ -106,57 +137,57 @@ if( !defined( 'WPMASTERAVAILABE' )) {
  *                           to get the called file.
  * @param   string $file     This can be a path to infofile if the first
  *                           param contains additional init args.    
- * @return	object           Instance of THEWPMASTER or false if error.
+ * @return  object           Instance of THEWPMASTER or false if error.
  */
-function THEWPMASTERINIT( $initArgs = null, $file = null ) {
-	
-	/*
-	 * If init args or key projectName is not set.
-	 */
-	if( ( !is_array( $initArgs ) || !isset( $initArgs['projectName'] ) )
-	 && ( 	null === $initArgs
-		 || ( is_string( $initArgs ) && file_exists( $initArgs ) )
-		 || ( is_string( $file ) && file_exists( $file ) )
-	)) {
-		/*
-		 * Start parsing the initiation arguments
-		 * Merge the passed arguments into the parsed.
-		 */
-		$initArgs = array_merge( 
-			THEWPBUILDER::get_initArgs( $initArgs, $file ),
-			( is_array( $initArgs ) ? $initArgs : array() )
-		);
-		$initArgs['isMaster'] = true;
-	} 
+function INIT( $initArgs = null, $file = null ) {
+    
+    /*
+     * If init args or key projectName is not set.
+     */
+    if( ( !is_array( $initArgs ) || !isset( $initArgs['projectName'] ) )
+     && (   null === $initArgs
+         || ( is_string( $initArgs ) && file_exists( $initArgs ) )
+         || ( is_string( $file ) && file_exists( $file ) )
+    )) {
+        /*
+         * Start parsing the initiation arguments
+         * Merge the passed arguments into the parsed.
+         */
+        $initArgs = array_merge( 
+            THEWPBUILDER::get_initArgs( $initArgs, $file ),
+            ( is_array( $initArgs ) ? $initArgs : array() )
+        );
+        $initArgs['isMaster'] = true;
+    } 
 
-	/*
-	 * Try to build a new Master with the initiation arguments.
-	 */
-	try {
-		$r = THEWPMASTER::get_instance( 'Master', $initArgs );
-	} catch( Exception $e ) {
-		/*
-		 * Errors Occured -> write an admin notice.
-		 */
-		if( !isset( $GLOBALS['THEWPMASTERINITERRORS'] )) {
-			if( function_exists( 'add_action' ) ) {
-				$GLOBALS['THEWPMASTERINITERRORS'] = array();
-				add_action( 'admin_notices', function() {
-					foreach( $GLOBALS['THEWPMASTERINITERRORS'] as $e ) {
-						echo '<div class="error"><p>' . $e->getMessage() . '<br />File:' . $e->getFile() . ' Line:' . $e->getLine() . '</p></div>';
-					}
-				});
-			} else {
-				echo '<div class="error"><p>' . $e->getMessage() . '<br />File:' . $e->getFile() . ' Line:' . $e->getLine() . '</p></div>';
-			}
-		}
-		array_push( $GLOBALS['THEWPMASTERINITERRORS'], $e );
-		/*
-		 * Do not return the object because it was not initated correctly.
-		 */
-		$r = false;
-	}
-	return $r;
+    /*
+     * Try to build a new Master with the initiation arguments.
+     */
+    try {
+        $r = THEWPMASTER::get_instance( 'Master', $initArgs );
+    } catch( \Exception $e ) {
+        /*
+         * Errors Occured -> write an admin notice.
+         */
+        if( !isset( $GLOBALS['THEWPMASTERINITERRORS'] )) {
+            if( function_exists( 'add_action' ) ) {
+                $GLOBALS['THEWPMASTERINITERRORS'] = array();
+                add_action( 'admin_notices', function() {
+                    foreach( $GLOBALS['THEWPMASTERINITERRORS'] as $e ) {
+                        echo '<div class="error"><p>' . $e->getMessage() . '<br />File:' . $e->getFile() . ' Line:' . $e->getLine() . '</p></div>';
+                    }
+                });
+            } else {
+                echo '<div class="error"><p>' . $e->getMessage() . '<br />File:' . $e->getFile() . ' Line:' . $e->getLine() . '</p></div>';
+            }
+        }
+        array_push( $GLOBALS['THEWPMASTERINITERRORS'], $e );
+        /*
+         * Do not return the object because it was not initated correctly.
+         */
+        $r = false;
+    }
+    return $r;
 }
 
 /**
@@ -176,17 +207,17 @@ function THEWPMASTERINIT( $initArgs = null, $file = null ) {
  *                         only one that's delivered at the time of 3.0
  * @return void
  */
-function BUILDTHEMASTER( $extended = true, $template = 'def' ) {
-	$args = THEWPBUILDER::get_initArgs();
+function BUILD( $extended = true, $template = 'def' ) {
+    $args = THEWPBUILDER::get_initArgs();
 
-	if( !isset( $args['projectName'] ) ) {
-		throw new Exception( 'BUILDTHEWPMASTERPLUGIN called in invalid file.', 1 );
-	} elseif( !isset( $args['date'] ) ) {
-		THEWPBUILDER::sbuild( 'init', $args, $template, $extended );
-	} elseif( !isset( $args['version'] ) ) {
-		THEWPBUILDER::missing_initArgs( $args );
-	} else {
-		THEWPBUILDER::sbuild( 'full', $args, $template, $extended );
-	}
+    if( !isset( $args['projectName'] ) ) {
+        throw new Exception( 'BUILDTHEWPMASTERPLUGIN called in invalid file.', 1 );
+    } elseif( !isset( $args['date'] ) ) {
+        THEWPBUILDER::sbuild( 'init', $args, $template, $extended );
+    } elseif( !isset( $args['version'] ) ) {
+        THEWPBUILDER::missing_initArgs( $args );
+    } else {
+        THEWPBUILDER::sbuild( 'full', $args, $template, $extended );
+    }
 }
 ?>

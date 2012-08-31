@@ -1,7 +1,20 @@
 <?php
-// Include parent class.
-require_once('wpsettings.php');
+namespace Xiphe\THEMASTER;
 
+/*
+ * Include parent class.
+ */
+require_once(THEMASTER_COREFOLDER.'wpsettings.php');
+
+/**
+ * THEWPUPDATES handles updates via the (WP-Project-Update-API)[https://github.com/Xiphe/WP-Project-Update-API]
+ *
+ * @copyright Copyright (c) 2012, Hannes Diercks
+ * @author    Hannes Diercks <xiphe@gmx.de>
+ * @version   3.0.0
+ * @link      https://github.com/Xiphe/-THE-MASTER/
+ * @package   !THE MASTER
+ */
 class THEWPUPDATES extends THEWPSETTINGS {
 
 	/* ------------------ */
@@ -44,7 +57,7 @@ class THEWPUPDATES extends THEWPSETTINGS {
 		$this->add_requiredInitArgs_( array( 'updatable' ) );
 
 		if ( !self::$s_initiated ) {
-			THEBASE::sRegister_callback( 'afterBaseS_init', array( 'THEWPUPDATES', 'sinit' ) );
+			THEBASE::sRegister_callback( 'afterBaseS_init', array( 'Xiphe\THEMASTER\THEWPUPDATES', 'sinit' ) );
 		}
 
 		// pass the Ball
@@ -98,14 +111,14 @@ class THEWPUPDATES extends THEWPSETTINGS {
 	 */
 	private static function s_hooks() {
 		if ( function_exists( 'add_action' ) ) {
-			add_action( 'plugins_loaded', array( 'THEWPUPDATES', '_checkConstants' ) );
+			add_action( 'plugins_loaded', array( 'Xiphe\THEMASTER\THEWPUPDATES', '_checkConstants' ) );
 		}
 
 		if ( function_exists( 'add_filter' ) ) {
-			add_filter( 'pre_set_site_transient_update_themes', array( 'THEWPUPDATES', '_check_for_project_update' ) );
-			add_filter( 'pre_set_site_transient_update_plugins', array( 'THEWPUPDATES', '_check_for_project_update' ) );
-			add_filter( 'themes_api', array( 'THEWPUPDATES', '_project_api_call' ), 10, 3);
-			add_filter( 'plugins_api', array( 'THEWPUPDATES', '_project_api_call' ), 10, 3);
+			add_filter( 'pre_set_site_transient_update_themes', array( 'Xiphe\THEMASTER\THEWPUPDATES', '_check_for_project_update' ) );
+			add_filter( 'pre_set_site_transient_update_plugins', array( 'Xiphe\THEMASTER\THEWPUPDATES', '_check_for_project_update' ) );
+			add_filter( 'themes_api', array( 'Xiphe\THEMASTER\THEWPUPDATES', '_project_api_call' ), 10, 3);
+			add_filter( 'plugins_api', array( 'Xiphe\THEMASTER\THEWPUPDATES', '_project_api_call' ), 10, 3);
 			// add_filter( 'upgrader_source_selection', array( 'THEWPUPDATES', 'sSourceSelection' ), 10, 3);
 			// add_filter( 'plugins_api_result', function( $a ) {
 			// 	THEDEBUG::debug( $a, 'pluginsApiResult' );
@@ -140,7 +153,7 @@ class THEWPUPDATES extends THEWPSETTINGS {
 	// }
 	
 	private function _checkForcing() {
-		if ( THEWPSETTINGS::_get_Setting( 'forceUpdates', self::$sTextID_ ) ) {
+		if ( THEWPSETTINGS::_get_Setting( 'forceUpdates', THEBASE::$sTextID ) ) {
 			set_site_transient( 'update_plugins', null );
 			set_site_transient( 'update_themes', null );
 		}
@@ -152,9 +165,9 @@ class THEWPUPDATES extends THEWPSETTINGS {
 			foreach ( $const['user'] as $const => $name ) {
 				if ( strstr( $const, 'THEUPDATES_UPDATABLE' )) {
 					if ( count( ( $e = explode( '|', $name ) ) ) == 2 ) {
-						self::updatable( THEBASE::get_textID( $e[0] ), $e[1] );
+						self::updatable( THETOOLS::get_textID( $e[0] ), $e[1] );
 					} else {
-						self::updatable( THEBASE::get_textID( $e[0] ) );
+						self::updatable( THETOOLS::get_textID( $e[0] ) );
 					}
 				}
 			}
@@ -173,7 +186,7 @@ class THEWPUPDATES extends THEWPSETTINGS {
 		
 		try {
 			$apiKey = THEWPSETTINGS::get_setting( 'updateApikey', $textID );
-		} catch ( Exception $e ) {
+		} catch ( \Exception $e ) {
 			if( function_exists( 'get_bloginfo' ) )
 				$apiKey = md5( get_bloginfo('url') );
 			else 
