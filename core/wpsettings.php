@@ -260,8 +260,6 @@ class THEWPSETTINGS extends THEWPBUILDER {
 	public static function sSave_settings() {
 		$obj = self::inst();
 
-		$obj->debug( 'saving Settings' );
-
 		// var_dump( $_REQUEST );
 		if( !isset( $_REQUEST['tm-settingkey'] ) ) {
 			$obj->_exit( 'error', 'tm-settingkey not available.', 5 );

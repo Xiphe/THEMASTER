@@ -12,11 +12,34 @@ namespace Xiphe\THEMASTER;
  */
 class THEDEBUG {
 
-	/* ------------------ */
-	/*  STATIC VARIABLES  */
-	/* ------------------ */
+	/* --------- *
+	 *  SETTINGS *
+	 * --------- */
+
+	/**
+	 * Fall-back Settings for Standalone usage.
+	 *
+	 * @access private
+	 * @var array
+	 */
+	private static $s_settings = array(
+		'debug' => true,
+		'debugMode' => 'FirePHP',  // inline, mail, FirePHP, summed
+		'debugGet' => false,
+		'debugEmail' => false,
+		'debugEmailFrom' => false,
+	);
+
+	private static $s_firePHPPath = './../classes/FirePHPCore/fb.php';
+
+
+	/* ------------------ *
+	 *  STATIC VARIABLES  *
+	 * ------------------ */
 
 	/* PRIVATE */
+
+
 
 	// Turns true after first initiation.
 	private static $s_initiated = false;	
@@ -62,6 +85,8 @@ class THEDEBUG {
 			'f' => '#500'
 		)
 	);
+
+
 	
 	// Holders for $this->_sortDebugs() function used by summed outputs
 	private static $s_cSorting = 'type';
@@ -75,59 +100,91 @@ class THEDEBUG {
 	}
 
 	public function __construct() {
-		if( isset( self::$s_singleton ) && is_object( self::$s_singleton ) ) {
+		if (isset(self::$s_singleton) && is_object(self::$s_singleton)) {
 			return self::$s_singleton;
-		} elseif( !self::$s_initiated ) {
-			THEBASE::sRegister_callback( 'afterBaseS_init', array('Xiphe\THEMASTER\THEDEBUG', 'sinit' ), 1, null, null, 2 );
+		} elseif (!self::$s_initiated) {
+			if (class_exists('Xiphe\THEMASTER\THEBASE')) {
+				THEBASE::sRegister_callback(
+					'afterBaseS_init',
+					array('Xiphe\THEMASTER\THEDEBUG', 'sinit' ),
+					1,
+					null,
+					null,
+					2
+				);
+			} else {
+				self::sInit();
+			}
 		}
 	}
 
 	public static function sInit() {
-		if( !self::$s_initiated ) {
+		if (!self::$s_initiated) {
 			self::$s_initiated = true;
 
-			if( THESETTINGS::sGet_setting( 'debug', THEBASE::$sTextID ) ) {
-				self::$s_mode = THESETTINGS::sGet_setting( 'debugMode', THEBASE::$sTextID );
-				self::$s_getMode = THESETTINGS::sGet_setting( 'debugGet', THEBASE::$sTextID );
+			if (self::_get_setting('debug')) {
+				self::$s_mode = self::_get_setting('debugMode');
+				self::$s_getMode = self::_get_setting('debugGet');
 
+				if (!function_exists('__')) {
+					function __($str) {
+						return $str;
+					}
+				}
 				self::$s_names = array(
-					__( 'OK', 'themaster' ),
-					__( 'Debug', 'themaster' ),
-					__( 'Info', 'themaster' ),
-					__( 'Warning', 'themaster' ),
-					__( 'Error', 'themaster' )
+					__('OK', 'themaster'),
+					__('Debug', 'themaster'),
+					__('Info', 'themaster'),
+					__('Warning', 'themaster'),
+					__('Error', 'themaster')
 				);
 
-				if( self::$s_mode === 'FirePHP' ) {
+				if (self::$s_mode === 'FirePHP') {
 					try {
 						if( !class_exists( '\FirePHP' ) ) {
-							require_once( THEBASE::$sBasePath . 'classes' . DS . 'FirePHPCore' . DS . 'fb.php' );
+							if (class_exists('Xiphe\THEMASTER\THEBASE')) {
+								$firePHP = THEBASE::$sBasePath.'classes'.DS.'FirePHPCore'.DS.'fb.php';
+							} else {
+								$firePHP = self::$s_firePHPPath;
+							}
+
+							require_once($firePHP);
 							ob_start();
 							$FB = \FirePHP::getInstance( true );
 						}
 					} catch(\Exception $e) {
-						THESETTINGS::_set_setting( 'debugMode', 'themaster', 'inline' );
+						if (class_exists('Xiphe\THEMASTER\THESETTINGS')) {
+							THESETTINGS::_set_setting('debugMode', 'themaster', 'inline');
+						}
 						self::$s_mode = 'inline';
-						echo self::_get_debug( 'Debug mode reset to inline because FirePHP could not be initiated', 4 );
+						echo self::_get_debug('Debug mode reset to inline because FirePHP could not be initiated', 4);
 					}
-				} elseif( self::$s_mode === 'mail' ) {
+				} elseif (self::$s_mode === 'mail') {
 
-					self::$s_debugEmail = THESETTINGS::get_setting( 'debugEmail', THEBASE::$sTextID );
+					self::$s_debugEmail = self::_get_setting('debugEmail');
 
-					if( !THEMASTER::isValidEmail( self::$s_debugEmail ) ) {
+					if ((
+						 class_exists('Xiphe\THEMASTER\THETOOLS')
+					 	 && !THETOOLS::isValidEmail(self::$s_debugEmail)
+					   ) || (
+					   	 !class_exists('Xiphe\THEMASTER\THETOOLS')
+					   	 && !preg_match("/^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,3})$/", self::$s_debugEmail)
+					   )
+					) {
 						throw new \Exception( __( 'THEMASTER ERROR: THEDEBUG Mode is set to Mail but no valid reciver is found.', 'themaster' ), 1);
 					}
+					
 
-					if( function_exists( 'get_bloginfo' ) ) {
-						$baseFrom = get_bloginfo( 'siteurl' );
+					if (function_exists('get_bloginfo')) {
+						$baseFrom = get_bloginfo('siteurl');
 					} else {
-						$baseFrom = THEMASTER::get_currentUrl();
+						$baseFrom = $_SERVER['SERVER_NAME'];
 					}
 
-					$baseFrom = parse_url( $baseFrom, PHP_URL_HOST );
-					if( count( ( $e = explode( '.', $baseFrom ) ) ) > 2 ) {
-						unset( $e[0] );
-						$baseFrom = implode( '.', $e );
+					$baseFrom = parse_url($baseFrom, PHP_URL_HOST);
+					if (count(($e = explode('.', $baseFrom))) > 2) {
+						unset($e[0]);
+						$baseFrom = implode('.', $e);
 					}
 					self::$s_debugEmailFrom = 'debug@' . $baseFrom;
 				}
@@ -137,12 +194,12 @@ class THEDEBUG {
 
 			
 				self::$s_enabled = true;
-				self::debug( sprintf( __( 'Debug is on and Mode is set to %s.', 'themaster' ), self::$s_mode ), 2 );
+				self::debug(sprintf(__('Debug is on and Mode is set to %s.', 'themaster'), self::$s_mode), 2);
 			} // ENDIF ( THESETTINGS::get_setting( 'debug', '_themaster' ) )
 		} // ENDIF ( !self::$s_initiated )
 	} // ENDMETHOD sInit
 	
-	public function print_debugcounts() {
+	public static function print_debugcounts() {
 		if( !self::$s_enabled ) return;
 
 		foreach( self::$s_counts as $k => $count ) {
@@ -158,6 +215,15 @@ class THEDEBUG {
 		}
 	}
 
+	private static function _get_setting($key)
+	{
+		if(class_exists('Xiphe\THEMASTER\THESETTINGS')) {
+			return THESETTINGS::sGet_setting($key, THEBASE::$sTextID);
+		} else {
+			return self::$s_settings[$key];
+		}
+	}
+
 	/** Generates the Debug Array and allowes mixing positions of nr & name
 	 *
 	 * @param array $args the called debug args
@@ -165,7 +231,7 @@ class THEDEBUG {
 	 * @access private
 	 * @date Nov 10th 2011
 	 */
-	private function _gen_debug( $args ) {
+	private static function _gen_debug( $args ) {
 		self::$s_cDebug = array();
 		self::$s_cDebug['type'] = gettype( $args[0] );
 		self::$s_cDebug['var'] = $args[0];
@@ -192,7 +258,7 @@ class THEDEBUG {
 			self::$s_cDebug['name'] = null;
 	}
 	
-	private function _callStack( $depth ) {
+	private static function _callStack( $depth ) {
 		$offset = 4;
 		$depth = $depth + $offset;
 		$bt = debug_backtrace();
@@ -216,7 +282,7 @@ class THEDEBUG {
 		);
 	}
 	
-	public function _debug( $args = null, $deepth = null ) {
+	public static function _debug( $args = null, $deepth = null ) {
 		if( !self::$s_enabled ) return;
 
 		self::s_softReset_btDeepth();
@@ -252,7 +318,7 @@ class THEDEBUG {
 	 * @access public
 	 * @date Nov 10th 2011 
 	 */
-	public function _inner_debug( $args = null ) {
+	public static function _inner_debug( $args = null ) {
 		if( !self::$s_enabled ) return;
 		if( empty( $args ) ) return;
 
@@ -337,7 +403,7 @@ class THEDEBUG {
 	 * @access private
 	 * @date Jul 28th 2011
 	 */
-	private function _get_debug( $debugArr ) {
+	private static function _get_debug( $debugArr ) {
 		$r = '<div style="font-family: sans-serif; text-align: left; border: 1px solid '
 				. self::$s_css[$debugArr['nr']]['b'] . ';'
 				. 'background: ' . self::$s_css[$debugArr['nr']]['bg'] . '; color: '
@@ -358,7 +424,7 @@ class THEDEBUG {
 		return $r;
 	}
 	
-	private function _sortDebugs( $x, $y ) {
+	private static function _sortDebugs( $x, $y ) {
 		$c = self::$s_cSorting;
 		$c = $c == 'file' ? 'btFile' : $c == 'line' ? 'btLine' : $c;
 		if( in_array( $c, array( 'name', 'type', 'btFile' ) ) ) {
@@ -381,11 +447,11 @@ class THEDEBUG {
 			return 0;
 	}
 	
-	public function _reset_btDeepth() {
+	public static function _reset_btDeepth() {
 		self::$s_standardBtDeepth = self::$s_internalStandardBtDeepth;
 		self::$s_btDeepth = self::$s_internalStandardBtDeepth;
 	}
-	public function _set_btDeepth( $deepth ) {
+	public static function _set_btDeepth( $deepth ) {
 		if( $deepth === '--' ) {
 			self::$s_standardBtDeepth--;
 			self::$s_btDeepth--;
@@ -409,7 +475,7 @@ class THEDEBUG {
 	 * @param  string $dir     null for asc or asc/desc
 	 * @return void
 	 */
-	public function print_debug( $sorting = null, $dir = 'asc' ) {
+	public static function print_debug( $sorting = null, $dir = 'asc' ) {
 		if( !self::$s_enabled ) return;
 		
 		if( $sorting && count( self::$s_debugs ) > 1 ) {
@@ -433,21 +499,27 @@ class THEDEBUG {
 	 * @param  string $name optional name of the variable
 	 * @return void
 	 */
-	public function diebug( $var = null ) {
+	public static function diebug( $var = null ) {
 		if( !self::$s_enabled ) return;
 		
+		$args = func_get_args();
 		call_user_func_array(
 			array( 'Xiphe\THEMASTER\THEDEBUG', '_debug' ),
-			func_get_args()
+			$args
 		);
+		
+		$d = 0;
+		if (count($args) >= 4) {
+			$d += $args[3];
+		}
 		call_user_func_array(
 			array( 'Xiphe\THEMASTER\THEDEBUG', '_debug' ),
-			array( 'Script got murdered by diebug.', 2 )
+			array( 'Script got murdered by diebug.', 2, null, $d )
 		);
 		die();
 	}
 
-	public function rebug( $var ) {
+	public static function rebug( $var ) {
 		if( !self::$s_enabled ) return;
 		
 		call_user_func_array(
@@ -457,7 +529,7 @@ class THEDEBUG {
 		return $var;
 	}
 
-	public function debug( $var ) {
+	public static function debug( $var ) {
 		if( !self::$s_enabled ) return;
 		
 		call_user_func_array(
@@ -466,7 +538,7 @@ class THEDEBUG {
 		);
 	}
 
-	public function countbug($key) {
+	public static function countbug($key) {
 		if( !self::$s_enabled ) return;
 
 		self::$s_btDeepth -= 4;
@@ -492,7 +564,7 @@ class THEDEBUG {
 		}
 	}
 
-	public function deprecated( $alternative, $continue = true, $bto = 0, $bto2 = 0 ) {
+	public static function deprecated( $alternative = null, $continue = true, $bto = 0, $bto2 = 0 ) {
 		if( !self::$s_enabled ) return;
 		
 		self::_set_btDeepth( '++' );
@@ -502,11 +574,29 @@ class THEDEBUG {
 
 		$ac = self::$s_mode === 'FirePHP' ? '´' : '&acute;';
 
-		$msg = 'use of ' . $ac . $bt[$bto]['class'] . '::' . $bt[$bto]['function'] . '()' . $ac . '. '
-			.'Please use ' . $ac . $alternative . $ac . ' instead.';
+		$func = $ac;
+		if (isset($bt[$bto]['class'])) {
+			$func .= $bt[$bto]['class'].'::';
+		}
+		$func .= $bt[$bto]['function'].'()'.$ac;
+
+		if (isset($alternative) && $alternative != false && $alternative != '') {
+			$alt = ' '.sprintf(
+				__('Please use %s insted.', 'themaster'),
+				$ac.$alternative.$ac
+			);
+		} else {
+			$alt = '';
+		}
+
+		$msg = sprintf(
+			__('Deprecated use of %s.%s', 'themaster'),
+			$func,
+			$alt
+		);
 
 		$args = array(
-			$msg, 3, 'Deprecated', $bto2+2
+			$msg, 3, null, $bto2+2
 		);
 		$method = $continue ? 'debug' : 'diebug';
 
@@ -517,7 +607,7 @@ class THEDEBUG {
 		self::_set_btDeepth( '--' );
 	}
 
-	public function get_mode() {
+	public static function get_mode() {
 		return self::$s_mode;
 	}
 }

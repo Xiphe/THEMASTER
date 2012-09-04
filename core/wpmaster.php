@@ -199,6 +199,8 @@ class THEWPMASTER extends THEWPUPDATES {
      * @return void
      */
     private static function s_hooks() {
+        THEDEBUG::debug('s_hooks');
+
         /*
          * Return if Wordpress is not available.
          */
@@ -210,6 +212,7 @@ class THEWPMASTER extends THEWPUPDATES {
          * Register verry own one time init when wp is available.
          */
         add_action('wp_head', array('Xiphe\THEMASTER\THEWPMASTER', 'twpm_wphead'), 1, 0);
+        add_action('admin_head', array('Xiphe\THEMASTER\THEWPMASTER', 'twpm_wphead'), 1, 0);
 
         /*
          * Register callbacks for printing js-variables.
@@ -465,6 +468,7 @@ class THEWPMASTER extends THEWPUPDATES {
     final public static function twpm_wphead() {
         wp_enqueue_script('jquery');
 
+        THEDEBUG::debug(THEBASE::sGet_registeredSources(), 'regSources');
         foreach( THEBASE::sGet_registeredSources() as $dest => $sources) {
             foreach($sources as $type => $files) {
                 foreach($files as $file => $url) {
@@ -714,7 +718,7 @@ class THEWPMASTER extends THEWPUPDATES {
     }
     
     private function _get_loginRederectUrl( $full = true ) {
-        self::inst()->session();
+        THETOOLS::session();
         $t = false;
         if( isset( $_SESSION['twpm_loginrederect'] ) ) {
             $t = $_SESSION['twpm_loginrederect'];
@@ -726,7 +730,7 @@ class THEWPMASTER extends THEWPUPDATES {
     }
     
     private function _del_loginRederectSession() {
-        self::inst()->session();
+        THETOOLS::session();
         if( isset( $_SESSION['twpm_loginrederect'] ) ) 
             unset( $_SESSION['twpm_loginrederect'] );
         if( isset( $_SESSION['twpm_loginrederectHash'] ) ) 

@@ -757,7 +757,7 @@ class THETOOLS {
      * @param  string $str the string to be backslashed
      * @return string      the backslashed string
      */
-    public static function preSlash($str)
+    public static function preBackSlash($str)
     {
         return '\\'.ltrim($str,'\\');
     }

@@ -418,10 +418,10 @@ class THEBASE {
         $called = get_called_class();
 
         if(
-            isset(self::$_singletons[strtolower($called)])
-            && is_object(self::$_singletons[strtolower($called)])
+            isset(self::$_singletons[$called])
+            && is_object(self::$_singletons[$called])
         ) {
-            $inst = self::$_singletons[strtolower($called)];
+            $inst = self::$_singletons[$called];
         } elseif(class_exists($called) && ($inst = THEBASE::inst()))
             $inst = $inst->get_instance( $called );
         else 
@@ -740,7 +740,8 @@ class THEBASE {
                 if ($source == 'less') {
                     $file = self::_handle_less($file, $foa);
                     $relpath = str_replace(DS.'less'.DS, DS.'css'.DS, $relpath);
-                    $source = $suffix = 'css';
+                    $source = 'css';
+                    $suffix = 'less.css';
                 }
 
                 $url = THETOOLS::slash($url).str_replace(DS, '/', $relpath).$filename.'.'.$suffix;
@@ -763,28 +764,63 @@ class THEBASE {
             "$filename.$source",
             implode(__('" or here "', 'themaster'), $ePaths)
         );
-        throw new \Exception($msg);
+        throw new \Exception($msg,1);
     }
 
+    /**
+     * Internal method for THEBASE::_reg_source()
+     *
+     * Controls the creation of css files from less by checking the filetime of .css and .less
+     * and converts new css from less if less in newer.
+     * Also appends CSSfix to less.
+     *
+     * @access public
+     * @param  string $file the less filepath
+     * @param  string $foa  admin or front
+     * @return string       the css filepath
+     */
     private function _handle_less($file, $foa)
     {
+        /*
+         * Prevent double handling in runtime.
+         */
         self::$s_registeredSources[$foa]['less'][$file] = true;
-                        
-        $cssFile = str_replace(array(DS.'less'.DS, '.less'), array(DS.'css'.DS, '.css'), $file);
         
+        /*
+         * Predict the css path by replacing less with css in the filepath.
+         */
+        $cssFile = str_replace(array(DS.'less'.DS, '.less'), array(DS.'css'.DS, '.less.css'), $file);
+        
+        /*
+         * If the file does not exist or the less is newer...
+         */
         if (!file_exists(($cssFile)) 
          || filemtime($file) > filemtime($cssFile)
         ) {
+
+            /*
+             * Include the libraries.
+             */
             require_once(self::$sBasePath.'classes'.DS.'lessPHP'.DS.'lessc.inc.php');
             require_once(self::$sBasePath.'classes'.DS.'CSSfix'.DS.'CSSfix.php');
+
+            /*
+             * Get the content from less file.
+             */
             $c = file($file);
             
+            /*
+             * Check if elements.less is already appended and add it if not.
+             */
             $import = "// themaster //\n@import \"elements.less\";\n// End: themaster //\n\n";
             if (!isset($c[3]) || $import !== preg_replace('/[\n|\r|\r\n]+/', "\n", $c[0].$c[1].$c[2].$c[3])."\n") {
                 $c = $import.implode('', $c);
                 file_put_contents($file, $c);
             }
 
+            /*
+             * Convert css and append CSSfix
+             */
             try {
                 $LessC = new \lessc($file);
                 $LessC->importDir = array( 
@@ -817,241 +853,417 @@ class THEBASE {
         }
     }
     
-    public function echo_sources($admin = false) {
-        if(empty(self::$s_registeredSources)) return;
+    /**
+     * Print out links to registered sources.
+     *
+     * @access public
+     * @param  boolean $admin true for admin sources
+     * @return void
+     */
+    public function echo_sources($admin = false)
+    {
+        if (empty(self::$s_registeredSources)) {
+            return;
+        }
         
         $sources = $admin == 'admin' ? self::$s_registeredSources['admin'] : self::$s_registeredSources['front'];
         unset($sources['less']);
-        if(empty($sources)) return;
+        if (empty($sources)) {
+            return;
+        }
 
-        $HTML = $this->get_HTML();
-        foreach($sources as $type => $files) {
-            foreach($files as $file => $url) {
+        $HTML = self::sGet_HTML();
+        foreach ($sources as $type => $files) {
+            foreach ($files as $file => $url) {
                 $HTML->$type($url);
             }
         }
     }
 
-    public static function sGet_registeredSources() {
+    /**
+     * Getter for THEBASE::$s_registeredSources
+     *
+     * @access public
+     * @return array
+     */
+    public static function sGet_registeredSources()
+    {
         return self::$s_registeredSources;
     }
 
-    public static function sGet_registeredJsVars() {
+    /**
+     * Getter for THEBASE::$s_registeredJsVars
+     *
+     * @access public
+     * @return array
+     */
+    public static function sGet_registeredJsVars()
+    {
         return self::$s_registeredJsVars;
     }
 
-    public static function sGet_registeredAdminJsVars() {
+    /**
+     * Getter for THEBASE::$s_registeredAdminJsVars
+     *
+     * @access public
+     * @return array
+     */
+    public static function sGet_registeredAdminJsVars()
+    {
         return self::$s_registeredAdminJsVars;
     }
     
-    public function echo_jsVars() {
-        $HTML = $this->get_HTML();
+    /**
+     * Prints out the registered JsVariables.
+     *
+     * @access public
+     * @return void
+     */
+    public function echo_jsVars()
+    {
+        $HTML = self::sGet_HTML();
         $HTML->sg_script();
-        foreach(self::$s_registeredJsVars as $name => $var) {
+        foreach (self::$s_registeredJsVars as $name => $var) {
             $HTML->blank('var '.$name.' = '.json_encode($var).';');
             unset(self::$s_registeredJsVars[$name]);
         }
         $HTML->end();
     }
     
-    public function echo_AdmimJsVars() {
+    /**
+     * Prints out the registered AdminJsVariables.
+     *
+     * @access public
+     * @return void
+     */
+    public function echo_AdmimJsVars()
+    {
         $HTML = $this->get_HTML();
         $HTML->sg_script();
-        foreach(self::$s_registeredAdminJsVars as $name => $var) {
+        foreach (self::$s_registeredAdminJsVars as $name => $var) {
             $HTML->blank('var '.$name.' = '.json_encode($var));
             unset(self::$s_registeredAdminJsVars[$name]);
         }
         $HTML->end();
     }
     
-    
-    public function incl( $source, $include = false ) {
-        $source = THETOOLS::get_verryCleanedDirectPath( $sSource ).'.php';
-        
-        foreach( array( $this->basePath, self::$sBasePath ) as $path ) {
-            if( file_exists( ( $path = $path . 'res' . DS . 'includes' . DS . $source ) ) ) {
-                return $include ? include( $path ) : $path;
-            }
-        }
-
-        throw new \Exception( 'Tryed to include unexistent file "' . $source . '"', 1 );
-    }
-    
-    
-    /** Includes a Model File from basePath/models/
+    /**
+     * Prepares the including of a file in res/includes
      *
-     * @param string $modelname the Models name
-     * @return bool flag if the model was included or not
      * @access public
-     * @date Dez 15th 2011
+     * @param  string  $source  the filename or relative path + filename
+     * @param  boolean $include true for direct including.
+     * @return mixed            the full path to the file or bool as result from include.
      */
-    final public function reg_model( $modelname, $staticInits = null ) {
-        if( class_exists( ( $fullModelname = strtoupper( $this->prefix ) . $modelname ) ) ) return true;
-        try {
-            if( file_exists( 
-                ( $inclPath = $this->basePath . 'models' . DS . strtolower( $modelname ) . '.php' ) 
-            ) ) {
-                include( $inclPath );
-                if( is_array( $staticInits ) ) {
-                    foreach( $staticInits as $key => $value ) {
-                        $fullModelname::$$key = $value;
-                    }
-                }
-                if( !class_exists( $fullModelname ) ) {
-                    throw new \Exception('Model not found: '.$fullModelname.' | ' . $inclPath);
-                } else {
-                    return true;
-                }
-            } else {
-                throw new \Exception('Model File not found: '.$fullModelname.' | ' . $inclPath);
-            }
-        } catch(\Exception $e) {
-            $this->debug($e->getMessage()."\nFile: ".$e->getFile()."\nLine: ".$e->getLine(), 4);
-            return false;
+    final public function incl($source, $include = false)
+    {
+        $source = THETOOLS::get_verryCleanedDirectPath($sSource).'.php';
+        $paths = array();
+        if (isset($this)) {
+            $paths[] = $this->basePath;
         }
+        $paths[] = self::$sBasePath;
+
+        foreach ($paths as $path) {
+            if (file_exists(($path = $path.'res'.DS.'includes'.DS.$source))) {
+                return $include ? include($path) : $path;
+            }
+        }
+
+        throw new \Exception('Tryed to include unexistent file "'.$source.'"', 1);
     }
     
-    final public function new_model( $modelname, $initArgs = null ) {
-        if( !class_exists( ( $fullModelname = strtoupper( $this->prefix ) . $modelname ) ) ) {
-            $this->reg_model( $modelname );
+    
+    /**
+     * Includes a Model File from basePath/models/
+     *
+     * @access public
+     * @param  string $modelname the Models name
+     * @return string            namespace+model.
+     */
+    final public function reg_model($modelname, $staticInits = null)
+    {
+        $paths = array();
+        if (isset($this)) {
+            $paths[] = array(
+                'namespace' => $this->namespace,
+                'basePath' => $this->basePath
+            );
         }
-        if( class_exists( $fullModelname ) ) {
-            return new $fullModelname( $initArgs );
+        $paths[] = array(
+            'namespace' => self::sNameSpace,
+            'basePath' => self::$sBasePath
+        );
+        $ePaths = array();
+
+        foreach ($paths as $k => $data) {
+            extract($data);
+            $mID = $namespace.'\\'.$modelname;
+
+            if (class_exists($mID)) {
+                return $mID;
+            }
+
+            $inclPath = $basePath.'models'.DS.strtolower($modelname).'.php';
+            $ePaths[] = $inclPath;
+
+            if (file_exists($inclPath)) {
+                include_once($inclPath);
+                if (!class_exists($mID ) ) {
+                    throw new \Exception('Model not found: '.$mID.' | ' . $inclPath);
+                } else {
+                    if (is_array($staticInits)) {
+                        foreach ($staticInits as $key => $value) {
+                            $mID::$$key = $value;
+                        }
+                    }
+                    return $mID;
+                }
+            }
         }
+
+        $msg = sprintf(__( '**!THE MASTER ERROR:** Model File for %s not found.<br />Expected here: "%s".', 'themaster' ),
+            $modelname,
+            implode(__('" or here "', 'themaster'), $ePaths)
+        );
+        throw new \Exception($msg,1);
+    }
+    
+    /**
+     * Checks if the model is available, includes the model file with THEBASE::reg_model()
+     * and returns a new Model.
+     *
+     * @access public
+     * @param  string $modelname the model name
+     * @param  array  $initArgs  the initiation arguments for the model
+     * @return object            the model
+     */
+    final public function new_model($modelname, $initArgs = null)
+    {
+        $paths = array();
+        if (isset($this)) {
+            $paths[] = array(
+                'namespace' => $this->namespace,
+                'basePath' => $this->basePath
+            );
+        }
+        $paths[] = array(
+            'namespace' => self::sNameSpace,
+            'basePath' => self::$sBasePath
+        );
+        $ePaths = array();
+
+        foreach ($paths as $k => $data) {
+            $mID = $namespace.'\\'.$modelname;
+            if (!class_exists($mID)) {
+                try {
+                    call_user_func(
+                        array(
+                            isset($this) ? $this : '\Xiphe\THEMASTER\THEBASE',
+                            'reg_model'
+                        ),
+                        $modelname
+                    );
+                } catch (\Exception $e) {
+                    continue;
+                }
+            }
+            if (class_exists($mID)) {
+                return new $mID($initArgs);
+            }
+        }
+
+        throw $e;
     }
 
-    final public function gi( $classname, $initArgs = array() ) {
-        if( isset( $this ) ) {
-            return $this->get_instance( $classname, $initArgs );
+    /**
+     * Shorthand for THEBASE::get_instance()
+     *
+     * @access public
+     * @param  string $classname the name of the class
+     * @param  array  $initArgs  optional initiation arguments for the instance.
+     * @return mixed             the instance or false if not available.
+     */
+    final public function gi($classname, $initArgs = array())
+    {
+        if (isset($this)) {
+            return $this->get_instance($classname, $initArgs);
         } else {
-            return self::get_instance( $classname, $initArgs );
+            return self::get_instance($classname, $initArgs);
         }
     }
 
-    /** Trys to get a class File named example.php from 
+    /**
+     * Trys to get a class File named example.php from 
      * "classes"-Subfolder of defined basePath and return a 
      * instance of Example
      * 
-     * @param String $classname
-     * @param Array/Empty $initArgs optional
-     * @return Object the requested Object
      * @access public
-     * @date Jul 29th 2011
+     * @param  string $classname the name of the class
+     * @param  array  $initArgs  optional initiation arguments for the instance.
+     * @return mixed             the instance or false if not available.
      */
-    final public function get_instance( $classname, $initArgs = array() ) {
-
-        if( $classname === 'Master' ) {
-            // if( isset( $initArgs['prefix'] )
-         //      && isset( $initArgs['basePath'] )
-         //     ) {
-            //  $prefix = $initArgs['prefix'];
-            //  $basePath = $initArgs['basePath'];
+    final public function get_instance($classname, $initArgs = array())
+    {
+        $paths = array();
+        if ($classname === 'Master') {
             if (isset($initArgs['basePath']) && $initArgs['namespace']) {
-                $namespace = $initArgs['namespace'];
-                $basePath = $initArgs['basePath'];
+                $paths[]  = array(
+                    'namespace' => $initArgs['namespace'],
+                    'basePath' => $initArgs['basePath']
+                );
             } else {
                 throw new \Exception( 'Master initiation misses arguments (prefix & basePath)', 1);
                 return false;
             }
-        } elseif( isset( $this ) ) {
-            $namespace = $this->namespace;
-            $basePath = $this->basePath;
         } else {
-            throw new \Exception( 'Can not call nonmaster classes statically.', 1 );
-            return false;
+            if (isset($this)) {
+                $paths[] = array(
+                    'namespace' => $this->namespace,
+                    'basePath' => $this->basePath
+                );
+            }
+            $paths[] = array(
+                'namespace' => self::sNameSpace,
+                'basePath' => self::$sBasePath
+            );
         }
 
-        $classname = trim( $classname );
-        $filename = strtolower( $classname );
-        // $lcn = strtolower( $prefix . $classname );
-        $lcn = strtolower( $classname );
+        $classname = trim($classname);
+        $filename = strtolower($classname);
+        $lcn = strtolower($classname);
+        $ePaths = array();
+        
 
-        if(isset(self::$_singletons[$lcn]) && is_object(self::$_singletons[$lcn]))
-            return self::$_singletons[$lcn];
+        foreach ($paths as $k => $data) {
+            extract($data);
+            $cID = $namespace.'\\'.$classname;
 
-        foreach( array( $basePath, self::$sBasePath ) as $k => $basePath ) {
-            if( file_exists( ( $file = $basePath . 'classes' . DS . $filename . '.php' ) ) ) {
-                include_once( $file );
+            if (isset(self::$_singletons[$cID]) && is_object(self::$_singletons[$cID])) {
+                return self::$_singletons[$cID];
+            }
+
+            $file = $basePath.'classes'.DS.$filename.'.php';
+            $ePaths[] = $file;
+
+            if (file_exists($file)) {
+                include_once($file);
                 
-                // $classname = ( $k === 0 ? $prefix : '' ) . $classname;
-                $classname = $namespace . '\\' . $classname;
 
-                if( !class_exists( $classname ) ) {
-                    throw new \Exception('<strong>!THE MASTER ERROR:</strong> Class ' . $classname . ' is not available.', 2);
+                if (!class_exists($cID)) {
+                    throw new \Exception('<strong>!THE MASTER ERROR:</strong> Class '.$cID.' is not available.', 2);
                 }
 
-                $args = isset( $this ) ? array_merge(
+                if (isset($this)) {
+                    $initArgs = array_merge(
                         $this->_mastersInitArgs,
-                        array_merge( $this->_initArgs, $initArgs )
-                ) : $initArgs;
+                        $this->_initArgs,
+                        $initArgs
+                    );
+                }
 
                 self::sRegister_callback(
                     'initiated', 
-                    function( $obj ) {
-                        if( isset( $obj->singleton ) && $obj->singleton === true ) {
-                            THEBASE::sRegSingleton( $obj );
+                    function ($obj) {
+                        if (isset($obj->singleton) && $obj->singleton === true) {
+                            THEBASE::sRegSingleton($obj);
                         }
 
-                        if( isset( $obj->HTML ) && $obj->HTML === true ) {
-                            if( defined( 'HTMLCLASSAVAILABLE' ) && HTMLCLASSAVAILABLE === true ) {
-                                $obj->HTML = new \HTML( $obj->baseUrl );
+                        if (isset($obj->HTML) && $obj->HTML === true) {
+                            if (defined('HTMLCLASSAVAILABLE') && HTMLCLASSAVAILABLE === true) {
+                                $obj->HTML = new \HTML($obj->baseUrl);
                             } else {
                                 throw new \Exception( '<strong>!THE MASTER ERROR:</strong> Class "'
-                                    . get_class( $obj ) . '" should have been initiated whith HTML Object,'
-                                    . ' but it seems as the HTML Class file is not available.', 4 );
+                                    .get_class($obj).'" should have been initiated whith HTML Object,'
+                                    .' but it seems as the HTML Class file is not available.', 4
+                                );
                             }
                         }
 
-                        if( method_exists( $obj, '_hooks' ) )
+                        if (method_exists($obj, '_hooks')) {
                             $obj->_hooks();
-                        if( method_exists( $obj, 'hooks' ) )
+                        }
+                        if (method_exists($obj, 'hooks')) {
                             $obj->hooks();
-                        if( method_exists( $obj, 'init' ) )
+                        }
+                        if (method_exists($obj, 'init')) {
                             $obj->init();
+                        }
                     },
                     1,
-                    function( $condArgs, $givenArgs ) {
+                    function ($condArgs, $givenArgs) {
                         return $condArgs['class'] === $givenArgs['class'];
                     },
-                    array( 'class' => $classname )
+                    array('class' => $cID)
                 );
 
-                $obj = new $classname( $args );
-
-                if( !$obj )
-                    throw new \Exception( '<strong>!THE MASTER ERROR:</strong> Class was not initiated: ' . $classname, 3 );
-                
-                return $obj;
-            } 
+                $obj = new $cID($initArgs);
+                break;
+            }
         }
 
-        if( isset( $this ) && class_exists( 'Xiphe\THEMASTER\THEWPBUILDER' ) && $this->buildMissingClasses === true ) {
-            return THEWPBUILDER::sBuildClass( $classname, $initArgs, $this );
+        if(!isset($obj) || !$obj) {
+            if (isset($this) && class_exists('Xiphe\THEMASTER\THEWPBUILDER') && $this->buildMissingClasses === true) {
+                return THEWPBUILDER::sBuildClass($classname, $initArgs, $this);
+            } else {
+                               
+                $msg = sprintf(__( '**!THE MASTER ERROR:** Class File for %s expected here: "%s".', 'themaster' ),
+                    $classname,
+                    implode(__('" or here "', 'themaster'), $ePaths)
+                );
+                throw new \Exception($msg,1);
+            }
+        }
+    }
+
+    /**
+     * Saves a object into static singleton store.
+     *
+     * @access public
+     * @param  object $obj
+     * @return void
+     */
+    final public static function sRegSingleton($obj)
+    {
+        $cID = get_class($obj);
+        if (isset(self::$_singletons[$cID])) {
+            throw new \Exception('Invalid double construction of singleton "'.$cID.'"', 1);
         } else {
-            throw new \Exception( '<strong>!THE MASTER ERROR:</strong> Class File for ' . $classname
-                . ' not found --- Should be '
-                . '<em>' . $basePath . 'classes' . DS . strtolower($classname) . '.php</em>'
-                . ' or <em>' . self::$sBasePath . 'classes' . DS . strtolower($classname) . '.php</em>.',
-                1
-            );
+            self::$_singletons[$cID] = $obj;
         }
     }
 
-    final public static function sRegSingleton( $obj ) {
-        $name = get_class( $obj );
-        $lcn = strtolower( $name );
-        if( isset( self::$_singletons[ $lcn ] ) ) {
-            throw new \Exception( 'Invalid double construction of singleton "' . $name . '"', 1 );
-        } else {
-            self::$_singletons[ $lcn ] = $obj;
-        }
+    /**
+     * Non-static wrapper for THEBASE::sRegister_callback();
+     *
+     * @access public
+     * @param  string    $name          the name of the callback
+     * @param  function  $cb            the callback function
+     * @param  mixed     $times         how often the callback should be fired before being deleted. Integer or '*'
+     * @param  function  $condition     a function returning a boolean to determine if the callback should be fired
+     * @param  array     $conditionArgs arguments to be passed to the condition function
+     * @param  integer   $position      the position of the callback lower number -> called early.
+     * @return void
+     */
+    final public function register_callback($name, $cb, $times = 1, $condition = null, $conditionArgs = array(), $position = 10)
+    {
+        self::sRegister_callback($name, $cb, $times, $condition, $conditionArgs, $position);
     }
 
-    final public function register_callback( $name, $cb, $times = 1, $condition = null, $conditionArgs = array(), $position = 10 ) {
-        self::sRegister_callback( $name, $cb, $times, $condition, $conditionArgs, $position );
-    }
-
-    final public static function sRegister_callback( $name, $cb, $times = 1, $condition = null, $conditionArgs = array(), $position = 10 ) {
+    /**
+     * Registers a callback to be used later by THEBASE::do_callback()
+     *
+     * @access public
+     * @param  string    $name          the name of the callback
+     * @param  function  $cb            the callback function
+     * @param  mixed     $times         how often the callback should be fired before being deleted. Integer or '*'
+     * @param  function  $condition     a function returning a boolean to determine if the callback should be fired
+     * @param  array     $conditionArgs arguments to be passed to the condition function
+     * @param  integer   $position      the position of the callback lower number -> called early.
+     * @return void
+     */
+    final public static function sRegister_callback($name, $cb, $times = 1, $condition = null, $conditionArgs = array(), $position = 10)
+    {
         self::$s_callbacks[$name][$position][] = array(
             'condition' => $condition,
             'cb' => $cb,
@@ -1060,36 +1272,59 @@ class THEBASE {
         );
     }
 
-    final public function do_callback( $name, $callbackArgs = array(), $doConditionArgs = array() ) {
-        self::sdo_callback(  $name, $callbackArgs, $doConditionArgs );
+    /**
+     * Non-static wrapper for THEBASE::sDo_callback();
+     *
+     * @access public
+     * @param  string $name            the name of the callback
+     * @param  array  $callbackArgs    array of arguments to be passed to the callback function.
+     * @param  array  $doConditionArgs array of arguments to be passed to the condition function.
+     * @return void
+     */
+    final public function do_callback($name, $callbackArgs = array(), $doConditionArgs = array())
+    {
+        self::sDo_callback($name, $callbackArgs, $doConditionArgs);
     }
 
-    final public static function sdo_callback( $name, $callbackArgs = array(), $doConditionArgs = array() ) {
-        if( isset( self::$s_callbacks[$name] ) 
-         && count( self::$s_callbacks[$name] ) > 0
+    /**
+     * Fires a previously registered callback
+     *
+     * @access public
+     * @param  string $name            the name of the callback
+     * @param  array  $callbackArgs    array of arguments to be passed to the callback function.
+     * @param  array  $doConditionArgs array of arguments to be passed to the condition function.
+     * @return void
+     */
+    final public static function sDo_callback($name, $callbackArgs = array(), $doConditionArgs = array())
+    {
+        if (isset(self::$s_callbacks[$name]) 
+         && count(self::$s_callbacks[$name]) > 0
         ) {
-            ksort( self::$s_callbacks[$name] );
+            ksort(self::$s_callbacks[$name]);
 
-            foreach( array( 'callbackArgs', 'doConditionArgs' ) as $k ) {
-                if( !is_array( $$k ) ) {
-                    $$k = array( $$k );
+            foreach (array('callbackArgs', 'doConditionArgs') as $k) {
+                if (!is_array($$k)) {
+                    $$k = array($$k);
                 }
             }
-            foreach( self::$s_callbacks[$name] as $nr => $cbg ) {
-                foreach( $cbg as $k => $v ) {
-                    extract( $v );
+            foreach (self::$s_callbacks[$name] as $nr => $cbg) {
+                foreach ($cbg as $k => $data) {
+                    extract($data);
 
-                    if( !isset( $condition )
-                     || ( !is_callable( $condition ) && $condition )
-                     || call_user_func_array( $condition, array( $doConditionArgs, $conditionArgs ) )
+                    if (!isset( $condition)
+                     || (!is_callable($condition) && $condition)
+                     || call_user_func_array($condition, array($doConditionArgs, $conditionArgs))
                     ) {
-                        array_unshift( $callbackArgs, $cb );
-                        call_user_func_array( array( 'Xiphe\THEMASTER\THEMASTER', 'sTryTo' ), $callbackArgs );
+                        array_unshift($callbackArgs, $cb);
+                        call_user_func_array(
+                            array('Xiphe\THEMASTER\THEMASTER', 'sTryTo'),
+                            $callbackArgs
+                        );
                         
-                        if( $times !== '*' ) {
+                        if ($times !== '*') {
                             $times--;
-                            if( $times <= 0 ) {
-                                unset( self::$s_callbacks[$name][$nr][$k] );
+                            if ($times <= 0) {
+                                unset(self::$s_callbacks[$name][$nr][$k]);
                             } else {
                                 self::$s_callbacks[$name][$nr][$k]['times'] = $times;
                             }
@@ -1100,48 +1335,103 @@ class THEBASE {
         }
     }
         
-    // end of hooking chain.
+    /**
+     * End of hooking chain.
+     *
+     * @access protected
+     * @return void
+     */
     protected function _hooks() { }
-
     
-    // end of update chain.
-    public function update() {
+    /**
+     * End of update chain.
+     *
+     * @access protected
+     * @return void
+     */
+    public function update()
+    {
         return true;
     }
 
-    final public function __call( $method, $args ) {
+    /**
+     * Catch all function to implement THETOOLS and THEDEBUG
+     * 
+     * @access public
+     * @return void
+     */
+    final public function __call($method, $args)
+    {
+        /*
+         * Check if called on instance and if the instance has a "call" method.
+         */
         if (isset($this) && method_exists($this, 'call')) {
             return call_user_func_array(array($this,'call'), $args);
-        } elseif (
+        }
+
+        /*
+         * Check if method is available in THETOOLS.
+         */
+        elseif (
             class_exists($class = 'Xiphe\THEMASTER\THETOOLS')
          && method_exists($class, $method)
         ) {
-            THEDEBUG::debug('Indirect call of THETOOLS::'.$method.' please try to call it directly', null, 3);
+            THEDEBUG::debug('Indirect call of THETOOLS::'.$method.' please try to call it directly', null, 3, 1);
             return call_user_func_array(array($class, $method), $args);
-        } elseif (
+        }
+
+        /*
+         * Check if the method is available in THEDEBUG.
+         */
+        elseif (
             class_exists($class = 'Xiphe\THEMASTER\THEDEBUG')
-         && method_exists($class, $method ) ) {
-            THEDEBUG::debug('Indirect call of THEDEBUG::'.$method.' please try to call it directly', null, 3);
+         && method_exists($class, $method )
+        ) {
+            THEDEBUG::debug('Indirect call of THEDEBUG::'.$method.' please try to call it directly', null, 3, 1);
             THEDEBUG::_set_btDeepth(7);
             return call_user_func_array(array($class, $method), $args);
             THEDEBUG::_reset_btDeepth();
-        } elseif($method == 'debug') {
+        }
+
+        /*
+         * Check if method was "debug".
+         */
+        elseif ($method == 'debug') {
             echo '<pre>Debug:'."\n";
             var_dump($args);
             echo '<pre>';
+
+        /*
+         * Throw exception.
+         */
         } else {
-            throw new \Exception( 'Call to undefined method ' . $method, 1 );
+            throw new \Exception('Call to undefined method '.$method, 1);
         }
     }
 }
 
-if ( !function_exists('__') ) {
-    function __( $text ) {
+/**
+ * Fallback for translation in non-Wordpress environments.
+ */
+if (!function_exists('__')) {
+    /**
+     * Fallback for translation in non-Wordpress environments.
+     *
+     * @param  string $text incoming text
+     * @return string       the same text :)
+     */
+    function __($text) {
         return $text;
     }
 }
-if ( !function_exists('_e') ) {
-    function _e( $text ) {
+if (!function_exists('_e')) {
+    /**
+     * Fallback for translation in non-Wordpress environments.
+     *
+     * @param  string $text incoming text
+     * @return void
+     */
+    function _e($text) {
         echo $text;
     }
 }

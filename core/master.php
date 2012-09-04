@@ -119,7 +119,7 @@ class THEMASTER extends THESETTINGS {
 
         if( isset( $this->requiredPlugins )
          && ( is_array( $this->requiredPlugins ) || is_object( $this->requiredPlugins ) )
-         && !$this->group_in_array( $this->requiredPlugins, self::$s_initiatedProjects )
+         && !THETOOLS::group_in_array( $this->requiredPlugins, self::$s_initiatedProjects )
         ) {
             if( !isset( self::$s_toBeInitiated[ $this->textdomain ] ) ) {
                 self::$s_toBeInitiated[ $this->textdomain ] = array(
@@ -202,7 +202,7 @@ class THEMASTER extends THESETTINGS {
                 $this->_r[$k] = $$k;
             }
         }
-        if( $this->_get_setting( 'debug', THEBASE::get_textID( THEMASTER_PROJECTFILE ) ) === true
+        if( $this->_get_setting( 'debug', THETOOLS::get_textID( THEMASTER_PROJECTFILE ) ) === true
          && isset( $_REQUEST['debug'] )
          && $_REQUEST['debug'] == 'true'
         ) {

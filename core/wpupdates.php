@@ -262,7 +262,7 @@ class THEWPUPDATES extends THEWPSETTINGS {
 			if ( isset( $response )
 			 && !empty( $response )
 			 && ( is_object( $response ) || is_array( $response ) )
-			 && THEMASTER::rget( $response, 'new_version' ) !== null
+			 && THETOOLS::rget( $response, 'new_version' ) !== null
 			) {
 				$checked_data->response[$textID] = $response;
 			}
