@@ -98,19 +98,23 @@ class THEWPMASTER extends THEWPUPDATES {
 
     
     private static $s_ftp_conn_id;
-    private static $s_folderStructure = array(
-        'classes' => 0755,
-        // 'models' => 0755,
-        'res' => array(
-            'chmod' => 0755,
-            'css' => 0777,
-            'includes' => 0755,
-            'js' => 0777,
-            'less' => 0755,
-        ),
-        // 'views' => 0755,
-    );
 
+    /**
+     * Array of all project versions.
+     *
+     * @access private
+     * @var array
+     */
+    private static $s_theVersions = array();
+
+    /**
+     * Flag turns true if a project has been updated and allows sSaveTheVersions
+     * to store the new versions into the database.
+     *
+     * @access private
+     * @var    boolean
+     */
+    private static $s_storeTheVersions = false;
 
     /* ---------------------- *
      *  CONSTRUCTION METHODS  *
@@ -142,7 +146,15 @@ class THEWPMASTER extends THEWPUPDATES {
         /*
          * Pass ball to parent.
          */
-        return parent::__construct($initArgs);
+        $obj = parent::__construct($initArgs);
+
+        if ($initArgs === 'MINIMASTER') {
+            if (class_exists('Xiphe\THEMASTER\THEWPMASTER')) {
+                $this->_versionCheck();
+            }
+        }
+
+        return $obj;
     }
     
     /**
@@ -153,6 +165,14 @@ class THEWPMASTER extends THEWPUPDATES {
      */
     public static function sinit() {
         if (!self::$s_initiated) {
+            if( function_exists( 'get_option' ) ) {
+                self::$s_theVersions = get_option( 'Xiphe\THEMASTER\theVersions', array() );
+            }
+
+            if (function_exists('add_action')) {
+                add_action('shutdown', array('Xiphe\THEMASTER\THEWPMASTER','sSaveTheVersions'));
+            }
+
             /*
              * Register basic less and js files.
              */
@@ -199,8 +219,6 @@ class THEWPMASTER extends THEWPUPDATES {
      * @return void
      */
     private static function s_hooks() {
-        THEDEBUG::debug('s_hooks');
-
         /*
          * Return if Wordpress is not available.
          */
@@ -272,16 +290,23 @@ class THEWPMASTER extends THEWPUPDATES {
         if( parent::_masterInit() ) {
             $this->_versionCheck();
             
+            $wpishPath = get_wpInstallPath(
+                $this->projectFile,
+                ($this->projectType == 'theme' ? true : false)
+            );
+
             if( is_dir( $this->basePath . DS . 'languages' ) ) {
-                load_plugin_textdomain( $this->textdomain, false, $this->basePath . DS . 'languages' . DS );
+                load_plugin_textdomain( $this->textdomain, false, $wpishPath . DS . 'languages' . DS );
             }
 
-            if( method_exists( $this, 'activate' ) ) {
-                register_activation_hook( $this->projectFile, array( $this, 'activate' ) );
-            }
+            if ($this->projectType != 'theme') {
+                if( method_exists( $this, 'activate' ) ) {
+                    register_activation_hook( $wpishPath, array( $this, 'activate' ) );
+                }
 
-            if( method_exists( $this, 'deactivate' ) ) {
-                register_activation_hook( $this->projectFile, array( $this, 'deactivate' ) );
+                if( method_exists( $this, 'deactivate' ) ) {
+                    register_deactivation_hook( $wpishPath, array( $this, 'deactivate' ) );
+                }
             }
 
             $this->_masterInitiated();
@@ -303,7 +328,7 @@ class THEWPMASTER extends THEWPUPDATES {
      * @access private
      * @return void
      */
-    private function _versionCheck() {
+    protected function _versionCheck() {
         if( !isset( $GLOBALS['pagenow'])
          || ( $GLOBALS['pagenow'] != 'plugins.php' && $GLOBALS['pagenow'] != 'themes.php' )
          || !function_exists( 'get_option' )
@@ -312,20 +337,33 @@ class THEWPMASTER extends THEWPUPDATES {
             return;
         }
 
-        if( ( defined( ( $name = 'THEVERSION_' . strtoupper( $this->textdomain ) ) ) && ( $version = constant( $name ) ) )
-         || ( isset( $this->version ) && ( $version = $this->version ) )
-        ) {
-            $name = strtolower( $name );
-            if( version_compare( get_option( $name ), $version, '<' ) ) {
-                if( isset( $this->folderStructure ) && is_array( $this->folderStructure ) ) {
-                    THEBUILDER::check_folderStructure( $this->folderStructure, $this->basePath );
-                }
+        if (!isset($this)) {
+            throw new Exception('Invalid call of _versionCheck', 1);
+        }
 
-                if( $this->update() ) {
-                    update_option($name, $version);
-                } else {
-                    throw new Exception('Error: Update method for "'.$name.'" failed. (return !== true)', 1);
+        if (get_class($this) == 'Xiphe\THEMASTER\THEWPMASTER') {
+            $textdomain = 'Xiphe\THEMASTER\THEWPMASTER';
+            $version = THEBASE::$sVersion;
+        } else {
+            $textdomain = get_class($this);
+            $version = $this->version;
+        } 
+
+        if (!isset(self::$s_theVersions[$textdomain])
+         || version_compare(self::$s_theVersions[$textdomain], $version, '<')
+        ) {
+            if (get_class($this) == 'Xiphe\THEMASTER\THEWPMASTER') {
+                $ok = self::_masterUpdate();
+            } else {
+                if (isset($this->folderStructure) && is_array($this->folderStructure)) {
+                    THEBUILDER::check_folderStructure($this->folderStructure, $this->basePath);
                 }
+                $ok = $this->update();
+            }
+
+            if ($ok == true) {
+                self::$s_theVersions[$textdomain] = $version;
+                self::$s_storeTheVersions = true;
             }
         }
     }
@@ -382,16 +420,11 @@ class THEWPMASTER extends THEWPUPDATES {
      *  ACTIVATION AND UPDATE METHODS  *
      * ------------------------------- */
 
-    /**
-     * This method is called if !THE MASTER is being updated.
-     *
-     * @access private
-     * @return bool always true
-     */
-    protected static function _masterUpdate() {
-        $this->debug( 'THEWPMASTER::_masterUpdate called' );
-        $this->_check_folderStructure( self::$s_folderStructure, dirname( THEMASTER_PROJECTFILE ) . DS );
-        return parent::_masterUpdate();
+    public static function sSaveTheVersions() {
+        if( self::$s_storeTheVersions && function_exists( 'update_option' ) ) {
+            update_option('Xiphe\THEMASTER\theVersions', self::$s_theVersions);
+            self::$s_storeTheVersions = false;
+        }
     }
 
     /**
@@ -402,6 +435,26 @@ class THEWPMASTER extends THEWPUPDATES {
      */
     public static function _masterActivate() {
         return parent::_masterActivate();
+    }
+
+    /**
+     * This method is called if !THE MASTER is being updated.
+     *
+     * @access private
+     * @return bool always true
+     */
+    protected static function _masterUpdate() {
+        return parent::_masterUpdate();
+    }
+
+    /**
+     * Deactivation method for !THE MASTER
+     *
+     * @access private
+     * @return void
+     */
+    public static function _masterDeactivate() {
+        return parent::_masterDeactivate();
     }
 
 
@@ -468,7 +521,6 @@ class THEWPMASTER extends THEWPUPDATES {
     final public static function twpm_wphead() {
         wp_enqueue_script('jquery');
 
-        THEDEBUG::debug(THEBASE::sGet_registeredSources(), 'regSources');
         foreach( THEBASE::sGet_registeredSources() as $dest => $sources) {
             foreach($sources as $type => $files) {
                 foreach($files as $file => $url) {
@@ -582,7 +634,7 @@ class THEWPMASTER extends THEWPUPDATES {
         if($key == null)
             return self::$sCurrentUser;
         else
-            return self::recursive_get(self::$sCurrentUser, $key);
+            return THETOOLS::rget(self::$sCurrentUser, $key);
     }
     
     public function set_user($key, $value) {

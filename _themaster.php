@@ -98,16 +98,48 @@ define('THEMASTER_PROJECTFOLDER', dirname(__FILE__).DS);
  */
 define('THEMASTER_COREFOLDER', dirname(__FILE__).DS.'core'.DS);
 
+/**
+ * Transforms the filepath as if it is a subdirectory of wp-content/themes or
+ * wp-content/plugins.
+ *
+ * This is required for symliked projects because the activation_hooks of wordpress
+ * do not work if the project is not located inside the wp-content folder.
+ *
+ * @param  string  $path     the realpath of the project
+ * @param  boolean $isTheme  set true for themes
+ * @param  boolean $hasNoDir set true if is one-file-plugin.
+ * @return string            the symlink path.
+ */
+function get_wpInstallPath($path, $isTheme = false, $hasNoDir = false)
+{
+    $rel = !$hasNoDir ? basename(dirname($path)).DS : '';
+    $rel .= basename($path);
+    $rel = ABSPATH.'wp-content'.DS.(!$isTheme ? 'plugins' : 'themes').DS.$rel;
+    return preg_replace('/[\\\|\/]/', DS, $rel);
+}
 
 /*
  * Register activation hook.
  */
 if (function_exists('register_activation_hook')) {
     register_activation_hook(
-        __FILE__,
+        get_wpInstallPath(__FILE__),
         function () {
             require_once(THEMASTER_COREFOLDER.'wpmaster.php');
             THEWPMASTER::_masterActivate();
+        }
+    );
+}
+
+/*
+ * Register activation hook.
+ */
+if (function_exists('register_deactivation_hook')) {
+    register_deactivation_hook(
+        get_wpInstallPath(__FILE__),
+        function () {
+            require_once(THEMASTER_COREFOLDER.'wpmaster.php');
+            THEWPMASTER::_masterDeactivate();
         }
     );
 }

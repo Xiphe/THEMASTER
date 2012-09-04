@@ -1,4 +1,9 @@
-<?php class __PREFIX__Master extends THEWPMASTER {
+<?php 
+namespace __namespace__;
+
+use Xiphe\THEMASTER as TM;
+
+class Master extends TM\THEWPMASTER {
 	/* STATIC VARS */
 
 
@@ -6,6 +11,9 @@
 
 	public $singleton = true; // Prevents the contruction of a second instance by THEBASE.
 	public $HTML = true; // This Master Uses the !HTML Class.
+	// **EXTENDED** //
+	// public $buildMissingClasses = true; // Uncomment to tell THEWPBUILDER to build unknown classes.
+	// **EXTENDED_END** //
 	
 	// **EXTENDED** //
 	/* 
@@ -37,8 +45,8 @@
 	public function init() {
 
 		// **EXTENDED** //
-		// $this->reg_js( '__lcprefix__script' );
-		// $this->reg_less( '__lcprefix__style' );
+		// $this->reg_js( 'script' );
+		// $this->reg_less( 'style' );
 		// **EXTENDED_END** //
 	}
 	// **EXTENDED** //

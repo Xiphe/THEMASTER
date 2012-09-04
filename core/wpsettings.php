@@ -38,6 +38,8 @@ class THEWPSETTINGS extends THEWPBUILDER {
 
 	private static $s_themeSettings;
 
+	private static $s_storeSettings = false;
+
 
 	/* ---------------------- */
 	/*  CONSTRUCTION METHODS  */
@@ -56,14 +58,14 @@ class THEWPSETTINGS extends THEWPBUILDER {
 		}
 
 		if( !self::$s_initiated ) {
-			self::$s_settings[ THEBASE::get_textID( THEMASTER_PROJECTFILE ) ] = array(
+			self::$s_settings[ THETOOLS::get_textID( THEMASTER_PROJECTFILE ) ] = array(
 				'name' => 'THE MASTER',
 				'settings' => array( 'Xiphe\THEMASTER\THEWPSETTINGS', 'tmgl_settings' )
 			);
 
 			// Get all options from database.
 			if( function_exists( 'get_option' ) ) {
-				self::$s_userSettings = unserialize( get_option( 'tm-allsettings', 'a:0:{}' ) );
+				self::$s_userSettings = get_option( 'Xiphe\THEMASTER\allsettings', array() );
 			}
 			THEBASE::sRegister_callback( 'afterBaseS_init', array( 'Xiphe\THEMASTER\THEWPSETTINGS', 'sinit' ), 1, null, null, 1 );
 		}
@@ -82,6 +84,10 @@ class THEWPSETTINGS extends THEWPBUILDER {
 			THEBASE::sRegister_callback( 'beforeMasterInit', array(
 				'Xiphe\THEMASTER\THEWPSETTINGS', 'sCheckSettings'
 			), '*' );
+
+			if (function_exists('add_action')) {
+                add_action('shutdown', array('Xiphe\THEMASTER\THEWPSETTINGS','sSaveTheSettings'));
+            }
 
 			// Prevent this from beeing executed twice.
 			self::$s_initiated = true;
@@ -323,10 +329,10 @@ class THEWPSETTINGS extends THEWPBUILDER {
 			}
 		}
 
-		$allOpts = unserialize( get_option( 'tm-allsettings', 'a:0:{}' ) );
-		$allOpts[ $_REQUEST['tm-settingkey'] ] = $opts;
 
-		update_option( 'tm-allsettings', serialize( $allOpts ));
+		self::$s_userSettings[$sK] = $opts;
+		self::$s_storeSettings = true;
+
 		$obj->_exit( 'ok', __( 'Options updated', 'themaster' ), -1 );
 	}
 
@@ -342,6 +348,13 @@ class THEWPSETTINGS extends THEWPBUILDER {
 		} else {
 			return $links;
 		}
+	}
+
+	public function sSaveTheSettings() {
+		if( self::$s_storeSettings && function_exists( 'update_option' ) ) {
+            update_option('Xiphe\THEMASTER\allsettings', self::$s_userSettings);
+            self::$s_storeSettings = false;
+        }
 	}
 
 	public static function inject_settingsRow( $k ) {

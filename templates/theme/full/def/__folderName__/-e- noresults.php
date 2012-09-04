@@ -1,4 +1,7 @@
-<?php if( !isset( $__PREFIX__Master ) ) extract( __lcprefix__extr() );
+<?php
+namespace __namespace__;
+
+if( !isset( $Master ) ) extract( extr() );
 
 	$HTML->s_article( '#post-0|.post no-results not-found' )
 		->s_header( '.entry-header' )

@@ -25,6 +25,7 @@ class THEWPBUILDER extends THEMASTER {
 	private static $s_initArgsCache = array();
 
 	private static $s_buildArgs = array();
+	private static $s_storeNewInitArgs = false;
 
 
 	/**
@@ -48,7 +49,7 @@ class THEWPBUILDER extends THEMASTER {
 		if( !self::$s_initiated ) {
 			// Get all options from database.
 			if( function_exists( 'get_option' ) ) {
-				self::$s_initArgsCache = unserialize( get_option( 'tm-cachedInitArgs', 'a:0:{}' ) );
+				self::$s_initArgsCache = get_option( 'Xiphe\THEMASTER\cachedInitArgs', array() );
 			}
 
 			if( isset( $GLOBALS['pagenow'] ) 
@@ -58,14 +59,20 @@ class THEWPBUILDER extends THEMASTER {
 				self::$s_access = true;
 				add_action( 'init', array( 'Xiphe\THEMASTER\THEWPBUILDER', 'sStartToBuild' ) );	
 			}
+
+			if (function_exists('add_action')) {
+				add_action('shutdown', array('Xiphe\THEMASTER\THEWPBUILDER','sCacheInitArgs'));
+			}
+
 			// Prevent this from beeing executed twice.
 			self::$s_initiated = true;
 		}
 	}
 
-	private static function s_cacheInitArgs() {
-		if( function_exists( 'update_option' ) ) {
-			update_option( 'tm-cachedInitArgs', serialize( self::$s_initArgsCache ) );
+	public static function sCacheInitArgs() {
+		if( self::$s_storeNewInitArgs && function_exists( 'update_option' ) ) {
+			update_option( 'Xiphe\THEMASTER\cachedInitArgs', self::$s_initArgsCache );
+			self::$s_storeNewInitArgs = false;
 		}
 	}
 
@@ -133,7 +140,7 @@ class THEWPBUILDER extends THEMASTER {
 	}
 
 	public static function get_initArgs( $file = null, $file2 = null, $deepth = 1 ) {
-		// THEDEBUG::debug( 'callstack' );
+		// THEDEBUG::debug( $file );
 		// THEDEBUG::debug( $file, 'file' );
 		// THEDEBUG::debug( $file2, 'file2' );
 
@@ -153,7 +160,7 @@ class THEWPBUILDER extends THEMASTER {
 		$textID = THETOOLS::get_textID( $configFile );
 
 		if( isset( self::$s_initArgsCache[ $textID ] )
-		 && self::$s_initArgsCache[ $textID ]['time'] >= ( filemtime( $configFile ) + filemtime( $file ) ) / 2
+		 && self::$s_initArgsCache[ $textID ]['time'] >= ( filemtime( $configFile ) + filemtime( $file ) )
 		) {
 			// THEDEBUG::debug( self::$s_initArgsCache[ $file ]['args'], 'cachedArgs' );
 			return self::$s_initArgsCache[ $textID ]['args'];
@@ -265,11 +272,11 @@ class THEWPBUILDER extends THEMASTER {
 		}
 
 		self::$s_initArgsCache[ $iA['textID'] ] = array(
-			'time' => ( filemtime( $iA['configFile'] ) + filemtime( $iA['projectFile'] ) ) / 2,
+			'time' => ( filemtime( $iA['configFile'] ) + filemtime( $iA['projectFile'] ) ),
 			'args' => $iA
 		);
-		self::s_cacheInitArgs();
 
+		self::$s_storeNewInitArgs = true;
 		return $iA;
 	}
 
@@ -305,12 +312,14 @@ class THEWPBUILDER extends THEMASTER {
 			self::s_write_template( $template, $args );
 
 			if( $type === 'full' ) {
+				THEDEBUG::debug('full');
 				$pF = file_get_contents( $args['projectFile'] );
-				$pF = preg_replace( '/(\t)*BUILDTHEMASTER( )*\((.)*\)( )*;( )*\n/', "\tTHEWPMASTERINIT( __FILE__ );\n", $pF);
+				$pF = preg_replace('/(\t)*TM\\\BUILD( )*\((.)*\)( )*;( )*\n/', "\tTM\INIT( __FILE__ );\n", $pF);
 				$pF = str_replace( array(
 						"// *optional*\n",
 						"// Update Server: \n",
 						"// Required Plugins: \n",
+						"// Branch: \n",
 						"// Please fill in additional Plugin information.\n"
 					),
 					'',
@@ -340,7 +349,6 @@ class THEWPBUILDER extends THEMASTER {
 			if( $e === DS && !is_dir( $file ) ) {
 				mkdir( $file );
 			} elseif( $e !== DS ) {
-				debug( $file );
 				if( !file_exists( $file ) ) {
 					fclose( fopen( $file, 'x' ) );
 				}
@@ -451,12 +459,6 @@ class THEWPBUILDER extends THEMASTER {
 				$r = $extended === 'mini' ? ', ' : ' ';
 				return $baseTemplateName === 'def' ? '' : $r . '\'' . $baseTemplateName . '\' ';
 				break;
-			case 'PREFIX':
-				return strtoupper( $args['prefix'] );
-				break;
-			case 'lcprefix':
-				return strtolower( $args['prefix'] );
-				break;
 			case 'currentTime':
 				$t = get_option('gmt_offset');
 				if( $t !== 0 ) {
@@ -468,6 +470,10 @@ class THEWPBUILDER extends THEMASTER {
 				break;
 			case 'currentUser':
 				return THEWPMASTER::get_user( 'data|display_name' );
+				break;
+			case 'namespace':
+				return preg_replace('/[^A-Za-z]/', '', THEWPMASTER::get_user('data|display_name'))
+					.DS.preg_replace('/[^A-Za-z]/', '', $args['projectName']);
 				break;
 			case 'FILE':
 				return '__FILE__';
@@ -482,7 +488,7 @@ class THEWPBUILDER extends THEMASTER {
 				return basename( $args['configFile'] );
 				break;
 			default:
-				throw new Exception('No fill value found for template variable: ' . $key, 1);
+				throw new \Exception('No fill value found for template variable: ' . $key, 1);
 				break;
 		}
 	}
@@ -493,7 +499,7 @@ class THEWPBUILDER extends THEMASTER {
 		if( file_exists( ( $dir = self::s_getBaseTemplatePath() . $path ) ) 
 		 && is_dir( $dir )
 		) {
-			foreach( THEBASE::get_dirArray( $dir, null, array( 9, array( '.', '..', '.DS_Store' ) ) ) as $file ) {
+			foreach( THETOOLS::get_dirArray( $dir, null, array( 9, array( '.', '..', '.DS_Store' ) ) ) as $file ) {
 				$target = $file;
 				if( substr( $file, 0, 4 ) === '-n- ' ) {
 					if( $n == false ) { continue; }
@@ -514,5 +520,17 @@ class THEWPBUILDER extends THEMASTER {
 		}
 		return $r;
 	}
+
+	/**
+     * Deactivation method for !THE MASTER
+     *
+     * @access private
+     * @return void
+     */
+    public static function _masterDeactivate() {
+        delete_option('Xiphe\THEMASTER\cachedInitArgs');
+        self::$s_storeNewInitArgs = false;
+        return parent::_masterDeactivate();
+    }
 
 } ?>

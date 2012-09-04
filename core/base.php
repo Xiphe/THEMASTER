@@ -85,7 +85,23 @@ class THEBASE {
     /* PUBLIC */
 
     /**
-     * The basepath for !THEMASTER.
+     * The namespace of !THEMASTER
+     *
+     * @access public
+     * @var string
+     */
+    public static $sNameSpace = 'Xiphe\THEMASTER';
+
+    /**
+     * The version of !THEMASTER
+     *
+     * @access public
+     * @var string
+     */
+    public static $sVersion;
+
+    /**
+     * The basepath of !THEMASTER.
      *
      * @access public
      * @var    string
@@ -316,6 +332,10 @@ class THEBASE {
             self::$sFolderName = basename( self::$sBasePath );
             self::$sTextdomain = pathinfo( self::$sProjectFile, PATHINFO_FILENAME );
             self::$sTextID = self::$sFolderName . '/' . basename( self::$sProjectFile );
+            if (class_exists('Xiphe\THEMASTER\THEWPBUILDER')) {
+                self::$sVersion = THEWPBUILDER::get_initArgs(THEMASTER_PROJECTFILE,false);
+                self::$sVersion = self::$sVersion['version'];
+            }
 
             if( function_exists( 'plugins_url' )) {
                 self::$sBaseUrl = plugins_url( self::$sTextdomain );
@@ -356,6 +376,10 @@ class THEBASE {
     }
 
     public static function _masterActivate() {
+        return true;
+    }
+
+    public static function _masterDeactivate() {
         return true;
     }
     
@@ -991,7 +1015,7 @@ class THEBASE {
             );
         }
         $paths[] = array(
-            'namespace' => self::sNameSpace,
+            'namespace' => self::$sNameSpace,
             'basePath' => self::$sBasePath
         );
         $ePaths = array();
@@ -1048,7 +1072,7 @@ class THEBASE {
             );
         }
         $paths[] = array(
-            'namespace' => self::sNameSpace,
+            'namespace' => self::$sNameSpace,
             'basePath' => self::$sBasePath
         );
         $ePaths = array();
@@ -1124,7 +1148,7 @@ class THEBASE {
                 );
             }
             $paths[] = array(
-                'namespace' => self::sNameSpace,
+                'namespace' => self::$sNameSpace,
                 'basePath' => self::$sBasePath
             );
         }

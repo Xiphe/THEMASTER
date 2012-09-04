@@ -1,4 +1,7 @@
-<?php if( !isset( $__PREFIX__Master ) ) extract( __lcprefix__extr() );
+<?php
+namespace __namespace__;
+
+if( !isset( $Master ) ) extract( extr() );
 // **EXTENDED** //
 get_header();
 	$HTML->s_div( '#primary' )
