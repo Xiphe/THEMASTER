@@ -1,4 +1,6 @@
 <?php
+namespace Xiphe\THEMASTER;
+
 class THEWPMODEL extends THEMODEL {
 	private static $_structures = array();
 	
@@ -36,7 +38,7 @@ class THEWPMODEL extends THEMODEL {
 	public function read_empty() {
 		return true;
 	}
-	public function read( $keys = '*', $args = null ) {
+	final public function read( $keys = '*', $args = null ) {
 		if( $this->pre_read( $args ) ) {
 			if(!self::$table || !$this->_checkReadKeys()) {
 				throw new Exception('tryed to get DB entry without table or enough key information.', 1);
@@ -90,7 +92,7 @@ class THEWPMODEL extends THEMODEL {
 		return true;
 	}
 	public function after_save() {}
-	public function save() {
+	final public function save() {
 		if($this->pre_save()) {
 			if(!self::$table) {
 				throw new Exception('tryed to Save a Model without table', 1);
@@ -136,7 +138,7 @@ class THEWPMODEL extends THEMODEL {
 	}
 	public function after_delete() {}
 	public function deleteError() { return true; }
-	public function delete() {
+	final public function delete() {
 		if( call_user_func_array( array( $this, 'pre_delete' ), func_get_args() ) ) {
 			if(!self::$table) {
 				throw new Exception('tryed to Delete a Model without table', 1);

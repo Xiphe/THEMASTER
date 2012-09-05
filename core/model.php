@@ -1,4 +1,6 @@
 <?php
+namespace Xiphe\THEMASTER;
+
 class THEMODEL {
 	public $ID;
 	

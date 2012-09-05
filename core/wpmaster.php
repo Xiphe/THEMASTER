@@ -197,7 +197,7 @@ class THEWPMASTER extends THEWPUPDATES {
              && isset($_GET['forceRederect'])
              && $_GET['forceRederect'] == 'hash'
             ) {
-                self::reg_js('twpm_login');
+                THEBASE::reg_js('tm-login');
             }
 
             /*
@@ -231,6 +231,7 @@ class THEWPMASTER extends THEWPUPDATES {
          */
         add_action('wp_head', array('Xiphe\THEMASTER\THEWPMASTER', 'twpm_wphead'), 1, 0);
         add_action('admin_head', array('Xiphe\THEMASTER\THEWPMASTER', 'twpm_wphead'), 1, 0);
+        add_action('login_head', array('Xiphe\THEMASTER\THEWPMASTER', 'twpm_wphead'), 1, 0);
 
         /*
          * Register callbacks for printing js-variables.
@@ -420,6 +421,13 @@ class THEWPMASTER extends THEWPUPDATES {
      *  ACTIVATION AND UPDATE METHODS  *
      * ------------------------------- */
 
+    /**
+     * Called on destruction and saves the current options into database
+     * if THEWPMASTER::$s_storeTheVersions is true.
+     *
+     * @access public
+     * @return void
+     */
     public static function sSaveTheVersions() {
         if( self::$s_storeTheVersions && function_exists( 'update_option' ) ) {
             update_option('Xiphe\THEMASTER\theVersions', self::$s_theVersions);
@@ -657,50 +665,44 @@ class THEWPMASTER extends THEWPUPDATES {
         return $content;
     }
     
+    /**
+     * @deprecated since 3.0
+     */
     public function fireContentTag($tag) {
-        foreach(self::$s_contentTags as $cTag) {
-            if( $tag == $cTag['tag'] ) {
-                echo call_user_func( $cTag['cb'] );
-                break;
-            }
-        }       
+        THEDEBUG::deprecated('Wordpress\'s do_shortcode()', false);
+        // http://codex.wordpress.org/Function_Reference/do_shortcode      
     }
     
-    /** This function hookes into "the_content" and replaces [$tag] with $callback
+    /**
+     * This function hookes into "the_content" and replaces [$tag] with $callback
      *
+     * @access public
+     * @deprecated since 3.0 
      * @param string $tag the [tag] that should be replaced
      * @param mixed $callback array or string of method or function containing the replacement
      * @return void
-     * @access public
-     * @date Dez 14th 2011
      */
     protected function add_contentTag($tag, $callback) {
-        if(!isset(self::$_hooked['the_content'])) {
-            add_filter('the_content', array('Xiphe\THEMASTER\THEWPMASTER', 'do_ContentTags'));
-            self::$_hooked['the_content'] = true;
-        }
-        self::$_contentTags[] = array('tag' => $tag, 'cb' => $callback);
+        THEDEBUG::deprecated('Wordpress\'s add_shortcode()', false);
+        // http://codex.wordpress.org/Shortcode_API
     }
     
-    /** The hook callback from add_contentTag() called on "the_content"
+    /**
+     * The hook callback from add_contentTag() called on "the_content"
      *
+     * @access public
+     * @deprecated since 3.0
      * @param string $content the content string
      * @return string the new content string
-     * @date Dez 14th 2011
      */
     public static function do_ContentTags($content) {
-        foreach(self::$_contentTags as $contentTag) {
-            extract($contentTag);
-            if(preg_match('/\['.$tag.'\]/', $content)) 
-                $content = preg_replace('/(\<p\>)?\['.$tag.'\](\<\/p\>)?/', call_user_func($cb), $content);
-        }
-        return $content;
+        THEDEBUG::deprecated('Wordpress\'s do_shortcode()', false);
+        // http://codex.wordpress.org/Function_Reference/do_shortcode
     }
     
     /** killer for THEBASE::echo_sources(), sources will be included by
      *
      * @return void
-     * @date Dez 15th 2011
      */
     public function echo_sources( $admin = false ) {
     }
@@ -759,17 +761,16 @@ class THEWPMASTER extends THEWPUPDATES {
          && isset($_GET['forceRederect'])
          && ( $_GET['forceRederect'] == 'true' || $_GET['forceRederect'] == 'hash' )
         ) {
-            $t = self::inst();
-            $t->reg_jsVar('ajaxurl', admin_url('admin-ajax.php'));
-            $t->reg_jsVar('twpm_rederect', true);
-            $t->echo_jsVars();
-            $t->session();
+            THEBASE::reg_jsVar('ajaxurl', admin_url('admin-ajax.php'));
+            THEBASE::reg_jsVar('twpm_rederect', true);
+            THEBASE::echo_jsVars();
+            THETOOLS::session();
             $_SESSION['twpm_loginrederect'] = $_GET['redirect_to'];
             // self::inst()->debug( $_SESSION );
         }
     }
     
-    private function _get_loginRederectUrl( $full = true ) {
+    private static function _get_loginRederectUrl( $full = true ) {
         THETOOLS::session();
         $t = false;
         if( isset( $_SESSION['twpm_loginrederect'] ) ) {
@@ -808,11 +809,16 @@ class THEWPMASTER extends THEWPUPDATES {
     }
     
     public function twpm_loginMsg( $msg ) {
-        if( ( $t = self::inst()->_get_loginRederectUrl( false ) ) ) {
-            $msg = self::inst()->get_HTML()->r_p(
+        if( ( $t = self::_get_loginRederectUrl( false ) ) ) {
+            $HTML = THEBASE::sGet_HTML();
+            $link = $HTML->r_a(
+                $t.$HTML->r_span(null, '#tm_loginhash'),
+                'href='.$HTML->escape_mBB($t).'|#tm_loginlink'
+            );
+            $msg = $HTML->r_p(
                 sprintf( 
-                    __('You will be redirected to %s after you\'ve successfully logged in.', 'themaster'),
-                    '"'.$t.'<span id="twpm_hash"></span>"'
+                    __('You will be redirected to "%s" after you\'ve successfully logged in.', 'themaster'),
+                    $link
                 ),
                 'message'
             ).$msg;

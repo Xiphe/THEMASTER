@@ -312,21 +312,18 @@ class THEWPBUILDER extends THEMASTER {
 			self::s_write_template( $template, $args );
 
 			if( $type === 'full' ) {
-				THEDEBUG::debug('full');
+
 				$pF = file_get_contents( $args['projectFile'] );
-				$pF = preg_replace('/(\t)*TM\\\BUILD( )*\((.)*\)( )*;( )*\n/', "\tTM\INIT( __FILE__ );\n", $pF);
-				$pF = str_replace( array(
-						"// *optional*\n",
-						"// Update Server: \n",
-						"// Required Plugins: \n",
-						"// Branch: \n",
-						"// Please fill in additional Plugin information.\n"
-					),
-					'',
-					$pF
-				);
-				$pF = str_replace( 'BUILDTHEMASTER', 'THEWPMASTERINIT', $pF );
-				file_put_contents( $args['projectFile'], $pF );
+				// THEDEBUG::diebug(preg_match('/(\t)*TM\\\BUILD( )*\((.)*\)( )*;( )*(\n|\r|\r\n)/', $pF));
+				$pF = preg_replace('/(\t)*TM\\\BUILD( )*\((.)*\)( )*;( )*/', "\tTM\INIT(__FILE__);", $pF);
+				$pF = preg_replace('/(\t)*\/\/ \*optional\*( )*(\r\n|\r|\n)/', '', $pF);
+				$pF = preg_replace('/(\t)*\/\/ Update Server:( )*(\r\n|\r|\n)/', '', $pF);
+				$pF = preg_replace('/(\t)*\/\/ Required Plugins:( )*(\r\n|\r|\n)/', '', $pF);
+				$pF = preg_replace('/(\t)*\/\/ Branch:( )*(\r\n|\r|\n)/', '', $pF);
+				$pF = preg_replace('/(\t)*\/\/ Please fill in additional Plugin information.( )*(\r\n|\r|\n)/', '', $pF);
+				$pF = str_replace('BUILD', 'INIT', $pF);
+
+				file_put_contents($args['projectFile'], $pF);
 			}
 
 			$msg = sprintf(
@@ -426,12 +423,13 @@ class THEWPBUILDER extends THEMASTER {
 
 	private static function s_replaceTemplateTags( $string, $args, $extended, $baseTemplateName ) {
 		if( $extended === 'mini' ) {
-			$string = preg_replace( '/(\t)*(\/\/ \*\*EXTENDED\*\* \/\/)+(.*?)(\*\*EXTENDED_END\*\* \/\/[\n|\r|\r\n])+/ims', '', $string );
+			$string = preg_replace( '/(\t)*(\/\/ \*\*EXTENDED\*\* \/\/)+(.*?)(\*\*EXTENDED_END\*\* \/\/)+(\t )*(\r\n|\n|\r)/ims', '', $string );
 		} else {
-			$string = preg_replace( '/(\t)*(\/\/ \*\*EXTENDED\*\* \/\/[\n|\r|\r\n])+/', '', $string );
-			$string = preg_replace( '/(\t)*(\/\/ \*\*EXTENDED_END\*\* \/\/[\n|\r|\r\n])+/', '', $string );
+			$string = preg_replace( '/(\t)*(\/\/ \*\*EXTENDED\*\* \/\/)+(\t )*(\r\n|\n|\r)/', '', $string );
+			$string = preg_replace( '/(\t)*(\/\/ \*\*EXTENDED_END\*\* \/\/)+(\t )*(\r\n|\n|\r)/', '', $string );
 		}
 		preg_match_all( '/__(\w[^_]*)__/', $string, $m );
+
 		foreach( $m[1] as $var ) {
 			$val = isset( $args[$var] ) ? $args[$var] : self::s_additionalArg( $var, $args, $extended, $baseTemplateName );
 			$string = str_replace( '__' . $var . '__', $val, $string );
@@ -447,18 +445,14 @@ class THEWPBUILDER extends THEMASTER {
 		switch( $key ) {
 			case 'classname':
 				return strtolower( $args['ClassName'] );
-				break;
 			case 'ClassName':
 				return $args['ClassName'];
-				break;
 			case 'tmminimal':
 				$r = $extended === 'mini' ? ' false' : '';
 				return $r . ( $baseTemplateName === 'def' ? ' ' : '' );
-				break;
 			case 'tmtemplate':
 				$r = $extended === 'mini' ? ', ' : ' ';
 				return $baseTemplateName === 'def' ? '' : $r . '\'' . $baseTemplateName . '\' ';
-				break;
 			case 'currentTime':
 				$t = get_option('gmt_offset');
 				if( $t !== 0 ) {
@@ -467,29 +461,23 @@ class THEWPBUILDER extends THEMASTER {
 					$z = '';
 				}
 				return date( sprintf( __( 'd.m.Y H:i:s %s', 'themaster' ), $z ) );
-				break;
 			case 'currentUser':
 				return THEWPMASTER::get_user( 'data|display_name' );
-				break;
 			case 'namespace':
 				return preg_replace('/[^A-Za-z]/', '', THEWPMASTER::get_user('data|display_name'))
 					.DS.preg_replace('/[^A-Za-z]/', '', $args['projectName']);
-				break;
+			case 'mdh1projectName':
+				return str_repeat('=', strlen($args['projectName']));
 			case 'FILE':
 				return '__FILE__';
-				beak;
 			case 'DIR':
 				return '__DIR__';
-				break;
 			case 'CLASS':
 				return '__CLASS__';
-				break;
 			case 'baseConfigFile';
 				return basename( $args['configFile'] );
-				break;
 			default:
 				throw new \Exception('No fill value found for template variable: ' . $key, 1);
-				break;
 		}
 	}
 
