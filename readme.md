@@ -53,7 +53,7 @@ influenced my code strongly.
 3rd Party
 ---------
 
-This plugin uses and includes some scipts from other people.
+This plugin uses and includes some scripts from other people.
 Here is a list:
 
 ###PHP
@@ -130,7 +130,7 @@ Changelog
 
 ### 2.1.1
 +	added THEWPMASTER::twpm_wp_login() and his friends to enable &forceRederect=(true||'hash') in wordpress login url
-+	added phpQuery Libary 
++	added phpQuery Library 
 	suport functions: THEMASTER::initPhpQuery(), THEMASTER::pq('<html...>') & THEMASTER::get_pqHtml()
 +	added 'ipa' (iPad) as option for THEMASTER::is_browser()
 +	added THESETTINGS::_set_setting($key, $value) for internal emergency setting changes
@@ -177,7 +177,7 @@ Changelog
 +	echo_sources in wp_master replaced, sources will be added via wp_enqueue_script/style
 
 ### 2.0.1
-+   cleaned data structure and funcional update proccess
++   cleaned data structure and functional update process
 
 ### 2.0
 +   **First public version**
@@ -190,9 +190,11 @@ Upgrade Notice
 --------------
 
 ### 3.0.0
-+	incobytibility with old red thorn update api
++	incompatibility with old red thorn update api.
++ previous deprecated methods are now unavailable.
+
 ### 2.0.4
-+	init on github
++	init on github  
 
 
 Known Bugs
