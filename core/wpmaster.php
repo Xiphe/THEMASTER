@@ -30,6 +30,11 @@ require_once(THEMASTER_COREFOLDER.'wpupdates.php');
  */
 require_once(THEMASTER_COREFOLDER.'wpmodel.php');
 
+/*
+ * Include THEWPTOOLS class
+ */
+require_once(THEMASTER_COREFOLDER.'wptools.php');
+
 /**
  * THEWPMASTER is the last class inside !THE MASTER and the one that
  * Wordpress plugins and themes should extend.

@@ -20,8 +20,8 @@ Installation
 
 1. Upload the plugin directory to the `/wp-content/plugins/` directory
 2. Activate the plugin through the 'Plugins' menu in WordPress
-4. Does nothing now
-3. See [Plugin Page](https://github.com/Xiphe/-THE-MASTER) for usage details
+3. Does nothing now
+4. See [Plugin Page](https://github.com/Xiphe/-THE-MASTER/wiki) for usage details
 
 
 Support
