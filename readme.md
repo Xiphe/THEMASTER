@@ -9,6 +9,12 @@ for plugin and theme development in wordpress.
 See [Plugin Page](https://github.com/Xiphe/-THE-MASTER) for details
 
 
+Version
+-------
+
+3.0.0
+
+
 Installation
 ------------
 
@@ -117,7 +123,10 @@ Changelog
 +	Updates via own server now throu [WP Project Update API](https://github.com/Xiphe/WP-Project-Update-API)
 +	added shorthand-options
 +	merged !themasteroptions
-+	minor bugfixes
++ deleted all deprecated methods.
++ THEDEBUG is now standalone.
++ Added THETOOLS for non-relating methods.
++ Added THEWPBUILDER as a skeleton builder for wp-plugins and wp-themes
 
 ### 2.1.1
 +	added THEWPMASTER::twpm_wp_login() and his friends to enable &forceRederect=(true||'hash') in wordpress login url
@@ -195,9 +204,7 @@ Known Bugs
 Todo
 ----
 
-+	build skeleton builder for plugins/themes/standalones
-+	enable deep subfolders for classes, models & views
-+	search for global includable classes, models & views in /!themaster/... at first
++	build skeleton builder for standalones
 +	Add phpThumb or similar image resize functionality. see http://phpthumb.sourceforge.net/demo/docs/phpthumb.readme.txt (High-Security mode)
 
 License

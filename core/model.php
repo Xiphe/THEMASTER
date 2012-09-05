@@ -1,6 +1,15 @@
 <?php
 namespace Xiphe\THEMASTER;
 
+/**
+ * THEMODEL is basic class for model objects
+ *
+ * @copyright Copyright (c) 2012, Hannes Diercks
+ * @author    Hannes Diercks <xiphe@gmx.de>
+ * @version   3.0.0
+ * @link      https://github.com/Xiphe/-THE-MASTER/
+ * @package   !THE MASTER
+ */
 class THEMODEL {
 	public $ID;
 	
