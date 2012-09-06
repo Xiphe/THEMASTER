@@ -117,16 +117,23 @@ class THEMASTER extends THESETTINGS {
             return;
         }
 
+        /*
+         * If the project has required plugins and one of them is not available:
+         */
         if( isset( $this->requiredPlugins )
          && ( is_array( $this->requiredPlugins ) || is_object( $this->requiredPlugins ) )
          && !THETOOLS::group_in_array( $this->requiredPlugins, self::$s_initiatedProjects )
         ) {
+            /*
+             * Register for later initiation into the toBeInitiated array.
+             */
             if( !isset( self::$s_toBeInitiated[ $this->textdomain ] ) ) {
                 self::$s_toBeInitiated[ $this->textdomain ] = array(
                     'required' => $this->requiredPlugins,
                     'method' => array( $this, '_masterInit' ),
                     'type' => $this->projectType
                 );
+                THEBASE::sRegSingleton(false, get_class($this), true);
             }
             return false;
         } else {

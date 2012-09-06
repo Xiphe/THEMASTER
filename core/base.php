@@ -79,7 +79,7 @@ class THEBASE {
      * @access private
      * @var    array
      */
-    private static $_singletons = array();
+    private static $s_singletons = array();
 
 
     /* PUBLIC */
@@ -361,8 +361,8 @@ class THEBASE {
          */
 
         $name = isset( $name ) ? $name :  strtolower( get_called_class() );
-        if( isset( self::$_singletons[$name] )
-         && is_object( ( $r = self::$_singletons[$name] ) ) 
+        if( isset( self::$s_singletons[$name] )
+         && is_object( ( $r = self::$s_singletons[$name] ) ) 
          && isset( $r->singleton ) && $r->singleton === true
         ) {
             return $r;
@@ -404,15 +404,15 @@ class THEBASE {
      */
     public static function inst() {
         $called = get_called_class();
-        if(isset(self::$_singletons[strtolower($called)])
-            && is_object(($r = self::$_singletons[strtolower($called)])))
-                return $r;
-        elseif(isset(self::$_singletons['master']))
-            return self::$_singletons['master'];
-        elseif( defined( 'THEMINIWPMASTERAVAILABLE' ) )
-            return $GLOBALS[ 'THEMINIWPMASTER' ];
-        elseif( defined( 'THEMINIMASTERAVAILABLE' ) )
+        if (isset(self::$s_singletons[$called])) {
+            return self::$s_singletons[$called];
+        } elseif (isset(self::$s_singletons['master'])) {
+            return self::$s_singletons['master'];
+        } elseif (defined('THEMINIWPMASTERAVAILABLE')) {
+            return $GLOBALS['THEMINIWPMASTER'];
+        } elseif (defined('THEMINIMASTERAVAILABLE')) {
             return $GLOBALS['THEMINIMASTER'];
+        }
         return false;
     }
     
@@ -442,12 +442,14 @@ class THEBASE {
         $called = get_called_class();
 
         if(
-            isset(self::$_singletons[$called])
-            && is_object(self::$_singletons[$called])
+            isset(self::$s_singletons[$called])
         ) {
-            $inst = self::$_singletons[$called];
-        } elseif(class_exists($called) && ($inst = THEBASE::inst()))
-            $inst = $inst->get_instance( $called );
+            if (!is_object(self::$s_singletons[$called])) {
+                return false;
+            }
+            $inst = self::$s_singletons[$called];
+        } elseif(class_exists($called))
+            $inst = self::get_instance( $called );
         else 
             return false;
         
@@ -467,8 +469,8 @@ class THEBASE {
      * @date Jul 28th 2011
      */
     protected function _masterInit() {
-        // if( isset($this->slug) && !isset( self::$_singletons['masters'][ $this->slug ] ) )
-        //  self::$_singletons['masters'][ $this->slug ] = $this;
+        // if( isset($this->slug) && !isset( self::$s_singletons['masters'][ $this->slug ] ) )
+        //  self::$s_singletons['masters'][ $this->slug ] = $this;
         
             
         // $name = strtoupper($this->prefix).'Master';
@@ -1141,7 +1143,7 @@ class THEBASE {
                 return false;
             }
         } else {
-            if (isset($this)) {
+            if (isset($this) && get_class($this) != 'Xiphe\THEMASTER\THEWPMASTER') {
                 $paths[] = array(
                     'namespace' => $this->namespace,
                     'basePath' => $this->basePath
@@ -1163,8 +1165,8 @@ class THEBASE {
             extract($data);
             $cID = $namespace.'\\'.$classname;
 
-            if (isset(self::$_singletons[$cID]) && is_object(self::$_singletons[$cID])) {
-                return self::$_singletons[$cID];
+            if (isset(self::$s_singletons[$cID]) && is_object(self::$s_singletons[$cID])) {
+                return self::$s_singletons[$cID];
             }
 
             $file = $basePath.'classes'.DS.$filename.'.php';
@@ -1190,7 +1192,9 @@ class THEBASE {
                     'initiated', 
                     function ($obj) {
                         if (isset($obj->singleton) && $obj->singleton === true) {
-                            THEBASE::sRegSingleton($obj);
+                            THEBASE::sRegSingleton($obj, null, true);
+                        } elseif(isset(self::$s_singletons[get_class($obj)])) {
+                            unset(self::$s_singletons[get_class($obj)]);
                         }
 
                         if (isset($obj->HTML) && $obj->HTML === true) {
@@ -1227,7 +1231,11 @@ class THEBASE {
         }
 
         if(!isset($obj) || !$obj) {
-            if (isset($this) && class_exists('Xiphe\THEMASTER\THEWPBUILDER') && $this->buildMissingClasses === true) {
+            if (isset($this)
+             && class_exists('Xiphe\THEMASTER\THEWPBUILDER')
+             && isset($this->buildMissingClasses)
+             && $this->buildMissingClasses === true
+            ) {
                 return THEWPBUILDER::sBuildClass($classname, $initArgs, $this);
             } else {
                                
@@ -1244,16 +1252,25 @@ class THEBASE {
      * Saves a object into static singleton store.
      *
      * @access public
-     * @param  object $obj
+     * @param  mixed   $obj    the singleton instance to be registered or false as placeholder
+     * @param  string  $key    the instance name if $obj == false
+     * @param  boolean $force  set true to enable overwriting of singleton.
      * @return void
      */
-    final public static function sRegSingleton($obj)
+    final public static function sRegSingleton($obj, $key = '', $force = false)
     {
-        $cID = get_class($obj);
-        if (isset(self::$_singletons[$cID])) {
+        if ($obj == false) {
+            if ($key == '') {
+                throw new Exception('If registering a false object a key is required.', 1);
+            }
+            $cID = $key;
+        } else {
+            $cID = get_class($obj);
+        }
+        if (!$force && isset(self::$s_singletons[$cID])) {
             throw new \Exception('Invalid double construction of singleton "'.$cID.'"', 1);
         } else {
-            self::$_singletons[$cID] = $obj;
+            self::$s_singletons[$cID] = $obj;
         }
     }
 
