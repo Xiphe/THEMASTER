@@ -19,7 +19,7 @@ function extr() {
 		);
 		die();
 	} else {
-		return Master::extr();
+		return $r;
 	}
 }
 ?>
