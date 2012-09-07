@@ -6,12 +6,15 @@ namespace Xiphe\THEMASTER;
  *
  * @copyright Copyright (c) 2012, Hannes Diercks
  * @author    Hannes Diercks <xiphe@gmx.de>
- * @version   3.0.0
+ * @version   3.0.1
  * @link      https://github.com/Xiphe/-THE-MASTER/
  * @package   !THE MASTER
  */
 class THETOOLS {
-
+    /* ------------------ *
+     *  STATIC VARIABLES  *
+     * ------------------ */
+    
     /**
      * The Browserclass.
      *
@@ -70,6 +73,15 @@ class THETOOLS {
         'bb' => 'BLACKBERRY',
     );
 
+    private static $s_filters = array(
+        's' => FILTER_SANITIZE_STRING,
+        'e' => FILTER_SANITIZE_EMAIL,
+        'u' => FILTER_SANITIZE_URL,
+        'i' => FILTER_VALIDATE_INT,
+        'f' => FILTER_VALIDATE_FLOAT,
+        'b' => FILTER_VALIDATE_BOOLEAN
+    );
+
     /**
      * Flag for preventing PHPQuery to be only initiated once.
      *
@@ -77,6 +89,103 @@ class THETOOLS {
      * @var boolean
      */
     private static $s_phpQueryInitiated = false;
+
+
+    /* ---------------- *
+     *  STATIC METHODS  *
+     * ---------------- */
+
+    /**
+     * Parses an url adds and removes get-query arguments and rebuilds the url.
+     *
+     * @access public
+     * @param  string $url       the url string
+     * @param  array  $filterArr Array of query keys that should be removed or keeped.
+     * @param  string $method    'remove' deletes all $filterArr keys from query, 
+     *                           'keep' deletes all args that are not in $filterArr
+     * @param  array  $add       optional array of values to be added to the query
+     * @return void
+     */
+    public static function filter_urlQuery(&$url, $filterArr, $method = 'remove', array $add = array()) {
+        $pUrl = parse_url($url);
+        $qry;
+        parse_str($pUrl['query'], $qry);
+
+        foreach ($qry as $k => $v) {
+            if (($method == 'remove' && in_array($k, $filterArr))
+             || ($method == 'keep' && !in_array($k, $filterArr))
+            ) {
+                unset($qry[$k]);
+            } 
+        }
+
+        if (!empty($add)) {
+            $qry = array_merge($qry, $add);
+        }
+        $pUrl['query'] = http_build_query($qry);
+        $url = self::unparse_url($pUrl);
+    }
+
+    /**
+     * Creates a sprite image at $dest from image files in $imgs array.
+     *
+     * @access public
+     * @param  array   $imgs    array of image files.
+     * @param  string  $dest    filepath to where the sprite should be saved.
+     * @param  integer $spacing numbers of pixels between the images.
+     * @return object           object containing the sprite dimensions and the offsets of each image.
+     */
+    public static function create_sprite($imgs = array(), $dest = 'sprite.png', $spacing = 5) {
+        $spriteWidth = 0;
+        $spriteHeight = 0;
+
+        foreach ($imgs as $k => $file) {
+            list($w, $h) = getimagesize($file);
+            // make sure out icon is a 32px sq icon
+            if ($h > $spriteHeight) {
+                $spriteHeight = $h;
+            }
+            $spriteWidth += $w;
+            if($k < count($imgs)-1) {
+                $spriteWidth += $spacing;
+            }
+        }
+        $r = self::sc(array(
+            'sprite' => self::sc(array(
+                'width' => $spriteWidth,
+                'height' => $spriteHeight,
+            )),
+            'positions' => self::sc(array())
+        ));
+
+        $img = imagecreatetruecolor($spriteWidth, $spriteHeight);
+
+        $background = imagecolorallocate($img, 0, 0, 0);
+        $transparent = imagecolorallocatealpha($img, 0, 0, 0, 127); 
+        imagecolortransparent($img, $background);
+        imagealphablending($img, false);
+        imagesavealpha($img, true);
+
+        $pos = 0;
+        foreach ($imgs as $file) {
+            $name = pathinfo($file, PATHINFO_FILENAME);
+            $tmp = imagecreatefrompng($file);
+            list($w) = getimagesize($file);
+            $r->positions->$name = -$pos;
+
+            if($pos > 0 && $spacing > 0) {
+                imagefilledrectangle($img, $pos, 0, $pos + $spacing, $spriteHeight, $transparent);
+                $pos += $spacing;
+            }
+            imagecopy($img, $tmp, $pos, 0, 0, 0, $spriteWidth, $spriteHeight);
+            $pos += $w;
+            imagedestroy($tmp);
+        }
+
+        imagepng($img, $dest);
+        imagedestroy($img);
+        return $r;
+    }
 
     /**
      * Performs a post request to given url passing given parameters.
@@ -162,7 +271,7 @@ class THETOOLS {
      */
     public static function sc( $a, $b = null, $deep = false )
     {
-        $r = new stdClass();
+        $r = new \stdClass();
         if (is_array($a) || is_object($a)) {
             foreach ($a as $k => $v) {
                 if ($deep == true && (is_array($v) || is_object($v))) {
@@ -1005,21 +1114,35 @@ class THETOOLS {
      * filtered by $match = 'foo' will return array( 'foo_bar1' => 'bar );
      *
      * @access public
-     * @param  string      $match the beginning of the $data keys that should be returned
-     * @param  array|class $data  the data.
+     * @param  string $prefix  the beginning of the $data keys that should be returned
+     * @param  mixed  $data    the data.
+     * @param  array  $filter  array of keys that are expected and their types as value
      * @return array
      */
-    public static function filter_data_by($match, $data)
+    public static function filter_data_by($prefix, $data, $filter = false)
     {
         $args = array();
-        foreach ($data as $key => $value) {
-            if (substr($key, 0, 1) == '_') {
-                $key = substr($key, 1, strlen($key));           
+        if ($filter == false) {
+            foreach ($data as $key => $value) {
+                if (substr($key, 0, 1) == '_') {
+                    $key = substr($key, 1, strlen($key));           
+                }
+                if (strlen($key) > strlen($prefix)
+                 && substr($key, 0, strlen($prefix)) == $match
+                ) {
+                    $args[str_replace($prefix.'_', '', $key)] = $value;
+                }
             }
-            if (strlen($key) > strlen($match)
-             && substr($key, 0, strlen($match)) == $match
-            ) {
-                $args[str_replace($match.'_', '', $key)] = $value;
+        } else {
+            foreach ($filter as $name => $filterKey) {
+                if (isset($data[$prefix.'_'.$name])) {
+                    $args[$name] = filter_var(
+                        $data[$prefix.'_'.$name],
+                        self::$s_filters[$filterKey]
+                    );
+                } else {
+                    $args[$name] = null;
+                }
             }
         }
         return $args;
@@ -1032,12 +1155,13 @@ class THETOOLS {
      * filtered by $match = 'foo' will return array( 'foo_bar1' => 'bar );
      *
      * @access public
-     * @param  string $match the beginning of the $_POST keys that should be returned
+     * @param  string $prefix  the beginning of the $_POST keys that should be returned
+     * @param  array  $filter  array of keys that are expected and their types as value
      * @return array
      */
-    public static function filter_postDataBy($string)
+    public static function filter_postDataBy($prefix, $filter = false)
     {
-        return $this->filter_data_by($string, $_POST);
+        return self::filter_data_by($prefix, $_POST, $filter);
     }
 
     /**
@@ -1047,12 +1171,13 @@ class THETOOLS {
      * filtered by $match = 'foo' will return array( 'foo_bar1' => 'bar );
      *
      * @access public
-     * @param  string $match the beginning of the $_GET keys that should be returned
+     * @param  string $prefix  the beginning of the $_GET keys that should be returned
+     * @param  array  $filter  array of keys that are expected and their types as value
      * @return array
      */
-    public static function filter_getDataBy($string)
+    public static function filter_getDataBy($prefix, $filter = false)
     {
-        return $this->filter_data_by($string, $_GET);
+        return self::filter_data_by($string, $_GET, $filter);
     }
 
     /**
@@ -1062,12 +1187,13 @@ class THETOOLS {
      * filtered by $match = 'foo' will return array( 'foo_bar1' => 'bar );
      *
      * @access public
-     * @param  string $match the beginning of the $_REQUEST keys that should be returned
+     * @param  string $prefix  the beginning of the $_REQUEST keys that should be returned
+     * @param  array  $filter  array of keys that are expected and their types as value
      * @return array
      */
-    public static function filter_requestDataBy($string)
+    public static function filter_requestDataBy($prefix, $filter = false)
     {
-        return $this->filter_data_by($string, $_REQUEST);
+        return self::filter_data_by($string, $_REQUEST, $filter);
     }
 
 
