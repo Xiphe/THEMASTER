@@ -537,10 +537,12 @@ class THEWPMASTER extends THEWPUPDATES {
         foreach( THEBASE::sGet_registeredSources() as $dest => $sources) {
             foreach($sources as $type => $files) {
                 foreach($files as $file => $url) {
+                    $del = realpath(dirname($file).DS.'..'.DS.'..'.DS.'..'.DS.'..'.DS).DS;
+                    $id = preg_replace('/[^A-Za-z0-9-_]/', '_', str_replace($del, '', $file));
                     if($type == 'js') {
-                        wp_enqueue_script('twpm.'.$file, $url);
+                        wp_enqueue_script($id, $url);
                     } elseif($type == 'css') {
-                        wp_enqueue_style('twpm.'.$file, $url);
+                        wp_enqueue_style($id, $url);
                     }
                 }
             }

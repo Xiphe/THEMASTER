@@ -17,8 +17,7 @@ jQuery( document ).ready( function($) {
 		$ldng.removeClass('hidden');
 
 		e.preventDefault();
-		$.get( 
-			ajaxurl + '?' + $sw.find('input,select,textarea').serialize(),
+		$.get(ajaxurl + '?' + $sw.find('input,select,textarea').serialize(),
 			function( r ) {
 				$btn.removeAttr( 'disabled' );
 				$ldng.addClass('hidden');
@@ -27,7 +26,6 @@ jQuery( document ).ready( function($) {
 				if( r.status === 'validationError' &&
 					typeof r.id !== 'undefined'
 				) {
-					console.log($( '#' + r.id ));
 					$( '#' + r.id ).addClass('ts-error');
 					if( typeof r.errorMsg !== 'undefined' ) {
 						$( '#' + r.id ).after(

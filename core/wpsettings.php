@@ -291,7 +291,7 @@ class THEWPSETTINGS extends THEWPBUILDER {
 		$opts = array();
 		$cK = 'tm-setting_' . preg_replace( '/[^a-z0-9-_]/', '', $sK ) . '_';
 		foreach( $_REQUEST as $k => $v ) {
-			
+			$v = stripslashes($v);
 			if( substr( $k, 0, strlen( $cK ) ) == $cK ) { // IGNORE NON tm-setting_domain_ requests
 				$rSK = substr( $k, strlen( $cK ), strlen( $k ) ); // request setting key.
 				if( !isset( $regOpts[$rSK] ) ) {
