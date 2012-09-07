@@ -12,7 +12,7 @@ See [Plugin Page](https://github.com/Xiphe/-THE-MASTER) for details
 Version
 -------
 
-3.0.0
+3.0.1
 
 
 Installation
@@ -117,6 +117,11 @@ Here is a list:
 
 Changelog
 ---------
+
+### 3.0.1
++ Added THETOOLS::filter\_urlQuery() and THETOOLS::create\_sprite()
++ Fixed Names of Masterclass in THEBASE::extr() and THEBASE::get_view() methods.
++ Bigfixes.
 
 ### 3.0.0
 +	Complete refactoring of the initiation process
