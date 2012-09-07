@@ -21,7 +21,7 @@ require_once(THEMASTER_COREFOLDER.'tools.php');
  *
  * @copyright Copyright (c) 2012, Hannes Diercks
  * @author    Hannes Diercks <xiphe@gmx.de>
- * @version   3.0.0
+ * @version   3.0.1
  * @link      https://github.com/Xiphe/-THE-MASTER/
  * @package   !THE MASTER
  */
@@ -450,13 +450,18 @@ class THEBASE {
             $inst = self::$s_singletons[$called];
         } elseif(class_exists($called))
             $inst = self::get_instance( $called );
-        else 
+        else  {
             return false;
+        }
         
-        if(isset($inst->HTML))
+        $called = explode('\\', $called);
+        $called = $called[count($called)-1];
+
+        if(isset($inst->HTML)) {
             return array('HTML' => $inst->HTML, $called => $inst);
-        else
+        } else {
             return array($called => $inst);
+        }
     }
     
     
@@ -553,12 +558,15 @@ class THEBASE {
             }
             
             foreach( array( $this->basePath, self::$sBasePath ) as $basePath ) {
-                $file = $basePath . 'views' . DS . $this->get_directPath( $view ) . '.php';
+                $file = $basePath . 'views' . DS . THETOOLS::get_directPath( $view ) . '.php';
 
                 if( file_exists( $file ) ) {
-                    if( !is_array( $args ) ) $args = array( $args );
-                    $ar = array( get_class($this) => $this );
-                    if( ( $HTML = $this->get_HTML() ) )
+                    if (!is_array( $args )) $args = array($args);
+
+                    $class = explode('\\', get_class($this));
+                    $class = $class[count($class)-1];
+                    $ar = array($class => $this);
+                    if (( $HTML = $this->get_HTML() ) )
                         $ar['HTML'] = $HTML;
                     
                     extract(array_merge(
