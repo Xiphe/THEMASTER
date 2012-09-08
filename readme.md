@@ -12,7 +12,7 @@ See [Plugin Page](https://github.com/Xiphe/-THE-MASTER) for details
 Version
 -------
 
-3.0.1
+3.0.2
 
 
 Installation
@@ -117,6 +117,15 @@ Here is a list:
 
 Changelog
 ---------
+
+### 3.0.2
++ Added THEWPTOOLS::posted_on() from TwentyEleven
++ LessPHP to 0.3.8 and fixed import of elements.less
++ fixed import of textdomain
++ Added edit\_theme\_options as capability for Theme Settings
++ Added 'textarea' and 'tiny_mce' as keys for Setting type
++ Improved tm-admin.js setting-save-logic to enable tinyMCE
++ Improved def Theme template.
 
 ### 3.0.1
 + Added THETOOLS::filter\_urlQuery() and THETOOLS::create\_sprite()

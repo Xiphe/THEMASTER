@@ -12,7 +12,7 @@ require_once(THEMASTER_COREFOLDER.'wpbuilder.php');
  *
  * @copyright Copyright (c) 2012, Hannes Diercks
  * @author    Hannes Diercks <xiphe@gmx.de>
- * @version   3.0.0
+ * @version   3.0.2
  * @link      https://github.com/Xiphe/-THE-MASTER/
  * @package   !THE MASTER
  */
@@ -191,23 +191,29 @@ class THEWPSETTINGS extends THEWPBUILDER {
 	}
 
 	public static function sAdmin_menu() {
-		if( current_user_can( 'manage_options' ) ) {
+		if( current_user_can('manage_options') || current_user_can('edit_theme_options') ) {
 			foreach( self::$s_settings as $k => $s ) {
-				if( pathinfo( $k, PATHINFO_EXTENSION ) !== 'css' && $GLOBALS['pagenow'] === 'plugins.php'  ) {
+				if (pathinfo($k, PATHINFO_EXTENSION) !== 'css'
+				 && $GLOBALS['pagenow'] === 'plugins.php'
+				 && current_user_can('manage_options')
+				) {
 					add_filter( 'plugin_action_links_' . $k , array( 'Xiphe\THEMASTER\THEWPSETTINGS', 'sInject_settingsLink' ), 10, 2 );
 					add_action( 'after_plugin_row_' . $k, array( 'Xiphe\THEMASTER\THEWPSETTINGS', 'inject_settingsRow'), 10, 3 );
-				} elseif( pathinfo( $k, PATHINFO_EXTENSION ) == 'css' ) {
+				} elseif(pathinfo($k, PATHINFO_EXTENSION) == 'css'
+				 && current_user_can('edit_theme_options')
+				) {
 					self::$s_themeSettings = $k;
 					add_theme_page(
 						__( 'Settings', 'themaster' ),
 						__( 'Settings', 'themaster' ),
-						'manage_options',
+						'edit_theme_options',
 						'tm_themesettings',
 						array( 'Xiphe\THEMASTER\THEWPSETTINGS', 'sAdd_themeSettings' )
 					);
 				}
 			}
-		}
+			return;
+		} 
 	}
 
 	public static function sAdd_themeSettings() {
@@ -273,7 +279,8 @@ class THEWPSETTINGS extends THEWPBUILDER {
 		$sK = $_REQUEST['tm-settingkey']; // setting key
 
 		if( !is_admin()
-		 || !current_user_can( 'manage_options' )
+		 || (!current_user_can( 'manage_options' )
+		 	&& !current_user_can('edit_theme_options'))
 		 || !isset( $_REQUEST['tm-nonce'] )
 		 || !wp_verify_nonce( $_REQUEST['tm-nonce'], 
 		 		$sK . 'tmsaveSettings'
@@ -307,6 +314,10 @@ class THEWPSETTINGS extends THEWPBUILDER {
 					case 'checkbox':
 						$v = $v == 'on' ? true : false;
 						break;
+					case 'textarea':
+						/* Fallthrou */
+					case 'tiny_mce':
+						/* Fallthrou */
 					case 'input':
 						if( isset( $regOpts[$rSK]['validation'] ) ) {
 							$vltn = $regOpts[$rSK]['validation'];
@@ -434,6 +445,23 @@ class THEWPSETTINGS extends THEWPBUILDER {
 					),
 					$label
 				);
+				break;
+			case 'textarea':
+				$HTML->textarea(
+						$default,
+						array(
+							'name' => $name,
+							'pattern' => ( isset( $validation ) ? $validation : null )
+						),
+						$label
+				);
+				break;
+			case 'tiny_mce':
+				$HTML->h3($label, '.tm-tinymcelabel')
+					->s_div('.tm-tinymcewrap')
+					->span($name, '.tm-tinymceid hidden');
+				wp_editor( $default, $name );
+				$HTML->end();
 				break;
 			case 'seperator':
 				$HTML->hr();

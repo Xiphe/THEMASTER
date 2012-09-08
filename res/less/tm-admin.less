@@ -35,13 +35,22 @@
 			margin-right: 2.2em;
 			padding-top: 10px;
 			button {
-				margin-left: 200px;
+				margin-left: 15%;
 			}
 		}
 	}
-	label {
+	.tm-tinymcewrap {
+		font-size: 12px;
 		display: inline-block;
-		width: 200px;
+		margin-right: 2.2em;
+		width: 80%;
+		min-width: 700px;
+		margin-bottom: 10px;
+	}
+	label, .tm-tinymcelabel {
+		font-weight: normal;
+		display: inline-block;
+		width: 15%;
 	}
 	input, select {
 		position: relative;
@@ -77,6 +86,11 @@
 		&.last {
 			margin-top: 5em;
 		}
+	}
+}
+#wpcontent .tm-settings {
+	.tm-settingwrap {
+		height: auto;
 	}
 }
 .wrap {

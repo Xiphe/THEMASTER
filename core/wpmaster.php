@@ -41,7 +41,7 @@ require_once(THEMASTER_COREFOLDER.'wptools.php');
  *
  * @copyright Copyright (c) 2012, Hannes Diercks
  * @author  Hannes Diercks <xiphe@gmx.de>
- * @version 3.0.0
+ * @version 3.0.2
  * @link    https://github.com/Xiphe/-THE-MASTER/
  * @package !THE MASTER
  */
@@ -145,6 +145,9 @@ class THEWPMASTER extends THEWPUPDATES {
         $this->add_requiredInitArgs_('version');
 
         if (!self::$s_initiated) {
+            if (function_exists('load_plugin_textdomain')) {
+                load_plugin_textdomain('themaster', false, '_themaster/languages/');
+            }
             THEBASE::sRegister_callback('afterBaseS_init', array('Xiphe\THEMASTER\THEWPMASTER', 'sinit'));
         }
 
@@ -152,6 +155,7 @@ class THEWPMASTER extends THEWPUPDATES {
          * Pass ball to parent.
          */
         $obj = parent::__construct($initArgs);
+
 
         if ($initArgs === 'MINIMASTER') {
             if (class_exists('Xiphe\THEMASTER\THEWPMASTER')) {
@@ -293,16 +297,16 @@ class THEWPMASTER extends THEWPUPDATES {
             return;
         }
 
-        if( parent::_masterInit() ) {
+        if (parent::_masterInit()) {
             $this->_versionCheck();
-            
-            $wpishPath = get_wpInstallPath(
-                $this->projectFile,
-                ($this->projectType == 'theme' ? true : false)
-            );
 
-            if( is_dir( $this->basePath . DS . 'languages' ) ) {
-                load_plugin_textdomain( $this->textdomain, false, $wpishPath . DS . 'languages' . DS );
+            if (is_dir($this->basePath.DS.'languages')) {
+                if ($this->projectType == 'plugin') {
+                    load_plugin_textdomain($this->textdomain, false, $this->foldername.'/languages/');
+                } elseif ($this->projectType == 'theme') {
+                    $path = dirname(get_wpInstallPath($this->projectFile, true)).DS.'languages'.DS;
+                    load_theme_textdomain($this->textdomain, $path);
+                }
             }
 
             if ($this->projectType != 'theme') {
@@ -317,13 +321,6 @@ class THEWPMASTER extends THEWPUPDATES {
 
             $this->_masterInitiated();
         }
-    
-        // TODO: REIMPLEMENT    
-        // if(!isset(self::$_hooked['masterVersionCheck'])) {
-        //  $this->_versionCheck('themaster', $this);
-        //  self::$_hooked['masterVersionCheck'] = true;
-        // }
-        
     }
 
     /**
@@ -517,13 +514,19 @@ class THEWPMASTER extends THEWPUPDATES {
      * @return void
      */
     final public static function twpm_print_jsVars($admin = false) {
-        if (is_object($HTML = THEBASE::sget_HTML())) {
-            $source = $admin ? THEBASE::sGet_registeredAdminJsVars() : THEBASE::sGet_registeredJsVars();
+        $source = $admin ? THEBASE::sGet_registeredAdminJsVars() : THEBASE::sGet_registeredJsVars();
+        if (is_object($HTML = THEBASE::sget_HTML(true))) {
             $HTML->sg_script();
             foreach ($source as $name => $var) {
                 $HTML->blank('var '.$name.' = '.json_encode($var).';');
             }
             $HTML->end();
+        } else {
+            echo '<script type="text/javascript">';
+            foreach ($source as $name => $var) {
+                echo 'var '.$name.' = '.json_encode($var).";\n";
+            }
+            echo '</script>';
         }
     }
     

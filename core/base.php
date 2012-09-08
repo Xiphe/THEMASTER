@@ -21,7 +21,7 @@ require_once(THEMASTER_COREFOLDER.'tools.php');
  *
  * @copyright Copyright (c) 2012, Hannes Diercks
  * @author    Hannes Diercks <xiphe@gmx.de>
- * @version   3.0.1
+ * @version   3.0.2
  * @link      https://github.com/Xiphe/-THE-MASTER/
  * @package   !THE MASTER
  */
@@ -856,12 +856,11 @@ class THEBASE {
              * Convert css and append CSSfix
              */
             try {
-                $LessC = new \lessc($file);
-                $LessC->importDir = array( 
-                    '', 
-                    dirname($file)
-                );
-                $CSS = $LessC->parse();
+                $Less = new \lessc();
+                $Less->addImportDir(dirname($file));
+                $Less->addImportDir(THEMASTER_PROJECTFOLDER.'res'.DS.'less');
+                
+                $CSS = $Less->compileFile($file);
                 $CSSfix = new \CSSfix();
                 $CSSfix->from_string($CSS);
                 if (!file_exists(($cssFile))) {

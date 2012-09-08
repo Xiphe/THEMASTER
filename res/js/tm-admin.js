@@ -10,14 +10,26 @@ jQuery( document ).ready( function($) {
 		$sw = $(this).closest('.tm-settingswrap'),
 		$btn = $(this),
 		$ldng = $sw.find('.tm-loading'),
-		$msg = $sw.find('.tm-message');
+		$msg = $sw.find('.tm-message'),
+		rqst = [];
+
+		e.preventDefault();
 
 		$msg.fadeOut( 500, function() { $msg.html(''); });
 		$btn.attr( 'disabled', 'disabled' );
 		$ldng.removeClass('hidden');
 
-		e.preventDefault();
-		$.get(ajaxurl + '?' + $sw.find('input,select,textarea').serialize(),
+		$.each($('.tm-settingwrap'), function() {
+			if($(this).children('.tm-tinymcewrap').length) {
+				var id = $(this).find('.tm-tinymceid').html();
+				var c = tinyMCE.get(id).getContent();
+				rqst.push(encodeURI(id)+'='+encodeURI(c));
+			} else {
+				rqst.push($(this).find('input,select,textarea').serialize());
+			}
+		});
+
+		$.get(ajaxurl + '?' + rqst.join('&'),
 			function( r ) {
 				$btn.removeAttr( 'disabled' );
 				$ldng.addClass('hidden');

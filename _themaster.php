@@ -3,7 +3,7 @@
 Plugin Name: !THE MASTER
 Plugin URI: http://plugins.red-thorn.de/libary/themaster/
 Description: A Plugin to provide global access to the THEWPMASTER class. THEWPMASTER provides a lot of handy functions for plugins an themes.
-Version: 3.0.1
+Version: 3.0.2
 Date: 2012-06-17 04:22:00
 Author: Hannes Diercks
 Author URI: http://red-thorn.de/
@@ -149,12 +149,37 @@ if (function_exists('register_deactivation_hook')) {
  */
 if (!defined('THEWPMASTERAVAILABE')) {
     if (!defined('THEMINIWPMASTERAVAILABLE')) {
-        require_once(THEMASTER_COREFOLDER.'wpmaster.php');
-        $GLOBALS['THEMINIWPMASTER'] = new THEWPMASTER('MINIMASTER');
-        define('THEMINIWPMASTERAVAILABLE', true);
+        try {
+            require_once(THEMASTER_COREFOLDER.'wpmaster.php');
+            $GLOBALS['THEMINIWPMASTER'] = new THEWPMASTER('MINIMASTER');
+            define('THEMINIWPMASTERAVAILABLE', true);
+        } catch( \Exception $e ) {
+            /*
+             * Errors Occured -> try to write an admin notice.
+             */
+            collect_tmInitErrors($e);
+        }
     }
 }
 
+
+function collect_tmInitErrors($e) {
+    if (!isset($GLOBALS['THEWPMASTERINITERRORS'])) {
+        if (function_exists('add_action')) {
+            $GLOBALS['THEWPMASTERINITERRORS'] = array();
+            add_action('admin_notices', function() {
+                foreach($GLOBALS['THEWPMASTERINITERRORS'] as $e) {
+                    echo '<div class="error"><p>'.$e->getMessage().'<br />File:'.$e->getFile().' Line:'.$e->getLine().'</p></div>';
+                }
+            });
+        } else {
+            echo '<div class="error"><p>'.$e->getMessage().'<br />File:'.$e->getFile().' Line:'.$e->getLine().'</p></div>';
+            return false;
+        }
+    }
+    $k = $e->getFile().$e->getLine();
+    $GLOBALS['THEWPMASTERINITERRORS'][$k] = $e;
+}
 
 /**
  * initiation for Plugins and Themes that want to use THE MASTER.
@@ -199,21 +224,10 @@ function INIT( $initArgs = null, $file = null ) {
         $r = THEWPMASTER::get_instance( 'Master', $initArgs );
     } catch( \Exception $e ) {
         /*
-         * Errors Occured -> write an admin notice.
+         * Errors Occured -> try to write an admin notice.
          */
-        if( !isset( $GLOBALS['THEWPMASTERINITERRORS'] )) {
-            if( function_exists( 'add_action' ) ) {
-                $GLOBALS['THEWPMASTERINITERRORS'] = array();
-                add_action( 'admin_notices', function() {
-                    foreach( $GLOBALS['THEWPMASTERINITERRORS'] as $e ) {
-                        echo '<div class="error"><p>' . $e->getMessage() . '<br />File:' . $e->getFile() . ' Line:' . $e->getLine() . '</p></div>';
-                    }
-                });
-            } else {
-                echo '<div class="error"><p>' . $e->getMessage() . '<br />File:' . $e->getFile() . ' Line:' . $e->getLine() . '</p></div>';
-            }
-        }
-        array_push( $GLOBALS['THEWPMASTERINITERRORS'], $e );
+        collect_tmInitErrors($e);
+
         /*
          * Do not return the object because it was not initated correctly.
          */
