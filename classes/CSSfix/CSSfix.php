@@ -345,13 +345,6 @@ class CSSfix
 	//build new css string
 	private function build($data, $min){
 		$str = "";
-		foreach($this->keyframes as $rule)
-		{
-			$selector = $rule["key"];
-			$str .= ($min) ? $selector."{" : $selector."{\n";
-			$str .= ($min) ? $rule["val"] : "\t".$rule["val"]."\n";
-			$str .= ($min) ? "}" : "}\n";
-		}
 		foreach($data as $selector => $rule)
 		{
 			$str .= ($min) ? $selector."{" : $selector." {\n";
@@ -361,6 +354,13 @@ class CSSfix
 				$val = $val["val"];
 				$str .= ($min) ? $key.":".$val.";" : "\t".$key.": ".$val.";\n";
 			}
+			$str .= ($min) ? "}" : "}\n";
+		}
+		foreach($this->keyframes as $rule)
+		{
+			$selector = $rule["key"];
+			$str .= ($min) ? $selector."{" : $selector."{\n";
+			$str .= ($min) ? $rule["val"] : "\t".$rule["val"]."\n";
 			$str .= ($min) ? "}" : "}\n";
 		}
 		return $str;
