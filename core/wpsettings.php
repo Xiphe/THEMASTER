@@ -70,7 +70,7 @@ class THEWPSETTINGS extends THEWPBUILDER {
 			THEBASE::sRegister_callback( 'afterBaseS_init', array( 'Xiphe\THEMASTER\THEWPSETTINGS', 'sinit' ), 1, null, null, 1 );
 		}
 
-		parent::__construct($initArgs);
+		return parent::__construct($initArgs);
 	}
 
 	/**
@@ -309,7 +309,7 @@ class THEWPSETTINGS extends THEWPBUILDER {
 					case 'dropdown':
 					case 'select':
 						if( !isset( $regOpts[$rSK]['args'][$v] ) )
-							$obj->_exit( 'error', 'cheatin?', 3 );
+							$obj->_exit( 'error', __('cheatin?', 'themaster'), 3 );
 						break;
 					case 'checkbox':
 						$v = $v == 'on' ? true : false;
@@ -319,18 +319,26 @@ class THEWPSETTINGS extends THEWPBUILDER {
 					case 'tiny_mce':
 						/* Fallthrou */
 					case 'input':
-						if( isset( $regOpts[$rSK]['validation'] ) ) {
+						if(isset($regOpts[$rSK]['validation'])) {
 							$vltn = $regOpts[$rSK]['validation'];
-							if( is_string( $vltn ) 
+							if(is_string($vltn) 
 							 && !preg_match('/' . $vltn . '/', $v)
 							) {
 								if( isset( $regOpts[$rSK]['errorMessage'] )) {
 									$obj->_r['errorMsg'] = $regOpts[$rSK]['errorMessage'];
 								}
 								$obj->_r['id'] = $k;
-								$obj->_exit( 'validationError', 'mismatch on validation', 2 );
+								$obj->_exit( 'validationError', __('Mismatch on validation', 'themaster'), 2 );
 							}
 						}
+						break;
+					case 'attachment':
+						self::s_validateAttachments(
+							$regOpts[$rSK],
+							$k,
+							$v,
+							$obj
+						);
 						break;
 					default:
 						break;
@@ -345,6 +353,54 @@ class THEWPSETTINGS extends THEWPBUILDER {
 		self::$s_storeSettings = true;
 
 		$obj->_exit( 'ok', __( 'Options updated', 'themaster' ), -1 );
+	}
+
+	private static function s_validateAttachments($regOpts, $inpID, $v, $obj) {
+
+		/*
+		 * Check if multiple attachements are set and not allowed
+		 */
+		$v = explode(',', $v);
+		if (count($v) > 1 
+		 && (
+			!isset($regOpts['args']['multiple'])
+		  || $regOpts['args']['multiple'] != true
+		 )
+		) {
+			$obj->_r['errorMsg'] = __('Only one Attachment is allowed but multiple are set - please delete some.', 'themaster');
+			$obj->_r['id'] = $inpID;
+			$obj->_exit('validationError', __('Invalid attachment count.', 'themaster'), 2);
+		}
+
+		if (isset($regOpts['validation']) && !empty($v)) {
+			if (!THEBASE::get_instance('FileSelect')->validateTypeFor(
+				$v,
+				$regOpts['validation']
+			)) {
+				if (isset($regOpts['errorMessage'])) {
+					$msg = $regOpts['errorMessage'];
+				} else {
+					$msg = THEBASE::get_instance('FileSelect')->get_typeErrorMessageFor($v);
+				}
+				$obj->_r['errorMsg'] = $msg;
+				$obj->_r['id'] = $inpID;
+				$obj->_exit('validationError', __('Invalid Filetype.', 'themaster'), 2);
+			}
+		}
+
+		if (!THEBASE::get_instance('FileSelect')->validateSizeFor(
+			$v,
+			$regOpts['args']
+		)) {
+			if (isset($regOpts['errorMessage'])) {
+				$msg = $regOpts['errorMessage'];
+			} else {
+				$msg = THEBASE::get_instance('FileSelect')->get_sizeErrorMessageFor($v);
+			}
+			$obj->_r['errorMsg'] = $msg;
+			$obj->_r['id'] = $inpID;
+			$obj->_exit('validationError', __('Invalid Filetype.', 'themaster'), 2);
+		}
 	}
 
 	public static function sInject_settingsLink( $links, $k ) {
@@ -462,6 +518,23 @@ class THEWPSETTINGS extends THEWPBUILDER {
 					->span($name, '.tm-tinymceid hidden');
 				wp_editor( $default, $name );
 				$HTML->end();
+				break;
+			case 'attachment':
+				if (is_array($default)) {
+					$default = implode(',', $default);
+				}
+				if (strstr($default, ',')) {
+					$args['multiple'] = true;
+				}
+				THEBASE::get_instance('FileSelect')->button(
+					$name,
+					$default,
+					$label,
+					'thumbnail',
+					(isset($validation) ? $validation : false),
+					(!empty($args['multiple']) ? true : false)
+				);
+				$HTML->clear();
 				break;
 			case 'seperator':
 				$HTML->hr();

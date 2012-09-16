@@ -48,7 +48,7 @@ class THESETTINGS extends THEBASE {
 			self::$s_initiated = true;
 		}
 
-		parent::__construct( $initArgs );
+		return parent::__construct( $initArgs );
 	}
 
 	protected function _masterInit() {

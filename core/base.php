@@ -81,7 +81,7 @@ class THEBASE {
      */
     private static $s_singletons = array();
 
-
+    private static $s_themastersInitArgs = array();
     /* PUBLIC */
 
     /**
@@ -194,19 +194,11 @@ class THEBASE {
     private $_requiredInitArgs = array();
 
     /**
-     * ?!?
-     *
-     * @access private
-     * @var array
-     */
-    private $_initArgs = array();
-
-    /**
      * Array of temporary globals used by THEBASE::_unset_temp_globals(),
      * THEBASE::_set_temp_globals() and THEMASE::_register_temp_global()
      *
      * @access private
-     * @var array 
+     * @var    array 
      */
     private $_temp_globals = array();
 
@@ -219,7 +211,7 @@ class THEBASE {
      * initiation keys.
      *
      * @access protected
-     * @var array
+     * @var    array
      */
     protected $requiredInitArgs = array();
     
@@ -227,15 +219,22 @@ class THEBASE {
      * Holds the original Array of initiation arguments passed on construction.
      *
      * @access protected
-     * @var array
+     * @var    array
      */ 
     protected $_mastersInitArgs = array();
     
+    /**
+     * Subclasses can overwrite this to add init args to own instantiation.
+     *
+     * @access  protected
+     * @var     array
+     */
+    protected $_initArgs = array();
+
 
     /* ---------------------- *
      *  CONSTRUCTION METHODS  *
      * ---------------------- */
-
     
     /** 
      * The Constructor gets called by every subclass
@@ -315,30 +314,43 @@ class THEBASE {
             $msg = sprintf(
                 '<strong>!THEMASTER - Required args Error:</strong> "%1$s" in %2$s "%3$s"',
                 $err,
-                $initArgs['projectType'],
-                $initArgs['projectName']
+                isset($initArgs['projectType']) ? $initArgs['projectType'] : __('Project', 'themaster'),
+                isset($initArgs['projectName']) ?  $initArgs['projectName'] : __('Unknown', 'themaster')
             );
-            throw new ErrorException($msg, 1);
+            throw new \Exception($msg, 1);
             return false;
         }
+        return $this;
     }
 
     private static function s_init() {
         if( !self::$s_initiated ) {
             THETOOLS::session();
 
-            self::$sProjectFile = THEMASTER_PROJECTFILE;
-            self::$sBasePath = dirname( self::$sProjectFile ) . DS;
-            self::$sFolderName = basename( self::$sBasePath );
-            self::$sTextdomain = pathinfo( self::$sProjectFile, PATHINFO_FILENAME );
-            self::$sTextID = self::$sFolderName . '/' . basename( self::$sProjectFile );
+            self::$s_themastersInitArgs['projectFile']
+                = self::$sProjectFile = THEMASTER_PROJECTFILE;
+            self::$s_themastersInitArgs['basePath']
+                = self::$sBasePath = dirname(self::$sProjectFile).DS;
+            self::$s_themastersInitArgs['folderName']
+                = self::$sFolderName = basename(self::$sBasePath);
+            self::$s_themastersInitArgs['textdomain']
+                = self::$sTextdomain = 'themaster';
+            self::$s_themastersInitArgs['textID']
+                = self::$sTextID = self::$sFolderName.'/'.basename(self::$sProjectFile);
+
+            self::$s_themastersInitArgs['namespace'] = 'Xiphe\\THEMASTER';
+            self::$s_themastersInitArgs['projectName'] = '!THE MASTER';
+            self::$s_themastersInitArgs['updatable'] = true;
+
             if (class_exists('Xiphe\THEMASTER\THEWPBUILDER')) {
                 self::$sVersion = THEWPBUILDER::get_initArgs(THEMASTER_PROJECTFILE,false);
-                self::$sVersion = self::$sVersion['version'];
+                self::$s_themastersInitArgs['version']
+                    = self::$sVersion = self::$sVersion['version'];
             }
 
             if( function_exists( 'plugins_url' )) {
-                self::$sBaseUrl = plugins_url( self::$sTextdomain );
+                self::$s_themastersInitArgs['baseUrl']
+                    = self::$sBaseUrl = THETOOLS::slash(plugins_url('_'.self::$sTextdomain));
             }
             
             if( THESETTINGS::sGet_setting( 'errorReporting', self::$sTextID ) === true ) {
@@ -438,17 +450,18 @@ class THEBASE {
      * @return array
      * @access public
      */
-    public static function extr() {
+    public static function extr()
+    {
         $called = get_called_class();
 
-        if(
+        if (
             isset(self::$s_singletons[$called])
         ) {
             if (!is_object(self::$s_singletons[$called])) {
                 return false;
             }
             $inst = self::$s_singletons[$called];
-        } elseif(class_exists($called))
+        } elseif (class_exists($called))
             $inst = self::get_instance( $called );
         else  {
             return false;
@@ -457,7 +470,7 @@ class THEBASE {
         $called = explode('\\', $called);
         $called = $called[count($called)-1];
 
-        if(isset($inst->HTML)) {
+        if (isset($inst->HTML)) {
             return array('HTML' => $inst->HTML, $called => $inst);
         } else {
             return array($called => $inst);
@@ -474,36 +487,13 @@ class THEBASE {
      * @date Jul 28th 2011
      */
     protected function _masterInit() {
-        // if( isset($this->slug) && !isset( self::$s_singletons['masters'][ $this->slug ] ) )
-        //  self::$s_singletons['masters'][ $this->slug ] = $this;
-        
-            
-        // $name = strtoupper($this->prefix).'Master';
-        
-        // global $$name;
-
-        // $this->debug( $this, 'called' );
-
-
         return true;
-        // $this->diebug( 'tot' );
-
-        // try {
-        //  $r = $this->get_instance( 'Master' );
-        //  $this->initiated = TRUE;
-        //  return $r;
-        // } catch (Exception $e) {
-        //  if( class_exists('THEWPMASTER') ) {
-        //      THEWPMASTER::sMasterInitError( $e, $initArgs );
-        //  } else {
-        //      echo '<p>' . $e . '</p>';
-        //  }
-        // }
     }
 
-    protected function _masterInitiated() {
-        if( $this->_masterInitiated  !== true ) {
-            self::sdo_callback( 'initiated', $this, array( 'class' => get_class($this) ) );
+    protected function _masterInitiated()
+    {
+        if ($this->_masterInitiated !== true) {
+            self::sdo_callback('initiated', $this, array('class' => get_class($this)));
             $this->_masterInitiated = true;
         }
     }
@@ -517,10 +507,11 @@ class THEBASE {
      * @access public
      * @date Jul 29th 2011
      */
-    public function view( $view, $args = null, $temp = null ) {
-        echo $this->get_view( $view, $args, $temp );    
+    public function view($view, $args = null, $temp = null)
+    {
+        echo $this->get_view($view, $args, $temp);
     }
-        
+
     /**
      * Trys to get a view File named example.php from 
      * "views"-Subfolder of defined basePath and return its output
@@ -534,7 +525,8 @@ class THEBASE {
      * @param  mixed       $temp catching param for wordpress calls
      * @return string      View String
      */
-    public function get_view($view, $args = array(), $temp = null) {
+    public function get_view($view, $args = array(), $temp = null)
+    {
         try {
             /** sth. for compability with Wordpress functions TODO: get more specific **/
             if(is_object($view)) {
@@ -711,7 +703,6 @@ class THEBASE {
          * Add !THE MASTERs basePath and BaseUrl as fall-back.
          */
         $paths[THEBASE::$sBasePath] = THEBASE::$sBaseUrl;
-
 
         $ePaths = array();
 
@@ -1193,6 +1184,13 @@ class THEBASE {
                         $this->_initArgs,
                         $initArgs
                     );
+                    $initArgs['_mastersInitArgs'] = $this->_mastersInitArgs;
+                } else {
+                    $initArgs = array_merge(
+                        self::$s_themastersInitArgs,
+                        $initArgs
+                    );
+                    $initArgs['_mastersInitArgs'] = self::$s_themastersInitArgs;
                 }
 
                 self::sRegister_callback(
@@ -1253,6 +1251,7 @@ class THEBASE {
                 throw new \Exception($msg,1);
             }
         }
+        return $obj;
     }
 
     /**

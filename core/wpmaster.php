@@ -162,7 +162,6 @@ class THEWPMASTER extends THEWPUPDATES {
                 $this->_versionCheck();
             }
         }
-
         return $obj;
     }
     
@@ -185,11 +184,12 @@ class THEWPMASTER extends THEWPUPDATES {
             /*
              * Register basic less and js files.
              */
-            if (function_exists('is_admin') && !is_admin()) {
+            if (!function_exists('is_admin') || !is_admin()) {
                 THEBASE::reg_less('base');
             } else {
                 THEBASE::reg_adminLess('tm-admin');
                 THEBASE::reg_adminJs('tm-admin');
+                THEBASE::get_instance('FileSelect');
             }
 
             /*
@@ -486,7 +486,7 @@ class THEWPMASTER extends THEWPUPDATES {
             $e->getFile(),
             $e->getLine()
         );
-        if( !self::$s_adminNoticesSent ) {
+        if(is_admin() && !self::$s_adminNoticesSent) {
             self::set_adminMessage( 
                 $msg,
                 'error'
@@ -565,6 +565,7 @@ class THEWPMASTER extends THEWPUPDATES {
                 foreach ( $this->$hooktype as $k => $hook ) {
                     $e = explode( '|', $hook );
                     $method = is_int( $k ) ? $e[0] : $k;
+                    $method = str_replace('-', '_', $method);
                     $e[-1] = $e[0];
                     $e[0] = array( $this, $method );
                     if( method_exists( $this, $method ) ) {
@@ -574,7 +575,7 @@ class THEWPMASTER extends THEWPUPDATES {
                             $e
                         );
                     } else {
-                        throw new Exception('THEMASTER ERROR: Should call Hook ' . $e[-1] . ' to unexistent method ' . $method . ' in class ' . get_class( $this ) . '.', 1);
+                        throw new \Exception('THEMASTER ERROR: Should call Hook ' . $e[-1] . ' to unexistent method ' . $method . ' in class ' . get_class( $this ) . '.', 1);
                     }
                 }
 
@@ -632,9 +633,9 @@ class THEWPMASTER extends THEWPUPDATES {
         if(empty($message))
             return;
         if(!$session)
-            self::$s_notes[] = array('inner' => $message, 'attr' => $attr);
+            self::$s_notes[md5($message)] = array('inner' => $message, 'attr' => $attr);
         else {
-            $_SESSION['tm_admin_notes'][] = array('inner' => $message, 'attr' => $attr);
+            $_SESSION['tm_admin_notes'][md5($message)] = array('inner' => $message, 'attr' => $attr);
         }
     }
     

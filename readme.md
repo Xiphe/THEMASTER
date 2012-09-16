@@ -12,7 +12,7 @@ See [Plugin Page](https://github.com/Xiphe/-THE-MASTER) for details
 Version
 -------
 
-3.0.2
+3.0.3
 
 
 Installation
@@ -88,6 +88,11 @@ Here is a list:
   License: GNU GPL.  
   File: http://www.gnu.org/copyleft/gpl.html  
   Developed by Robert Widdick
+* **SLT File Select(http://sltaylor.co.uk/wordpress/plugins/slt-file-select/)**
+  I implemented the idears of Steve Taylors File Select Plugin as Class FileSelect for usage in other Plugins
+  and as a part of THEWPSETTINGS. I modifyed his code a bit to make it fit into my workflow.
+  Donate Link: http://www.babyloniantimes.co.uk/index.php?page=donate
+  
 
 ###JS
 * **[animaterotatescale](https://github.com/zachstronaut/jquery-animate-css-rotate-scale/blob/master/jquery-animate-css-rotate-scale.js)**  
@@ -117,6 +122,13 @@ Here is a list:
 
 Changelog
 ---------
+
+### 3.0.3
++ Added FileSelect Class for manipulating the wordpress media upload dialog.
++ Added "attachment" as key for Setting type.
++ Added ResponsiveImage Class for preloading mini images and then get the right image files
+  for the current screen-size.
++ Lots of bugfixes
 
 ### 3.0.2
 + Added THEWPTOOLS::posted_on() from TwentyEleven

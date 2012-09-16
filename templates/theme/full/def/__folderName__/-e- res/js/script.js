@@ -20,4 +20,4 @@
 
 
 // INITIAION ETC.
-;(function(){_init();$(document).ready(_ready);});})(jQuery);
+;(function(){_init();$(document).ready(_ready);})();})(jQuery);

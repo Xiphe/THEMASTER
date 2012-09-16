@@ -61,7 +61,7 @@ class THEWPUPDATES extends THEWPSETTINGS {
 		}
 
 		// pass the Ball
-		parent::__construct( $initArgs );
+		return parent::__construct( $initArgs );
 	}
 
 	/**

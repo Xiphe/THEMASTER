@@ -96,6 +96,38 @@ class THETOOLS {
      * ---------------- */
 
     /**
+     * Parses a list-string from an array, an object or a testlist seperated by $inputSep.
+     *
+     * @access  public
+     * @param   mixed  $input     array, object or string with list entrys.
+     * @param   string $lastSep   the text for the last seperator. Default = " or "
+     * @param   string $stdSep    the text for all other seperators. Default = ", "
+     * @param   string $inputSep  the string that explodes the $input if it is a string.
+     * @return  string            a nice readable list of things.
+     */
+    public function readableList($input, $lastSep = null, $defSep = ', ', $inputSep = '|')
+    {
+        if ($lastSep === null) {
+            $lastSep = ' '.__('or', 'themaster').' ';
+        } 
+        $r = '';
+        if (is_string($input)) {
+            $input = explode($inputSep, $input);
+        }
+        $l = count($input)-1;
+        foreach ($input as $k => $v) {
+            if ($k == 0) {
+                $r .= $v;
+            } elseif ($k == $l) {
+                $r .= $lastSep.$v;
+            } else {
+                $r .= $defSep.$v;
+            }
+        }
+        return $r;
+    }
+    
+    /**
      * Parses an url adds and removes get-query arguments and rebuilds the url.
      *
      * @access public
@@ -155,7 +187,8 @@ class THETOOLS {
                 'width' => $spriteWidth,
                 'height' => $spriteHeight,
             )),
-            'positions' => self::sc(array())
+            'positions' => self::sc(array()),
+            'sizes' => self::sc(array())
         ));
 
         $img = imagecreatetruecolor($spriteWidth, $spriteHeight);
@@ -170,8 +203,9 @@ class THETOOLS {
         foreach ($imgs as $file) {
             $name = pathinfo($file, PATHINFO_FILENAME);
             $tmp = imagecreatefrompng($file);
-            list($w) = getimagesize($file);
+            list($w, $h) = getimagesize($file);
             $r->positions->$name = -$pos;
+            $r->sizes->$name = self::sc(array('width' => $w, 'height' => $h));
 
             if($pos > 0 && $spacing > 0) {
                 imagefilledrectangle($img, $pos, 0, $pos + $spacing, $spriteHeight, $transparent);
@@ -184,6 +218,7 @@ class THETOOLS {
 
         imagepng($img, $dest);
         imagedestroy($img);
+
         return $r;
     }
 
@@ -411,7 +446,7 @@ class THETOOLS {
     {
         if (self::$s_BrowserObj == null) {
             require_once(THEMASTER_PROJECTFOLDER.'classes'.DS.'Browser'.DS.'Browser.php');
-            self::$s_BrowserObj = new Browser;
+            self::$s_BrowserObj = new \Browser;
             self::$s_browserVersion = self::$s_BrowserObj->getVersion();
             self::$s_browser = self::$s_BrowserObj->getBrowser();
         }
@@ -956,7 +991,7 @@ class THETOOLS {
      */
     public static function get_classConstant($className, $constantName)
     {
-        $Class = new ReflectionClass($className);
+        $Class = new \ReflectionClass($className);
         return $Class->getConstant($constantName);
     }
 
@@ -1128,7 +1163,7 @@ class THETOOLS {
                     $key = substr($key, 1, strlen($key));           
                 }
                 if (strlen($key) > strlen($prefix)
-                 && substr($key, 0, strlen($prefix)) == $match
+                 && substr($key, 0, strlen($prefix)) == $prefix
                 ) {
                     $args[str_replace($prefix.'_', '', $key)] = $value;
                 }

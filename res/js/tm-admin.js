@@ -19,20 +19,26 @@ jQuery( document ).ready( function($) {
 		$btn.attr( 'disabled', 'disabled' );
 		$ldng.removeClass('hidden');
 
-		$.each($('.tm-settingwrap'), function() {
+		$.each($sw.children('.tm-settingwrap'), function() {
 			if($(this).children('.tm-tinymcewrap').length) {
 				var id = $(this).find('.tm-tinymceid').html();
 				var c = tinyMCE.get(id).getContent();
 				rqst.push(encodeURI(id)+'='+encodeURI(c));
 			} else {
-				rqst.push($(this).find('input,select,textarea').serialize());
+				$(this).find('input,select,textarea').each(function(k,v) {
+					if ($(this).attr('id').indexOf('tm-setting_') === 0) {
+						rqst.push($(this).serialize());
+					}
+				});
 			}
 		});
-
+		rqst.push($sw.children('.tm-savewrap').find('input,select,textarea').serialize());
 		$.get(ajaxurl + '?' + rqst.join('&'),
 			function( r ) {
 				$btn.removeAttr( 'disabled' );
 				$ldng.addClass('hidden');
+				$('.ts-error').removeClass('ts-error');
+				$('.ts-errormsg').remove();
 
 				r = eval( '(' + r + ')' );
 				if( r.status === 'validationError' &&
@@ -44,9 +50,6 @@ jQuery( document ).ready( function($) {
 							$('<span />').addClass('ts-errormsg').html(r.errorMsg)
 						);
 					}
-				} else {
-					$sw.find('.ts-error').removeClass('ts-error');
-					$sw.find('.ts-errormsg').remove();
 				}
 				
 				if( typeof r.msg !== 'undefined' ) {

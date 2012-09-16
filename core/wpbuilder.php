@@ -39,7 +39,7 @@ class THEWPBUILDER extends THEMASTER {
 		}
 
 		// Pass ball to parent.
-		parent::__construct( $initArgs );
+		return parent::__construct( $initArgs );
 	}
 
 	/**

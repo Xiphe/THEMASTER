@@ -87,6 +87,38 @@
 			margin-top: 5em;
 		}
 	}
+	.tm-fileselect_buttonwrap,
+	.tm-fileselect_preview {
+		width: 85%;
+		float: right;
+	}
+	.tm-fileselect_wrap {
+		width: 152px;
+		height: 152px;
+		.tm-fileselect_removewrap {
+			position: relative;
+			z-index: 5;
+			height: 0;
+			display: none;
+		}
+		.thickbox {
+			width: 150px;
+			height: 150px;
+			display: block;
+			position: relative;
+			z-index: 1;
+			border: 1px solid #dfdfdf;
+			&:hover, &:focus, &:active {
+				border: 1px solid #666;
+			}
+		}
+		&:hover, &:focus, &:active {
+			.tm-fileselect_removewrap {
+				display: block;
+			}
+
+		}
+	}
 }
 #wpcontent .tm-settings {
 	.tm-settingwrap {

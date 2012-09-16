@@ -12,13 +12,31 @@ namespace Xiphe\THEMASTER;
  */
 class THEWPTOOLS {
 
+
+	public static function create_noprivnonce($action, $id)
+	{
+		$i = wp_nonce_tick();
+		return substr(wp_hash($i . $action . $id, 'nonce'), -12, 10);
+	}
+
+	public static function verify_noprivnonce($nonce, $action, $id)
+	{
+		$i = wp_nonce_tick();
+		if ( substr(wp_hash($i . $action . $id, 'nonce'), -12, 10) == $nonce )
+			return 1;
+		if ( substr(wp_hash(($i - 1) . $action . $id, 'nonce'), -12, 10) == $nonce )
+			return 2;
+		return false;
+	}
+
 	/**
 	 * The "Posted by Derp in FooBar" post-meta.
 	 * Taken from TwentyEleven Wordpress Theme.
 	 * 
 	 * @return string
 	 */
-	public static function posted_on() {
+	public static function posted_on()
+	{
         return sprintf(__('<span class="sep">Posted on </span><a href="%1$s" title="%2$s" rel="bookmark"><time class="entry-date" datetime="%3$s" pubdate>%4$s</time></a><span class="by-author"> <span class="sep"> by </span> <span class="author vcard"><a class="url fn n" href="%5$s" title="%6$s" rel="author">%7$s</a></span></span>', 'themaster'),
             esc_url(get_permalink()),
             esc_attr(get_the_time()),

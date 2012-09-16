@@ -3,7 +3,7 @@ namespace Xiphe\THEMASTER;
 
 /**
  * Provides themes and plugins with a form interface to select a file from the Media Library.
- * [Original Plugin](http://sltaylor.co.uk/wordpress/plugins/file-select/)
+ * [Original Plugin](http://sltaylor.co.uk/wordpress/plugins/slt-file-select/)
  * 
  * @author   Logic: [Steve Taylor](http://sltaylor.co.uk)
  *           Adjustments and Conversion into TM-Class: [Hannes Diercks](xiphe@gmx.de)
