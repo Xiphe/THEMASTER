@@ -12,7 +12,7 @@ See [Plugin Page](https://github.com/Xiphe/-THE-MASTER) for details
 Version
 -------
 
-3.0.3
+3.0.4
 
 
 Installation
@@ -122,6 +122,12 @@ Here is a list:
 
 Changelog
 ---------
+
+### 3.0.4
++ Added DS, preDS, unDS and unPreDS to THETOOLS
++ Reactivated check\_folder\_structure_ in THEWPBUILDER used for gaining desired chmod on folders
+  after project update.
+  
 
 ### 3.0.3
 + Added FileSelect Class for manipulating the wordpress media upload dialog.

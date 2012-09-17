@@ -854,7 +854,7 @@ class THEBASE {
                 $CSS = $Less->compileFile($file);
                 $CSSfix = new \CSSfix();
                 $CSSfix->from_string($CSS);
-                if (!file_exists(($cssFile))) {
+                if (!file_exists($cssFile)) {
                     if (!is_dir(dirname($cssFile))) {
                         mkdir(dirname($cssFile));
                     }

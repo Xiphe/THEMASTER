@@ -63,9 +63,7 @@ class THEWPMASTER extends THEWPUPDATES {
      */
     public static $sCurrentUser;
 
-
     /* PROTECTED */
-
 
     /* PRIVATE */
 
@@ -101,7 +99,7 @@ class THEWPMASTER extends THEWPUPDATES {
      */
     private static $s_contentTags = array();
 
-    
+
     private static $s_ftp_conn_id;
 
     /**
@@ -120,6 +118,16 @@ class THEWPMASTER extends THEWPUPDATES {
      * @var    boolean
      */
     private static $s_storeTheVersions = false;
+
+
+    /* -------------------- *
+     *  INSTANCE VARIABLES  *
+     * -------------------- */
+
+    /* PROTECTED */
+
+    protected $folderStructure_;
+
 
     /* ---------------------- *
      *  CONSTRUCTION METHODS  *
@@ -173,6 +181,7 @@ class THEWPMASTER extends THEWPUPDATES {
      */
     public static function sinit() {
         if (!self::$s_initiated) {
+            
             if( function_exists( 'get_option' ) ) {
                 self::$s_theVersions = get_option( 'Xiphe\THEMASTER\theVersions', array() );
             }
@@ -358,9 +367,13 @@ class THEWPMASTER extends THEWPUPDATES {
             if (get_class($this) == 'Xiphe\THEMASTER\THEWPMASTER') {
                 $ok = self::_masterUpdate();
             } else {
-                if (isset($this->folderStructure) && is_array($this->folderStructure)) {
-                    THEBUILDER::check_folderStructure($this->folderStructure, $this->basePath);
+                if (isset($this->folderStructure_) && !is_array($this->folderStructure_)) {
+                    unset($this->folderStructure_);
                 }
+                THEWPBUILDER::check_folderStructure_(
+                    $this->basePath,
+                    isset($this->folderStructure_) ? $this->folderStructure_ : null
+                );
                 $ok = $this->update();
             }
 
@@ -454,6 +467,7 @@ class THEWPMASTER extends THEWPUPDATES {
      * @return bool always true
      */
     protected static function _masterUpdate() {
+        self::_check_folderStructure(self::$sBasePath);
         return parent::_masterUpdate();
     }
 

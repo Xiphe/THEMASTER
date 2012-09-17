@@ -219,7 +219,7 @@ class THEWPUPDATES extends THEWPSETTINGS {
 		if ( empty( $checked_data->checked ) )
 			return $checked_data;
 		
-		// $this->debug( $checked_data );
+		// THEDEBUG::debug( $checked_data );
 		foreach ( self::$s_updatables as $textID => $server ) {
 
 			$fullTextID = $textID;

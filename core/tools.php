@@ -819,7 +819,19 @@ class THETOOLS {
      */
     public static function unSlash($str)
     {
-        return rtrim($str,'/');
+        return rtrim($str, '/');
+    }
+
+    /**
+     * remove potential DIRECTORY_SEPARATOR from the end of the string.
+     *
+     * @access public
+     * @param  string $str the string to be unslashed
+     * @return string      the unslashed string
+     */
+    public static function unDS($str)
+    {
+        return rtrim($str, DIRECTORY_SEPARATOR);
     }
 
     /**
@@ -831,7 +843,7 @@ class THETOOLS {
      */
     public static function unBackSlash($str)
     {
-        return rtrim($str,'\\');
+        return rtrim($str, '\\');
     }
 
     /**
@@ -843,7 +855,19 @@ class THETOOLS {
      */
     public static function slash($str)
     {
-        return rtrim($str,'/').'/';
+        return rtrim($str, '/').'/';
+    }
+
+    /**
+     * add DIRECTORY_SEPARATOR to the end of the string.
+     *
+     * @access public
+     * @param  string $str the string to be slashed
+     * @return string      the slashed string
+     */
+    public static function DS($str)
+    {
+        return rtrim($str, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
     }
 
     /**
@@ -855,7 +879,7 @@ class THETOOLS {
      */
     public static function backSlash($str)
     {
-        return rtrim($str,'\\').'\\';
+        return rtrim($str, '\\').'\\';
     }
 
     /**
@@ -867,7 +891,19 @@ class THETOOLS {
      */
     public static function unPreSlash($str)
     {
-        return ltrim($str,'/');
+        return ltrim($str, '/');
+    }
+
+    /**
+     * remove potential DIRECTORY_SEPARATOR from the front of the string.
+     *
+     * @access public
+     * @param  string $str the string to be unslashed
+     * @return string      the unslashed string
+     */
+    public static function unPreDS($str)
+    {
+        return ltrim($str, DIRECTORY_SEPARATOR);
     }
 
     /**
@@ -879,7 +915,7 @@ class THETOOLS {
      */
     public static function unPreBackSlash($str)
     {
-        return ltrim($str,'\\');
+        return ltrim($str, '\\');
     }
 
     /**
@@ -891,7 +927,19 @@ class THETOOLS {
      */
     public static function preSlash($str)
     {
-        return '/'.ltrim($str,'/');
+        return '/'.ltrim($str, '/');
+    }
+
+    /**
+     * add DIRECTORY_SEPARATOR to the front of the string.
+     *
+     * @access public
+     * @param  string $str the string to be slashed
+     * @return string      the slashed string
+     */
+    public static function preDS($str)
+    {
+        return DIRECTORY_SEPARATOR.ltrim($str, DIRECTORY_SEPARATOR);
     }
 
     /**
@@ -903,7 +951,7 @@ class THETOOLS {
      */
     public static function preBackSlash($str)
     {
-        return '\\'.ltrim($str,'\\');
+        return '\\'.ltrim($str, '\\');
     }
     
     /**

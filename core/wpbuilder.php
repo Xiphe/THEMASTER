@@ -27,6 +27,30 @@ class THEWPBUILDER extends THEMASTER {
 	private static $s_buildArgs = array();
 	private static $s_storeNewInitArgs = false;
 
+	private static $_ftp_conn_id;
+
+	public static $sDefaultStructure = array(
+		'classes' => 0775,
+		'res' => array(
+			'chmod' => 0775,
+			'css' => 0777,
+			'less' => 0775,
+			'js' => 0775
+		)
+	);
+
+	public static $sFullStructure = array(
+		'classes' => 0775,
+		'res' => array(
+			'chmod' => 0775,
+			'css' => 0777,
+			'less' => 0775,
+			'js' => 0775,
+			'includes' => 0775
+		),
+		'models' => 0775,
+		'views' => 0775
+	);
 
 	/**
 	 * The Constructor method
@@ -96,19 +120,24 @@ class THEWPBUILDER extends THEMASTER {
 		}
 	}
 
-	private function _check_folderStructure($structure, $basePath) {
-		if(!isset(self::$_ftp_conn_id) && defined('FTP_HOST') && defined('FTP_USER') && defined('FTP_PASS')) {
+	protected function check_folderStructure_($basePath, $structure = null) {
+		if (!isset(self::$_ftp_conn_id) && defined('FTP_HOST') && defined('FTP_USER') && defined('FTP_PASS')) {
 			self::$_ftp_conn_id = ftp_connect(FTP_HOST);
 			$login_result = ftp_login(self::$_ftp_conn_id, FTP_USER, FTP_PASS);
-			$basePath = str_replace(FTP_WORKING_PATH, '', $basePath);
+			$relBasePath = str_replace(FTP_WORKING_PATH, '', $basePath);
+		} else {
+			$relBasePath = $basePath;
 		}
-		self::_check_folderStructureWalker($structure, '', $basePath);
+		if (empty($structure)) {
+			$structure = self::$sDefaultStructure;
+		}
+		self::_check_folderStructureWalker($structure, $relBasePath, $basePath);
 		if(isset(self::$_ftp_conn_id)) {
 			ftp_close(self::$_ftp_conn_id);
 		}
 	}
 	
-	private static function _check_folderStructureWalker($structure, $basedir, $root) {
+	private static function _check_folderStructureWalker($structure, $ftpRoot, $root, $basedir = '') {
 		foreach($structure as $folder => $chmod) {
 			$subfolders = null;
 			if(is_array($chmod)) {
@@ -117,24 +146,25 @@ class THEWPBUILDER extends THEMASTER {
 				$subfolders = $chmod;
 				$chmod = $t;
 			}
-			$dir = $root.$basedir.DS.$folder.DS;
+			$relDir = THETOOLS::DS($ftpRoot.$basedir.$folder);
+			$dir = THETOOLS::DS($root.$basedir.$folder);
 			if(is_dir($dir)) {
 				if(!isset(self::$_ftp_conn_id)) {
 					chmod($dir, $chmod);
 				} else {
-					ftp_chmod(self::$_ftp_conn_id, $chmod, $dir);
+					ftp_chmod(self::$_ftp_conn_id, $chmod, $relDir);
 				}
 			} else {
 				if(!isset(self::$_ftp_conn_id)) {
 					mkdir($dir, $chmod);
 				} else {
-					ftp_mkdir(self::$_ftp_conn_id, $dir);
-					ftp_chmod(self::$_ftp_conn_id, $chmod, $dir);
+					ftp_mkdir(self::$_ftp_conn_id, $relDir);
+					ftp_chmod(self::$_ftp_conn_id, $chmod, $relDir);
 				}
 			}
 			
 			if(is_array($subfolders)) {
-				self::_check_folderStructureWalker($subfolders, $basedir.DS.$folder, $root);
+				self::_check_folderStructureWalker($subfolders, $ftpRoot, $root, $basedir.$folder.DS);
 			}
 		}
 	}
