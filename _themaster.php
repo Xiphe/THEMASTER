@@ -7,8 +7,7 @@ Version: 3.0.4
 Date: 2012-06-17 04:22:00
 Author: Hannes Diercks
 Author URI: http://red-thorn.de/
-Update Server: http://plugins.red-thorn.de/api/
-Branch: 3.0_Alpha
+Update Server: http://plugins.red-thorn.de/v2/api/
 */
 
 /*
