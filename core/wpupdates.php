@@ -245,13 +245,13 @@ class THEWPUPDATES extends THEWPSETTINGS {
 			}
 
 			$request_string = self::_prepare_request( 'basic_check', $request_args, $fullTextID );
-			THEDEBUG::debug( $request_string, 'request_string' );
+			// THEDEBUG::debug( $request_string, 'request_string' );
 			
 			// Start checking for an update
 
 
 			$raw_response = wp_remote_post( $server, $request_string );
-			THEDEBUG::debug( $raw_response, 'raw_response' );
+			// THEDEBUG::debug( $raw_response, 'raw_response' );
 				
 
 			if ( !is_wp_error( $raw_response ) && ( $raw_response['response']['code'] == 200 ) ) {
