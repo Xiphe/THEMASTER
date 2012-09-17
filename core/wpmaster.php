@@ -467,7 +467,7 @@ class THEWPMASTER extends THEWPUPDATES {
      * @return bool always true
      */
     protected static function _masterUpdate() {
-        self::_check_folderStructure(self::$sBasePath);
+        self::check_folderStructure_(self::$sBasePath);
         return parent::_masterUpdate();
     }
 
