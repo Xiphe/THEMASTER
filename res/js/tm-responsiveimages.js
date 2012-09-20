@@ -1,9 +1,10 @@
 jQuery(document).ready(function($) {
+	if ($('body').hasClass('wp-admin')) {
+		return false;
+	}
 
 	var slideimgs = {},
 		sTime = 5000;
-
-
 
 	var responsize = function(elm) {
 		if ($(elm).hasClass('tm-responsiveimage')) {
@@ -41,8 +42,11 @@ jQuery(document).ready(function($) {
 					image: $(thiz).attr('data-origin'),
 					nonce: $(thiz).attr('data-nonce')
 				}, function(r) {
+					r = eval('('+r+')');
 					if (r && r.status === 'ok') {
-						setImg.call(thiz, url, nW);
+						$img.load(function() {
+							setImg.call(thiz, r.uri, nW);
+						})[0].src = r.uri;
 					}
 				});
 			})[0].src = url;
@@ -77,7 +81,7 @@ jQuery(document).ready(function($) {
 					image:   $(this).attr('data-slideshow'),
 					nonce:   $(this).attr('data-slidenonce'),
 					id:      $(this).attr('id'),
-					'class': $(this).attr('class'),
+					'class': $(this).attr('class')
 				};
 			if ($(this).attr('data-fixalt')) {
 				args.alt = $(this).attr('alt');

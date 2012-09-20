@@ -56,7 +56,7 @@ class FileSelect extends THEWPMASTER {
             $label = __('Select file', 'themaster');
         }
         if ($label !== false) {
-            $HTML->label(esc_attr($label), esc_attr($name));
+            $HTML->label(esc_attr($label), preg_replace('/[\[\]]/', '_', esc_attr($name)));
         }
         if (is_array($value)) {
             $value = implode(',', $value);

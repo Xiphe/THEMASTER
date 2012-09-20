@@ -77,7 +77,7 @@
 			this.button = $( "<button type='button'>&nbsp;</button>" )
 				.attr( "tabIndex", -1 )
 				.attr( "title", "Show All Items" )
-				.insertAfter( input )
+				.insertAfter(input)
 				.button({
 					icons: {
 						primary: "ui-icon-triangle-1-s"

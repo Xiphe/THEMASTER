@@ -181,7 +181,7 @@ class THEWPMASTER extends THEWPUPDATES {
      */
     public static function sinit() {
         if (!self::$s_initiated) {
-            
+
             if( function_exists( 'get_option' ) ) {
                 self::$s_theVersions = get_option( 'Xiphe\THEMASTER\theVersions', array() );
             }
@@ -269,7 +269,7 @@ class THEWPMASTER extends THEWPUPDATES {
         /*
          * Register callback for admin notices.
          */
-        add_action('admin_notices', array('Xiphe\THEMASTER\THEWPMASTER', 'twpm_admin_notices'));
+        add_action('admin_notices', array('Xiphe\THEMASTER\THEWPMASTER', 'twpm_admin_notices'), 999);
 
         /*
          * Register callback for printing debugs from THEDEBUG.
@@ -737,9 +737,9 @@ class THEWPMASTER extends THEWPUPDATES {
         
     
     public function get_models( $modelname, $conditions = null, $orderby = null, $oder = 'DESC', $modelInit = array() ) {
-        $fullModelname = strtoupper( $this->prefix ) . $modelname;
+        $fullModelname = $this->namespace.'\\'.$modelname;
         if( !class_exists( $fullModelname ) ) {
-            throw new Exception('Model "' . $fullModelname . '" not available/existing for THEBASE::get_models().', 1);
+            throw new \Exception('Model "' . $fullModelname . '" not available/existing for THEBASE::get_models().', 1);
             return false;
         }
         

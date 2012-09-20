@@ -210,11 +210,11 @@ jQuery(document).ready(function($) {
                 var id;
                 if ( $( this ).parent().attr( 'class' ) == 'savesend' ) {
                     id = $( this ).siblings( '.del-attachment' ).attr( 'id' );
-                    id = id.match( /del_attachment_([0-9]+)/ );
+                    id = id.match(/del_attachment_([0-9]+)/);
                     id = id[1];
                 } else {
                     id = $( this ).parent().attr( 'id' );
-                    id = id.match( /media\-item\-([0-9]+)/ );
+                    id = id.match(/media\-item\-([0-9]+)/);
                     id = id[1];
                 }
                 if (multiple) {

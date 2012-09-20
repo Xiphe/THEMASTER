@@ -981,7 +981,7 @@ class THEBASE {
      */
     final public function incl($source, $include = false)
     {
-        $source = THETOOLS::get_verryCleanedDirectPath($sSource).'.php';
+        $source = THETOOLS::get_verryCleanedDirectPath($source).'.php';
         $paths = array();
         if (isset($this)) {
             $paths[] = $this->basePath;
@@ -1141,7 +1141,11 @@ class THEBASE {
                 return false;
             }
         } else {
-            if (isset($this) && get_class($this) != 'Xiphe\THEMASTER\THEWPMASTER') {
+            if (isset($this)
+             && get_class($this) != 'Xiphe\THEMASTER\THEWPMASTER'
+             && isset($this->namespace)
+             && isset($this->basePath)
+            ) {
                 $paths[] = array(
                     'namespace' => $this->namespace,
                     'basePath' => $this->basePath
@@ -1423,7 +1427,7 @@ class THEBASE {
             class_exists($class = 'Xiphe\THEMASTER\THETOOLS')
          && method_exists($class, $method)
         ) {
-            THEDEBUG::debug('Indirect call of THETOOLS::'.$method.' please try to call it directly', null, 3, 1);
+            THEDEBUG::debug('Indirect call of THETOOLS::'.$method.' please try to call it directly', null, 3, 2);
             return call_user_func_array(array($class, $method), $args);
         }
 
@@ -1434,7 +1438,7 @@ class THEBASE {
             class_exists($class = 'Xiphe\THEMASTER\THEDEBUG')
          && method_exists($class, $method )
         ) {
-            THEDEBUG::debug('Indirect call of THEDEBUG::'.$method.' please try to call it directly', null, 3, 1);
+            THEDEBUG::debug('Indirect call of THEDEBUG::'.$method.' please try to call it directly', null, 3, 2);
             THEDEBUG::_set_btDeepth(7);
             return call_user_func_array(array($class, $method), $args);
             THEDEBUG::_reset_btDeepth();
@@ -1452,6 +1456,7 @@ class THEBASE {
          * Throw exception.
          */
         } else {
+            THEDEBUG::debug('callstack', null, null, 2);
             throw new \Exception('Call to undefined method '.$method, 1);
         }
     }

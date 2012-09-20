@@ -189,10 +189,10 @@ class THEWPBUILDER extends THEMASTER {
 
 		$textID = THETOOLS::get_textID( $configFile );
 
-		if( isset( self::$s_initArgsCache[ $textID ] )
+		if( isset( self::$s_initArgsCache[$textID] )
+		 && !empty(self::$s_initArgsCache[$textID]['args'])
 		 && self::$s_initArgsCache[ $textID ]['time'] >= ( filemtime( $configFile ) + filemtime( $file ) )
 		) {
-			// THEDEBUG::debug( self::$s_initArgsCache[ $file ]['args'], 'cachedArgs' );
 			return self::$s_initArgsCache[ $textID ]['args'];
 		} else {
 			return self::s_get_initArgsFromFile( $file );
@@ -209,8 +209,13 @@ class THEWPBUILDER extends THEMASTER {
 		$iA['folderName'] = basename( $iA['basePath'] );
 
 		// If path contains wp-content/themes project seems to be a theme.
-		$iA['projectType'] = ( strstr( $iA['basePath'], 'wp-content' . DS . 'themes' ) || strstr( $iA['basePath'], 'htdocs' . DS . '__THEMES' ) ) 
-			? 'theme' : 'plugin';
+		if (strstr(strtolower($iA['basePath']), 'wp-content'.DS.'themes')
+		 || strstr(strtolower($iA['basePath']), 'htdocs'.DS.'__themes')
+		) {
+			$iA['projectType'] = 'theme';
+		} else {
+			$iA['projectType'] = 'plugin';
+		}
 
 		// Set textdomain to foldername for themes and to filebasename for plugins.
 		if( $iA['projectType'] === 'theme' ) {

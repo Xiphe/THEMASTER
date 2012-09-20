@@ -12,6 +12,38 @@ namespace Xiphe\THEMASTER;
  */
 class THEWPTOOLS {
 
+	public static function get_nav_menu_id($menu)
+	{
+		if (!is_numeric($menu)) {
+			$locations = get_nav_menu_locations();
+			if (isset($locations[$menu])) {
+				$menu = $locations[$menu];
+			} else {
+				global $wpdb;
+				$menu = $wpdb->get_results($wpdb->prepare(
+					"SELECT term_id
+					FROM $wpdb->terms
+					WHERE slug = %s",
+					$menu
+				));
+				if (count($menu) == 1) {
+					$menu = intval($menu[0]->term_id);
+				} else {
+					return false;
+				}
+			}
+		}
+		return $menu;
+	}
+
+	public static function get_the_date($post_id, $format = null) {
+		global $post;
+		$save_post = $post;
+		$post = get_post($post_id);
+		$date = get_the_date($format);
+		$post = $save_post;
+		return $date;
+	}
 
 	public static function create_noprivnonce($action, $id)
 	{

@@ -12,7 +12,7 @@ See [Plugin Page](https://github.com/Xiphe/-THE-MASTER) for details
 Version
 -------
 
-3.0.4
+3.0.5
 
 
 Installation
@@ -122,6 +122,12 @@ Here is a list:
 
 Changelog
 ---------
+
+### 3.0.5
++ Added THETOOLS::shorten() for cutting a text after x letters 
++ Added THEWPTOOLS::get\_nav\_menu\_id()
++ Added THEWPTOOLS::get\_the\_date()
++ Bugfixes
 
 ### 3.0.4
 + Added DS, preDS, unDS and unPreDS to THETOOLS

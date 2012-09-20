@@ -3,8 +3,8 @@
 Plugin Name: !THE MASTER
 Plugin URI: http://plugins.red-thorn.de/libary/themaster/
 Description: A Plugin to provide global access to the THEWPMASTER class. THEWPMASTER provides a lot of handy functions for plugins an themes.
-Version: 3.0.4
-Date: 2012-06-17 04:22:00
+Version: 3.0.5
+Date: 2012-09-20 09:24:00 +02:00
 Author: Hannes Diercks
 Author URI: http://red-thorn.de/
 Update Server: http://plugins.red-thorn.de/v2/api/

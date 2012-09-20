@@ -150,7 +150,7 @@ class THEWPMODEL extends THEMODEL {
 	final public function delete() {
 		if( call_user_func_array( array( $this, 'pre_delete' ), func_get_args() ) ) {
 			if(!self::$table) {
-				throw new Exception('tryed to Delete a Model without table', 1);
+				throw new \Exception('tryed to Delete a Model without table', 1);
 				return false;
 			}
 			
@@ -171,18 +171,17 @@ class THEWPMODEL extends THEMODEL {
 			 		$query
 			 	) != 'ok'
 			) {
-				throw new Exception('Error on Delete.', 1);
+				throw new \Exception('Error on Delete.', 1);
 				return false;
 			}
 
-			THEDEBUG::inst()->countbug('a');
 			if( ( $r = $wpdb->query( $query ) ) ) {
 				$this->deleted = true;
 				$this->after_delete();
 				return $this;
 			} else {
 				if( $this->deleteError( 'delete went wrong.', $query, $r ) ) {
-					throw new Exception('Error on Delete.', 1);
+					throw new \Exception('Error on Delete.', 1);
 					return false;
 				}
 			}

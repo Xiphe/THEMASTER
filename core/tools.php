@@ -95,6 +95,23 @@ class THETOOLS {
      *  STATIC METHODS  *
      * ---------------- */
 
+
+    public function shorten($text, $maxlength = 140, $end = '[...]') {
+        $maxlength++;
+        if (mb_strlen($text) > $maxlength) {
+            $subex = mb_substr($text, 0, $maxlength - 5);
+            $exwords = explode(' ', $subex);
+            $excut = - (mb_strlen($exwords[count($exwords)-1]));
+            if ($excut < 0) {
+                $text = mb_substr($subex, 0, $excut);
+            } else {
+                $text = $subex;
+            }
+            $text .= $end;
+        }
+        return $text;
+    }
+
     /**
      * Parses a list-string from an array, an object or a testlist seperated by $inputSep.
      *
@@ -1260,7 +1277,7 @@ class THETOOLS {
      */
     public static function filter_getDataBy($prefix, $filter = false)
     {
-        return self::filter_data_by($string, $_GET, $filter);
+        return self::filter_data_by($prefix, $_GET, $filter);
     }
 
     /**
@@ -1276,7 +1293,7 @@ class THETOOLS {
      */
     public static function filter_requestDataBy($prefix, $filter = false)
     {
-        return self::filter_data_by($string, $_REQUEST, $filter);
+        return self::filter_data_by($prefix, $_REQUEST, $filter);
     }
 
 
