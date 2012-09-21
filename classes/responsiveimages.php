@@ -66,6 +66,15 @@ class ResponsiveImages extends THEWPMASTER {
 		return $this->_get_imageUrl($image, $width, $height);
 	}
 
+	public function get_imagefile($image, $width = 'auto', $round = true)
+	{
+		if (!($image = $this->_get_baseImageFile($image))) {
+			return false;
+		}
+		$height = $this->_get_dims($image, $width, $round);
+		return $this->_get_imageFile($image, $width, $height);
+	}
+
 
 	public function get_bg_imageAttrs($image, $width = 'auto')
 	{
@@ -318,6 +327,11 @@ class ResponsiveImages extends THEWPMASTER {
 		if ($width == 'auto') {
 			$width = $dims[0];
 			return $dims[1];
+		}
+
+		if (strstr($width, '%')) {
+			$width = floatval('0.'.str_replace('%', '', $width));
+			$width = round($dims[0]*$width);
 		}
 
 		if ($round) {

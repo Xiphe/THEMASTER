@@ -12,6 +12,15 @@ namespace Xiphe\THEMASTER;
  */
 class THEWPTOOLS {
 
+	public static function relUrl($url) {
+		$rurl = parse_url(get_bloginfo('url'));
+		if (isset($rurl['path'])) {
+			unset($rurl['path']);
+		}
+		$rurl = THETOOLS::unparse_url($url);
+		return str_replace($rurl, '', $url);
+	}
+
 	public static function get_nav_menu_id($menu)
 	{
 		if (!is_numeric($menu)) {

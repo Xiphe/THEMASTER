@@ -244,7 +244,7 @@ function tm_fileselect_select_item(item_id, field_id) {
     /* the target input */
     $field = $('#'+field_id),
     /* the container of preview images */
-    $preview_div = $field.parent().siblings('.tm-fileselect_preview'),
+    $preview_div = $field.parent().next('.tm-fileselect_preview'),
     /* the size of preview images */
     preview_size = $field.siblings('.tm-fileselect_previewsize').val(),
     /* the nonce */
@@ -268,5 +268,5 @@ function tm_fileselect_select_item(item_id, field_id) {
 
     /* Close interface down */
     tb_remove();
-    jQuery('html').removeClass('File');
+    $('html').removeClass('File');
 }

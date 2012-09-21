@@ -170,18 +170,19 @@ class THEWPBUILDER extends THEMASTER {
 	}
 
 	public static function get_initArgs( $file = null, $file2 = null, $deepth = 1 ) {
-		// THEDEBUG::debug( $file );
-		// THEDEBUG::debug( $file, 'file' );
-		// THEDEBUG::debug( $file2, 'file2' );
-
 		if( !is_string( $file ) || !file_exists( $file ) ) {
 			$file = $file2;
 		}
 
 		if( $file === null || !file_exists( $file ) ) {
 			$bt = debug_backtrace();
-			$file = $bt[$deepth]['file'];
+			if (isset($bt[$deepth]['file'])) {
+				$file = $bt[$deepth]['file'];
+			}
 			unset($bt);
+			if (empty($file)) {
+				return false;
+			}
 		}
 		
 		$configFile = strstr( $file, 'wp-content' . DS . 'themes' ) || strstr( $file, 'htdocs' . DS . '__THEMES' ) ?

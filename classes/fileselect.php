@@ -34,6 +34,7 @@ class FileSelect extends THEWPMASTER {
         'admin_init',
         'wp_ajax_tm_fileselect_getfile',
         'wp_ajax_tm_fileselect_getfullsize',
+        'save_post|0'
     );
 
     protected $filters_ = array(
@@ -41,7 +42,12 @@ class FileSelect extends THEWPMASTER {
         'gettext|10|3'
     );
 
-
+    public function save_post()
+    {
+        if (isset($_REQUEST['tm-fileselect_validation'])) {
+            unset($_REQUEST['tm-fileselect_validation']);
+        }
+    }
 
     public function button(
         $name,
@@ -82,6 +88,19 @@ class FileSelect extends THEWPMASTER {
             }
         $HTML->end();
     }
+
+    public function get_sizeStr($attachmentIDs) {
+        if (!is_array($attachmentIDs)) {
+            $attachmentIDs = explode(',', $attachmentIDs);
+        }
+        $r = [];
+        foreach ((array) $attachmentIDs as $k => $attachmentID) {
+            $meta = wp_get_attachment_metadata($attachmentID);
+            $r[] = $meta['width'].'x'.$meta['height'];
+        }
+        return implode('|', $r);
+    }
+
 
     public function validateTypeFor($attachmentIDs, $validTypes) {
         if (!is_array($attachmentIDs)) {
@@ -242,8 +261,8 @@ class FileSelect extends THEWPMASTER {
         $this->_translateSizes = array(
             'minwidth' => __('Minimal width', 'themaster'),
             'minheight' => __('Minimal height', 'themaster'),
-            'maxwidth' => __('Maxiaml width', 'themaster'),
-            'maxheight' => __('Maxiaml height', 'themaster'),
+            'maxwidth' => __('Maximal width', 'themaster'),
+            'maxheight' => __('Maximal height', 'themaster'),
         );
         $this->reg_adminJs('tm-fileselect');
         $this->reg_adminJsVar('tm_fileselect_selectfile', __('Select', 'themaster'));
@@ -337,6 +356,11 @@ class FileSelect extends THEWPMASTER {
 
     private function _get_preview($id, $size = 'thumbnail')
     {
+        $attachment_url = wp_get_attachment_url($id);
+        if ($attachment_url == false) {
+            return false;
+        }
+        
         $HTML = THEBASE::sget_HTML();
         $r = $HTML->sr_li(array(
             'class' => 'tm-fileselect_wrap '.(wp_attachment_is_image($id) ? 'tm-fileselect_wrap_image' : 'tm-fileselect_wrap_file'),
@@ -369,6 +393,9 @@ class FileSelect extends THEWPMASTER {
     private function _get_link($id)
     {
 		$attachment_url = wp_get_attachment_url($id);
+        if ($attachment_url == false) {
+            return false;
+        }
 		$ft = wp_check_filetype($attachment_url);
 		$fts = explode('/', $ft['type']);
 		return THEBASE::sget_HTML()->r_a(

@@ -3,7 +3,7 @@
 Plugin Name: !THE MASTER
 Plugin URI: http://plugins.red-thorn.de/libary/themaster/
 Description: A Plugin to provide global access to the THEWPMASTER class. THEWPMASTER provides a lot of handy functions for plugins an themes.
-Version: 3.0.5
+Version: 3.0.6
 Date: 2012-09-20 09:24:00 +02:00
 Author: Hannes Diercks
 Author URI: http://red-thorn.de/
@@ -206,13 +206,29 @@ function INIT( $initArgs = null, $file = null ) {
          || ( is_string( $file ) && file_exists( $file ) )
     )) {
         /*
-         * Start parsing the initiation arguments
-         * Merge the passed arguments into the parsed.
+         * Get initiation arguments from project file.
          */
-        $initArgs = array_merge( 
-            THEWPBUILDER::get_initArgs( $initArgs, $file ),
-            ( is_array( $initArgs ) ? $initArgs : array() )
-        );
+        $filesInitArgs = THEWPBUILDER::get_initArgs($initArgs, $file);
+
+        /*
+         * Error occurred.
+         */
+        if (empty($filesInitArgs)) {
+            return false;
+        }
+
+        /*
+         * Check if additional were given and merge them.
+         */
+        if (is_array($initArgs)) {
+            $initArgs = array_merge($filesInitArgs, $initArgs);
+        } else {
+            $initArgs = $filesInitArgs;
+        }
+        
+        /*
+         * Add Masterflag.
+         */
         $initArgs['isMaster'] = true;
     } 
 
