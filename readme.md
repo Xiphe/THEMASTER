@@ -178,6 +178,17 @@ Changelog
 + See changelog.md
 
 
+Upgrade Notice
+--------------
+
+### 3.0.0
++ incompatibility with old red thorn update api.
++ previous deprecated methods are now unavailable.
+
+### 2.0.4
++ init on github  
+
+
 Known Bugs
 ----------
 

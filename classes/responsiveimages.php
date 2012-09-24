@@ -18,20 +18,28 @@ class ResponsiveImages extends THEWPMASTER {
 	}
 
 	public function wp_ajax_tm_responsiveimageget() {
+		$img = THETOOLS::get_directPath(esc_attr($_REQUEST['image']));
 		if (!isset($_REQUEST['nonce'])
 		 || !THEWPTOOLS::verify_noprivnonce(
 				esc_attr($_REQUEST['nonce']),
 				'tm-responsive',
-				esc_attr($_REQUEST['image'])
+				$img
 			)
 		) {
 			$this->_exit('error', 'Authentication failed.', 1);
 		}
 
+		if (!is_numeric($img) && defined('ABSPATH')) {
+			$img = ABSPATH.$img;
+		}
+
 		$this->_r['uri'] = $this->get_url(
-			esc_attr($_REQUEST['image']),
+			$img,
 			esc_attr($_REQUEST['width'])
 		);
+		if ($this->_r['uri'] == false) {
+			$this->_exit('error', 'Image not available.', 2);
+		}
 		$this->_exit('ok', 'URI is attached.', 0);
 	}
 
@@ -135,6 +143,10 @@ class ResponsiveImages extends THEWPMASTER {
 			return false;
 		}
 
+		if (!is_numeric($origin) && defined('ABSPATH')) {
+			$origin = str_replace(ABSPATH, '', $origin);
+		}
+
 		$height;
 		$loadWidth = $this->_get_loadWidh($image, $width, $height);
 
@@ -167,6 +179,11 @@ class ResponsiveImages extends THEWPMASTER {
 			$args['data-fixtitle'] = true;
 		}
 		if ($slideshow) {
+			foreach ($slideshow as $k => $ss) {
+				if (!is_numeric($ss) && defined('ABSPATH')) {
+					$slideshow[$k] = str_replace(ABSPATH, '', $ss);
+				}
+			}
 			$args['data-slideshow'] = implode(',', $slideshow);
 			$args['data-slidenonce'] = THEWPTOOLS::create_noprivnonce('tm-responsive', $args['data-slideshow']);
 		}
@@ -348,7 +365,6 @@ class ResponsiveImages extends THEWPMASTER {
 			$width = $dims[0];
 			return $dims[1];
 		}
-		
 		return round($width/($dims[0]/$dims[1]));
 	}
 

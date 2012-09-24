@@ -57,7 +57,7 @@ class FileSelect extends THEWPMASTER {
         $validation = false,
         $multiple = false
     ) {
-    	$HTML = THEBASE::sget_HTML();
+    	$HTML = THEBASE::sget_HTML()->s_div('.tm-fileselect_fullwrap');
         if (empty($label) && $label !== false) {
             $label = __('Select file', 'themaster');
         }
@@ -86,7 +86,7 @@ class FileSelect extends THEWPMASTER {
                     echo $this->_get_preview($value, esc_attr($previewSize));
                 }
             }
-        $HTML->end();
+        $HTML->end('.tm-fileselect_fullwrap');
     }
 
     public function get_sizeStr($attachmentIDs) {

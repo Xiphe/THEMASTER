@@ -58,14 +58,3 @@ THE MASTER CHANGELOG
 
 ### pre 2.0
 +   Intern versions *no details*
-
-
-Upgrade Notice
---------------
-
-### 3.0.0
-+	incompatibility with old red thorn update api.
-+ previous deprecated methods are now unavailable.
-
-### 2.0.4
-+	init on github  
