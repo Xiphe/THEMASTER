@@ -552,6 +552,12 @@ class THEWPMASTER extends THEWPUPDATES {
         wp_enqueue_script('jquery');
 
         foreach( THEBASE::sGet_registeredSources() as $dest => $sources) {
+            if ($dest == 'front' && is_admin()
+             || $dest == 'admin' && !is_admin()
+            ) {
+                continue;
+            }
+
             foreach($sources as $type => $files) {
                 foreach($files as $file => $url) {
                     $del = realpath(dirname($file).DS.'..'.DS.'..'.DS.'..'.DS.'..'.DS).DS;

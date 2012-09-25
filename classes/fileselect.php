@@ -20,7 +20,9 @@ class FileSelect extends THEWPMASTER {
         'minwidth' => 0,
         'minheight' => 0,
         'maxwidth' => 0,
-        'maxheight' => 0
+        'maxheight' => 0,
+        'height' => 0,
+        'width' => 0
     );
 
     /* 
@@ -153,6 +155,7 @@ class FileSelect extends THEWPMASTER {
         $checkSize = false;
         $readableSizes = array();
         $sizes = array();
+
         foreach ($this->_sizes as $k => $size) {
             if (isset($chksizes[$k])) {
                 $sizes[$k] = $chksizes[$k];
@@ -175,10 +178,13 @@ class FileSelect extends THEWPMASTER {
             if ($fts[0] == 'image') {
                 $error = false;
                 foreach ($sizes as $k => $size) {
+
                     if (($k == 'minwidth' && $meta['width'] < $size)
                      || ($k == 'minheight' && $meta['height'] < $size)
                      || ($k == 'maxwidth' && $meta['width'] > $size)
                      || ($k == 'maxheight' && $meta['height'] > $size)
+                     || ($k == 'height' && $meta['height'] != $size)
+                     || ($k == 'width' && $meta['width'] != $size)
                     ) {
                         $error = true;
                     }
@@ -263,6 +269,8 @@ class FileSelect extends THEWPMASTER {
             'minheight' => __('Minimal height', 'themaster'),
             'maxwidth' => __('Maximal width', 'themaster'),
             'maxheight' => __('Maximal height', 'themaster'),
+            'height' => __('Height', 'themaster'),
+            'width' => __('Width', 'themaster')
         );
         $this->reg_adminJs('tm-fileselect');
         $this->reg_adminJsVar('tm_fileselect_selectfile', __('Select', 'themaster'));

@@ -12,7 +12,7 @@ See [Plugin Page](https://github.com/Xiphe/-THE-MASTER) for details
 Version
 -------
 
-3.0.6
+3.0.7
 
 
 Installation
@@ -122,6 +122,11 @@ Here is a list:
 
 Changelog
 ---------
+
+### 3.0.7
++ FileSelect Class supports height and width for dimension validation.
++ Fixed bug with registered source destinations.
++ Added .nowrap class to base.less and tm-admin.less
 
 ### 3.0.6
 + Fixed some errors when project file is not found by THEWPBUILDER.
