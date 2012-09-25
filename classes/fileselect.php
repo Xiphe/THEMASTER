@@ -95,7 +95,7 @@ class FileSelect extends THEWPMASTER {
         if (!is_array($attachmentIDs)) {
             $attachmentIDs = explode(',', $attachmentIDs);
         }
-        $r = [];
+        $r = array();
         foreach ((array) $attachmentIDs as $k => $attachmentID) {
             $meta = wp_get_attachment_metadata($attachmentID);
             $r[] = $meta['width'].'x'.$meta['height'];
