@@ -21,6 +21,70 @@ class THEWPTOOLS {
 		return str_replace($rurl, '', $url);
 	}
 
+	public static function get_nav_menu_parent($menu, $postID = null)
+	{
+		global $post, $wpdb;
+		$menu = self::get_nav_menu_id($menu);
+
+		if (empty($postID)) {
+			if (is_page() && isset($post)) {
+				$postID = $post->ID;
+			} else {
+				return false;
+			}
+		}
+		$qry = $wpdb->prepare(
+			"SELECT meta.meta_value as parent
+
+			 FROM $wpdb->postmeta as meta
+			 INNER JOIN $wpdb->posts as posts
+			 	ON  posts.post_type   = 'nav_menu_item'
+			 	AND posts.post_status = 'publish'
+			 INNER JOIN $wpdb->term_relationships as termrel
+			 	ON  termrel.object_id        = posts.ID
+			 	AND termrel.term_taxonomy_id = %d
+			 INNER JOIN $wpdb->postmeta as meta2
+			 	ON  meta.post_id     = meta2.post_id
+			 	AND meta2.meta_key   = '_menu_item_object_id'
+			 	AND meta2.meta_value = %s
+
+			 WHERE meta.post_id  = posts.ID
+			 AND   meta.meta_key = '_menu_item_menu_item_parent'
+			",
+			$menu,
+			$postID
+		);
+		$r = $wpdb->get_results($qry);
+		if (empty($r)) {
+			return false;
+		}
+		if ($r[0]->parent == 0) {
+			return 0;
+		} else {
+			$qry = $wpdb->prepare(
+				"SELECT meta.meta_value  as ID,
+					    meta2.meta_value as type
+
+				 FROM $wpdb->postmeta as meta
+				 INNER JOIN $wpdb->postmeta as meta2
+				 	ON  meta.post_id     = meta2.post_id
+				 	AND meta2.meta_key   = '_menu_item_object'
+
+				 WHERE meta.post_id  = %d
+				 AND   meta.meta_key = '_menu_item_object_id'
+				",
+				$r[0]->parent
+			);
+			$r = $wpdb->get_results($qry);
+			if (empty($r)) {
+				return false;
+			} else {
+				return $r[0];
+			}
+
+		}
+	}
+
 	public static function get_nav_menu_id($menu)
 	{
 		if (!is_numeric($menu)) {

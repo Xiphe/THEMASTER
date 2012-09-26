@@ -36,7 +36,8 @@ class FileSelect extends THEWPMASTER {
         'admin_init',
         'wp_ajax_tm_fileselect_getfile',
         'wp_ajax_tm_fileselect_getfullsize',
-        'save_post|0'
+        'save_post|0',
+        'admin_head'
     );
 
     protected $filters_ = array(
@@ -110,6 +111,7 @@ class FileSelect extends THEWPMASTER {
         }
         $validTypes = explode('|', $validTypes);
         $allOk = true;
+
 
         if($attachmentIDs === '') {
             $attachmentIDs = array();
@@ -254,6 +256,26 @@ class FileSelect extends THEWPMASTER {
         );
     }
 
+    public function bind_attachment($attachmentIDs, $postID) {
+        if (!is_array($attachmentIDs)) {
+            $attachmentIDs = explode(',', $attachmentIDs);
+        }
+
+        global $wpdb;
+        foreach ($attachmentIDs as $k => $attachmentID) {
+            $post = get_post($attachmentID);
+            if (isset($post->post_parent) && empty($post->post_parent)) {
+                $wpdb->update(
+                    $wpdb->posts,
+                    array('post_parent' => $postID),
+                    array('ID' => $post->ID),
+                    array('%d'),
+                    array('%d')
+                );
+            }
+        }
+    }
+
 	/**
      * Basic initiation before Wordpress is available.
      *
@@ -273,7 +295,19 @@ class FileSelect extends THEWPMASTER {
             'width' => __('Width', 'themaster')
         );
         $this->reg_adminJs('tm-fileselect');
-        $this->reg_adminJsVar('tm_fileselect_selectfile', __('Select', 'themaster'));
+        $this->reg_adminJsVar('tm_fileselecttext', array(
+            'select' => __('Select', 'themaster'),
+            'save' => __('Save', 'themaster')
+        ));
+    }
+
+    public function admin_head()
+    {
+        $this->reg_adminJsVar(
+            'tm_fileselectbaseurl',
+            // 'media-upload.php?post_id=0'
+            'media-upload.php?post_id='.(isset($GLOBALS['post']->ID) ? $GLOBALS['post']->ID : 0)
+        );
     }
 
     public function admin_init() {
@@ -406,12 +440,13 @@ class FileSelect extends THEWPMASTER {
         }
 		$ft = wp_check_filetype($attachment_url);
 		$fts = explode('/', $ft['type']);
+
 		return THEBASE::sget_HTML()->r_a(
 			basename( $attachment_url ),
 			array(
 				'href' => wp_get_attachment_url($id),
-				'class' => 'tm-fileselect_attachment tm-fileselect_attachment-'.$ft
-                    .' tm-fileselect_attachment-'.$fts[0]
+				'class' => 'tm-fileselect_attachment tm-fileselect_attachment-'.$fts[0]
+                    .' tm-fileselect_attachment-'.$fts[1]
 			)
 		);
 	}

@@ -12,7 +12,7 @@ See [Plugin Page](https://github.com/Xiphe/-THE-MASTER) for details
 Version
 -------
 
-3.0.7
+3.0.8
 
 
 Installation
@@ -122,6 +122,12 @@ Here is a list:
 
 Changelog
 ---------
+
+### 3.0.8
++ FileSelect now tries to bind newly uploaded files to the parent post.
++ You can now change title and description of attachment files via the fileselect dialog.
++ Added THEWPTOOLS::get\_nav\_menu\_parent()
++ Bugfixes
 
 ### 3.0.7
 + FileSelect Class supports height and width for dimension validation.

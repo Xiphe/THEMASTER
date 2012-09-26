@@ -254,8 +254,8 @@ class THEWPMASTER extends THEWPUPDATES {
         /*
          * Register callbacks for printing js-variables.
          */
-        add_action('wp_head', array('Xiphe\THEMASTER\THEWPMASTER', 'twpm_print_jsVars'), 0, 0);
-        add_action('admin_head', array('Xiphe\THEMASTER\THEWPMASTER', 'twpm_print_adminJsVars'), 0, 0);
+        add_action('wp_head', array('Xiphe\THEMASTER\THEWPMASTER', 'twpm_print_jsVars'), 999, 0);
+        add_action('admin_head', array('Xiphe\THEMASTER\THEWPMASTER', 'twpm_print_adminJsVars'), 999, 0);
 
         /*
          * Spice the Login Screen 
@@ -269,7 +269,7 @@ class THEWPMASTER extends THEWPUPDATES {
         /*
          * Register callback for admin notices.
          */
-        add_action('admin_notices', array('Xiphe\THEMASTER\THEWPMASTER', 'twpm_admin_notices'), 999);
+        add_action('admin_notices', array('Xiphe\THEMASTER\THEWPMASTER', 'twpm_admin_notices'), 999, 0);
 
         /*
          * Register callback for printing debugs from THEDEBUG.

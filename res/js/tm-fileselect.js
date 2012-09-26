@@ -38,8 +38,8 @@ jQuery(document).ready(function($) {
                 parent.tm_checkedAttachments = [];
             }
             $('html').addClass( 'File' );
-            tb_show('', 'media-upload.php?post_id=0&tm-fileselect_field='+
-                $(this).siblings('input.tm-fileselect_value').attr('id')+
+            tb_show('', tm_fileselectbaseurl+
+                '&tm-fileselect_field='+$(this).siblings('input.tm-fileselect_value').attr('id')+
                 '&tm-fileselect_previewsize='+$(this).siblings('input.tm-fileselect_previewsize').val()+
                 '&tm-fileselect_validation='+$(this).siblings('input.tm-fileselect_validation').val()+
                 '&tm-fileselect_multiple='+$(this).siblings('input.tm-fileselect_multiple').val()+
@@ -82,9 +82,37 @@ jQuery(document).ready(function($) {
         parent_src = parent_doc.getElementById('TB_iframeContent').src;
         parent_src_vars = get_url_vars(parent_src);
         if ('tm-fileselect_field' in parent_src_vars) {
+
+            var changeColumns = function($target) {
+                window.setTimeout(function() {
+                    if (typeof $target === 'undefined') {
+                        $target = $('.media-item');
+                    }
+                    $target.each(function() {
+                        if ($(this).hasClass('tm-changed')) {
+                            return;
+                        }
+                        
+                        $(this).find('tr.url, tr.align, tr.image-size').css({'display' : 'none'});
+                        $(this).find('tr.submit .savesend input.button[type="submit"]').css({'display' : 'none'});
+                        $(this).find('tr.submit .savesend .del-link').before('<button class="button tm-savechanges">'+tm_fileselecttext.save+'</button>');
+
+                        $(this).prepend(select_button);
+
+                        $(this).find('a.tm-fileselect_insert').css({
+                            'display': 'block',
+                            'float':   'right',
+                            'margin':  '7px 20px 0 0'
+                        });
+                        $(this).addClass('tm-changed');
+                    });
+                }, 0);
+            };
+
+
             multiple = false;
 
-            var select_button = '<a href="#" class="tm-fileselect_insert button-secondary">'+tm_fileselect_selectfile+'</a>';
+            var select_button = '<a href="#" class="tm-fileselect_insert button-secondary">'+tm_fileselecttext.select+'</a>';
             if (typeof parent_src_vars['tm-fileselect_multiple'] !== 'undefined' &&
                 parent_src_vars['tm-fileselect_multiple']
             ) {
@@ -94,7 +122,7 @@ jQuery(document).ready(function($) {
             }
 
             current_tab = $('ul#sidemenu a.current').parent('li').attr('id');
-            $( 'ul#sidemenu li#tab-type_url' ).remove();
+            $( 'ul#sidemenu li#tab-type_url, div#gallery-settings' ).remove();
             $('p.ml-submit').remove();
 
             switch (current_tab) {
@@ -131,42 +159,13 @@ jQuery(document).ready(function($) {
                         if ($(e.target).hasClass('pinkynail') &&
                             $(e.relatedNode).hasClass('media-item')
                         ) {
-                            var $ctnr = $(e.target).closest('.media-item');
-                            window.setTimeout(function() {
-                                $ctnr.removeClass('open');
-                                $ctnr.children('a.toggle').remove();
-                                $ctnr.prepend(select_button);
-                                $ctnr.children('table.slidetoggle').css({'display' : 'none'});
-                                $ctnr.children('.tm-fileselect_checkbox').attr('checked', 'checked');
-                                $ctnr.children('a.tm-fileselect_insert').css({
-                                    'display': 'block',
-                                    'float':   'right',
-                                    'margin':  '7px 20px 0 0'
-                                });
-
-                                var id = $ctnr.find('input[type="hidden"]').first().attr('id').replace('type-of-', '');
-                                $ctnr.attr('id', 'media-item-'+id);
-                                if (parent.tm_checkedAttachments.indexOf(id) < 0) {
-                                    parent.tm_checkedAttachments.push(id);
-                                }
-                            }, 0);
+                            changeColumns($(e.target).closest('.media-item'));
                         }
                     });
                     break;
                 case 'tab-library':
-                    window.setTimeout(function() {
-                        // Media Library
-                        $('#media-items .media-item a.toggle').remove();
-                        $('#media-items table.slidetoggle').css({'display' : 'none'});
-                        $('#media-items .media-item').each( function() {
-                            $( this ).prepend( select_button );
-                        });
-                        $( 'a.tm-fileselect_insert' ).css({
-                            'display': 'block',
-                            'float':   'right',
-                            'margin':  '7px 20px 0 0'
-                        });
-                    }, 0);
+                case 'tab-gallery':
+                    changeColumns();
                     break;
                 default:
                     break;
@@ -179,7 +178,14 @@ jQuery(document).ready(function($) {
                     });
                 }, 0);
 
-                $('.tm-fileselect_checkbox, .media-item').live('click', function(e){
+                $('.tm-fileselect_checkbox, .media-item').live('click', function(e) {
+
+                    if ($(e.target).closest('table.slidetoggle').length
+                     || $(e.target).hasClass('toggle')
+                    ) {
+                        return true;
+                    }
+
                     var $wrp = $(this).closest('.media-item'),
                         $cbx = $wrp.find('.tm-fileselect_checkbox'),
                         id = $wrp.attr('id');
@@ -206,15 +212,15 @@ jQuery(document).ready(function($) {
             }
 
             // Select functionality
-            $('a.tm-fileselect_insert').live('click', function() {
+            $('a.tm-fileselect_insert').live('click', function(e) {
                 var id;
                 if ( $( this ).parent().attr( 'class' ) == 'savesend' ) {
                     id = $( this ).siblings( '.del-attachment' ).attr( 'id' );
                     id = id.match(/del_attachment_([0-9]+)/);
                     id = id[1];
                 } else {
-                    id = $( this ).parent().attr( 'id' );
-                    id = id.match(/media\-item\-([0-9]+)/);
+                    id = $( this ).closest('.media-item').find('td.savesend .del-link').attr( 'onclick' );
+                    id = id.match(/del_attachment_([0-9]+)/);
                     id = id[1];
                 }
                 if (multiple) {
@@ -226,6 +232,41 @@ jQuery(document).ready(function($) {
                 parent.tm_fileselect_select_item(id, parent_src_vars['tm-fileselect_field']);
                 return false;
             });
+
+            $('.submit button.tm-savechanges').live('click', function(e) {
+                if (current_tab === 'tab-type') {
+                    return true;
+                }
+
+                var $cntr  = $(this).closest('.media-item'),
+                    cID    = $cntr.attr('id'),
+                    chckd  = $cntr.find('.tm-fileselect_checkbox').attr('checked')
+                    $frm   = $(this).closest('form.media-upload-form'),
+                    $inpts = $cntr.find('input')
+                        .add($cntr.find('textarea'))
+                        .add($cntr.find('select'))
+                        .add($frm.find('#_wpnonce'));
+
+                e.preventDefault();
+                
+                $.post($frm.attr('action'), $inpts.serialize(), function(c) {
+                    s = c.regexIndexOf(/<body(.*)>/i);
+                    e = c.regexIndexOf(/<\/body>/i);
+                    c = c.substr(s,e-s).replace(/<!--(.*)-->/g, '').replace(/<body(.*)>/g, '').replace(/(\r\n)|(\r)/g, '').replace(/\t/g, '');
+                    
+                    var $ncntr = $(c).find('#'+cID);
+                    if ($ncntr.length) {
+                        $cntr.replaceWith($ncntr);
+                        changeColumns($ncntr);
+                        window.setTimeout(function() {
+                            if (chckd === 'checked') {
+                                $ncntr.find('.tm-fileselect_checkbox').attr('checked', 'checked');
+                            }   
+                        }, 0);
+                    }
+                });
+            });
+
         }
     
     }
@@ -270,3 +311,8 @@ function tm_fileselect_select_item(item_id, field_id) {
     tb_remove();
     $('html').removeClass('File');
 }
+
+String.prototype.regexIndexOf = function(regex, startpos) {
+    var indexOf = this.substring(startpos || 0).search(regex);
+    return (indexOf >= 0) ? (indexOf + (startpos || 0)) : indexOf;
+};
