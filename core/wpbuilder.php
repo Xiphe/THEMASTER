@@ -124,7 +124,11 @@ class THEWPBUILDER extends THEMASTER {
 		if (!isset(self::$_ftp_conn_id) && defined('FTP_HOST') && defined('FTP_USER') && defined('FTP_PASS')) {
 			self::$_ftp_conn_id = ftp_connect(FTP_HOST);
 			$login_result = ftp_login(self::$_ftp_conn_id, FTP_USER, FTP_PASS);
-			$relBasePath = str_replace(FTP_WORKING_PATH, '', $basePath);
+			if (!$login_result) {
+				self::$_ftp_conn_id = null;
+			} else {
+				$relBasePath = str_replace(FTP_WORKING_PATH, '', $basePath);
+			}
 		} else {
 			$relBasePath = $basePath;
 		}
@@ -134,6 +138,7 @@ class THEWPBUILDER extends THEMASTER {
 		self::_check_folderStructureWalker($structure, $relBasePath, $basePath);
 		if(isset(self::$_ftp_conn_id)) {
 			ftp_close(self::$_ftp_conn_id);
+			self::$_ftp_conn_id = null;
 		}
 	}
 	
@@ -146,20 +151,20 @@ class THEWPBUILDER extends THEMASTER {
 				$subfolders = $chmod;
 				$chmod = $t;
 			}
-			$relDir = THETOOLS::DS($ftpRoot.$basedir.$folder);
+			$relDir = THETOOLS::unPreDS(THETOOLS::DS($ftpRoot.$basedir.$folder));
 			$dir = THETOOLS::DS($root.$basedir.$folder);
 			if(is_dir($dir)) {
 				if(!isset(self::$_ftp_conn_id)) {
-					chmod($dir, $chmod);
+					@chmod($dir, $chmod);
 				} else {
-					ftp_chmod(self::$_ftp_conn_id, $chmod, $relDir);
+					@ftp_chmod(self::$_ftp_conn_id, $chmod, $relDir);
 				}
 			} else {
 				if(!isset(self::$_ftp_conn_id)) {
-					mkdir($dir, $chmod);
+					@mkdir($dir, $chmod);
 				} else {
-					ftp_mkdir(self::$_ftp_conn_id, $relDir);
-					ftp_chmod(self::$_ftp_conn_id, $chmod, $relDir);
+					@ftp_mkdir(self::$_ftp_conn_id, $relDir);
+					@ftp_chmod(self::$_ftp_conn_id, $chmod, $relDir);
 				}
 			}
 			

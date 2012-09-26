@@ -341,10 +341,10 @@ class THEWPMASTER extends THEWPUPDATES {
      * @return void
      */
     protected function _versionCheck() {
-        if( !isset( $GLOBALS['pagenow'])
-         || ( $GLOBALS['pagenow'] != 'plugins.php' && $GLOBALS['pagenow'] != 'themes.php' )
-         || !function_exists( 'get_option' )
-         || !function_exists( 'update_option' )
+        if (!function_exists('is_admin')
+         || !is_admin()
+         || !function_exists('get_option')
+         || !function_exists('update_option')
         ) {
             return;
         }

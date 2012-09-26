@@ -840,7 +840,7 @@ class THEBASE {
             $import = "// themaster //\n@import \"elements.less\";\n// End: themaster //\n\n";
             if (!isset($c[3]) || $import !== preg_replace('/[\n|\r|\r\n]+/', "\n", $c[0].$c[1].$c[2].$c[3])."\n") {
                 $c = $import.implode('', $c);
-                file_put_contents($file, $c);
+                @file_put_contents($file, $c);
             }
 
             /*
@@ -856,13 +856,15 @@ class THEBASE {
                 $CSSfix->from_string($CSS);
                 if (!file_exists($cssFile)) {
                     if (!is_dir(dirname($cssFile))) {
-                        mkdir(dirname($cssFile));
+                        @mkdir(dirname($cssFile));
                     }
-                    $h = fopen($cssFile, 'w');
-                    fclose($h);
+                    $h = @fopen($cssFile, 'w');
+                    if ($h) {
+                        @fclose($h);
+                    }
                     unset($h);
                 }
-                file_put_contents($cssFile, $CSSfix->generate(false));
+                @file_put_contents($cssFile, $CSSfix->generate(false));
 
             } catch (\Exception $e) {
                 THEDEBUG::debug('LESS ERROR: '.$e->getMessage()." \nFile: ".$e->getFile()." \nLine: ".$e->getLine(), 4);
