@@ -362,20 +362,9 @@ class THETOOLS {
     public static function pq($html, $contentType = null)
     {
         self::initPhpQuery();
-        phpQuery::newDocument('<div id="#themaster_phpquery_wrap_T3o0A5um8UfCK8Ba">'.$html.'</div>', $contentType);
+        return \phpQuery::newDocument($html, $contentType);
     }
     
-    /**
-     * Returns the "DOM"-Markup.
-     *
-     * @access public
-     * @return string
-     */
-    public static function get_pqHtml()
-    {
-        return pq('#themaster_phpquery_wrap_T3o0A5um8UfCK8Ba')->html();
-    }
-
     /**
      * Switches the first two variables of an array while leaving its keys.
      * 

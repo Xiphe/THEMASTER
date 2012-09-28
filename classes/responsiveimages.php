@@ -327,10 +327,10 @@ class ResponsiveImages extends THEWPMASTER {
 				$r = imagegif($new_image, $target);
 				break;
 			case 'image/png':
-				$r = imagepng($new_image, $target);
+				$r = imagepng($new_image, $target, 0, PNG_NO_FILTER);
 				break;
 			default:
-				$r = imagejpeg($new_image, $target, 80);
+				$r = imagejpeg($new_image, $target, 100);
 				break;
 		}
 		imagedestroy($original);

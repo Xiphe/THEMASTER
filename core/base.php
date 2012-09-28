@@ -573,7 +573,7 @@ class THEBASE {
 
             throw new \Exception('Error: View File not Found (' . $file . ')', 1);
         } catch(\Exception $e) {
-            $this->debug($e);
+            THEDEBUG::debug($e);
         }
     }
 

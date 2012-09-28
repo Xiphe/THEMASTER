@@ -247,9 +247,9 @@ class THEWPMASTER extends THEWPUPDATES {
         /*
          * Register verry own one time init when wp is available.
          */
-        add_action('wp_head', array('Xiphe\THEMASTER\THEWPMASTER', 'twpm_wphead'), 1, 0);
-        add_action('admin_head', array('Xiphe\THEMASTER\THEWPMASTER', 'twpm_wphead'), 1, 0);
-        add_action('login_head', array('Xiphe\THEMASTER\THEWPMASTER', 'twpm_wphead'), 1, 0);
+        add_action('wp_head', array('Xiphe\THEMASTER\THEWPMASTER', 'twpm_wphead'), 999, 0);
+        add_action('admin_head', array('Xiphe\THEMASTER\THEWPMASTER', 'twpm_wphead'), 999, 0);
+        add_action('login_head', array('Xiphe\THEMASTER\THEWPMASTER', 'twpm_wphead'), 999, 0);
 
         /*
          * Register callbacks for printing js-variables.

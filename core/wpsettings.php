@@ -117,13 +117,14 @@ class THEWPSETTINGS extends THEWPBUILDER {
 		}
 	}
 
-	public static function sCheckSettings( $obj ) {
-		if( method_exists( $obj, 'settings' ) ) {
-			self::$s_settings[ $obj->textID ]
-				= array(
-					'name' => $obj->projectName,
-					'settings' => array( $obj, 'settings' )
-				);
+	public static function sCheckSettings($obj)
+	{
+		if (method_exists($obj, 'settings')) {
+			$r = array(
+				'name' => $obj->projectName,
+				'settings' => array($obj, 'settings'),
+			);
+			self::$s_settings[$obj->textID] = $r;
 		}
 	}
 
@@ -348,9 +349,11 @@ class THEWPSETTINGS extends THEWPBUILDER {
 			}
 		}
 
+		THEBASE::sDo_callback('settings_saved', array($opts), array('key' => $sK));
 
 		self::$s_userSettings[$sK] = $opts;
 		self::$s_storeSettings = true;
+
 
 		$obj->_exit( 'ok', __( 'Options updated', 'themaster' ), -1 );
 	}
@@ -388,18 +391,20 @@ class THEWPSETTINGS extends THEWPBUILDER {
 			}
 		}
 
-		if (!THEBASE::get_instance('FileSelect')->validateSizeFor(
-			$v,
-			$regOpts['args']
-		)) {
-			if (isset($regOpts['errorMessage'])) {
-				$msg = $regOpts['errorMessage'];
-			} else {
-				$msg = THEBASE::get_instance('FileSelect')->get_sizeErrorMessageFor($v);
+		if (isset($regOpts['args'])) {
+			if (!THEBASE::get_instance('FileSelect')->validateSizeFor(
+				$v,
+				$regOpts['args']
+			)) {
+				if (isset($regOpts['errorMessage'])) {
+					$msg = $regOpts['errorMessage'];
+				} else {
+					$msg = THEBASE::get_instance('FileSelect')->get_sizeErrorMessageFor($v);
+				}
+				$obj->_r['errorMsg'] = $msg;
+				$obj->_r['id'] = $inpID;
+				$obj->_exit('validationError', __('Invalid Filetype.', 'themaster'), 2);
 			}
-			$obj->_r['errorMsg'] = $msg;
-			$obj->_r['id'] = $inpID;
-			$obj->_exit('validationError', __('Invalid Filetype.', 'themaster'), 2);
 		}
 	}
 

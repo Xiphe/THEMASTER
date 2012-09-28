@@ -12,7 +12,7 @@ See [Plugin Page](https://github.com/Xiphe/-THE-MASTER) for details
 Version
 -------
 
-3.0.8
+3.0.9
 
 
 Installation
@@ -122,6 +122,11 @@ Here is a list:
 
 Changelog
 ---------
+
+### 3.0.9
++ Updated the PHPQuery helper.
++ Added settings_saved callback to THEWPSETTINGS.
++ bugfixes
 
 ### 3.0.8
 + FileSelect now tries to bind newly uploaded files to the parent post.
