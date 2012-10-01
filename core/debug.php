@@ -126,7 +126,7 @@ class THEDEBUG {
 				self::$s_mode = self::_get_setting('debugMode');
 				self::$s_getMode = self::_get_setting('debugGet');
 
-				if (!function_exists('__')) {
+				if (!function_exists('__') && !function_exists('Xiphe\THEMASTER\__')) {
 					function __($str) {
 						return $str;
 					}

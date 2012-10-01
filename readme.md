@@ -12,7 +12,7 @@ See [Plugin Page](https://github.com/Xiphe/-THE-MASTER) for details
 Version
 -------
 
-3.0.9
+3.0.10
 
 
 Installation
@@ -122,6 +122,11 @@ Here is a list:
 
 Changelog
 ---------
+
+### 3.0.10
++ Introducing TM\WP() Method as shorthand for class_exists('\WP')
++ First standalone Bugfixes
+
 
 ### 3.0.9
 + Updated the PHPQuery helper.

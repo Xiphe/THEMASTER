@@ -3,7 +3,7 @@
 Plugin Name: !THE MASTER
 Plugin URI: http://plugins.red-thorn.de/libary/themaster/
 Description: A Plugin to provide global access to the THEWPMASTER class. THEWPMASTER provides a lot of handy functions for plugins an themes.
-Version: 3.0.9
+Version: 3.0.10
 Date: 2012-09-25 09:55:00 +02:00
 Author: Hannes Diercks
 Author URI: http://red-thorn.de/
@@ -58,6 +58,16 @@ namespace Xiphe\THEMASTER;
     // define($tmSettingsID.'_DEBUG', true);
     // define($tmSettingsID.'_DEBUGMODE', 'FirePHP');
 
+if (class_exists('\WP')) {
+    define('THEMASTER_HAS_WPRDPRESS', true);
+} else {
+    define('THEMASTER_HAS_WPRDPRESS', false);
+}
+
+function WP()
+{
+    return THEMASTER_HAS_WPRDPRESS;
+}
 
 /*
  * I am using the DS constant as a shorthand for DIRECTORY_SEPARATOR.
@@ -65,14 +75,18 @@ namespace Xiphe\THEMASTER;
 if (!defined('DS')) {
     define('DS', DIRECTORY_SEPARATOR);
 } elseif (DS !== DIRECTORY_SEPARATOR) {
-    add_action(
-        'admin_notices',
-        function () {
-            $msg = __('The required constant "DS" is not available so !themaster will be deactivated.', 'themaster');
-            echo "<div class=\"error\"><p>$msg</p></div>";
-        }
-    );
-    deactivate_plugins(__FILE__);
+    $msg = __('The required constant "DS" is not available so !themaster will be deactivated.', 'themaster');
+    if (WP()) {
+        add_action(
+            'admin_notices',
+            function () use ($msg) {
+                echo "<div class=\"error\"><p>$msg</p></div>";
+            }
+        );
+        deactivate_plugins(__FILE__);
+    } else {
+        die($msg);
+    }
 }
 
 /*
@@ -97,30 +111,31 @@ define('THEMASTER_PROJECTFOLDER', dirname(__FILE__).DS);
  */
 define('THEMASTER_COREFOLDER', dirname(__FILE__).DS.'core'.DS);
 
-/**
- * Transforms the filepath as if it is a subdirectory of wp-content/themes or
- * wp-content/plugins.
- *
- * This is required for symliked projects because the activation_hooks of wordpress
- * do not work if the project is not located inside the wp-content folder.
- *
- * @param  string  $path     the realpath of the project
- * @param  boolean $isTheme  set true for themes
- * @param  boolean $hasNoDir set true if is one-file-plugin.
- * @return string            the symlink path.
- */
-function get_wpInstallPath($path, $isTheme = false, $hasNoDir = false)
-{
-    $rel = !$hasNoDir ? basename(dirname($path)).DS : '';
-    $rel .= basename($path);
-    $rel = ABSPATH.'wp-content'.DS.(!$isTheme ? 'plugins' : 'themes').DS.$rel;
-    return preg_replace('/[\\\|\/]/', DS, $rel);
-}
+if (WP()) {
 
-/*
- * Register activation hook.
- */
-if (function_exists('register_activation_hook')) {
+    /**
+     * Transforms the filepath as if it is a subdirectory of wp-content/themes or
+     * wp-content/plugins.
+     *
+     * This is required for symliked projects because the activation_hooks of wordpress
+     * do not work if the project is not located inside the wp-content folder.
+     *
+     * @param  string  $path     the realpath of the project
+     * @param  boolean $isTheme  set true for themes
+     * @param  boolean $hasNoDir set true if is one-file-plugin.
+     * @return string            the symlink path.
+     */
+    function get_wpInstallPath($path, $isTheme = false, $hasNoDir = false)
+    {
+        $rel = !$hasNoDir ? basename(dirname($path)).DS : '';
+        $rel .= basename($path);
+        $rel = ABSPATH.'wp-content'.DS.(!$isTheme ? 'plugins' : 'themes').DS.$rel;
+        return preg_replace('/[\\\|\/]/', DS, $rel);
+    }
+
+    /*
+     * Register activation hook.
+     */
     register_activation_hook(
         get_wpInstallPath(__FILE__),
         function () {
@@ -128,12 +143,10 @@ if (function_exists('register_activation_hook')) {
             THEWPMASTER::_masterActivate();
         }
     );
-}
 
-/*
- * Register activation hook.
- */
-if (function_exists('register_deactivation_hook')) {
+    /*
+     * Register activation hook.
+     */
     register_deactivation_hook(
         get_wpInstallPath(__FILE__),
         function () {
@@ -143,28 +156,33 @@ if (function_exists('register_deactivation_hook')) {
     );
 }
 
+
 /*
  * Include core File - automaticaly includes required core files and instantiates a base instance.
  */
 if (!defined('THEWPMASTERAVAILABE')) {
-    if (!defined('THEMINIWPMASTERAVAILABLE')) {
-        try {
+    try {
+        if (!defined('THEMINIWPMASTERAVAILABLE') && WP()) {
             require_once(THEMASTER_COREFOLDER.'wpmaster.php');
             $GLOBALS['THEMINIWPMASTER'] = new THEWPMASTER('MINIMASTER');
             define('THEMINIWPMASTERAVAILABLE', true);
-        } catch( \Exception $e ) {
-            /*
-             * Errors Occured -> try to write an admin notice.
-             */
-            collect_tmInitErrors($e);
+        } elseif (!defined('THEMINIMASTERAVAILABLE')) {
+            require_once(THEMASTER_COREFOLDER.'master.php');
+            $GLOBALS['THEMINIMASTER'] = new THEMASTER('MINIMASTER');
+            define('THEMINIMASTERAVAILABLE', true);
         }
+    } catch( \Exception $e ) {
+        /*
+         * Errors Occured -> try to write an admin notice.
+         */
+        collect_tmInitErrors($e);
     }
 }
 
 
 function collect_tmInitErrors($e) {
     if (!isset($GLOBALS['THEWPMASTERINITERRORS'])) {
-        if (function_exists('add_action')) {
+        if (WP()) {
             $GLOBALS['THEWPMASTERINITERRORS'] = array();
             add_action('admin_notices', function() {
                 foreach($GLOBALS['THEWPMASTERINITERRORS'] as $e) {

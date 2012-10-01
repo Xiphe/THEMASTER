@@ -67,10 +67,10 @@ class THEMASTER extends THESETTINGS {
      * @return mixed returns false if a required initiation Argument is missing
      *         or Instance if Subclass is Singleton
      */
-    function __construct( $initArgs ) {
-        if( !isset( $this->constructing )
-         && $this->constructing !== true
-         && is_object( ( $r = THEBASE::check_singleton_() ) ) ) {
+    function __construct( $initArgs )
+    {
+        if ((!isset($this->constructing) || $this->constructing !== true)
+        && is_object(($r = THEBASE::check_singleton_()))) {
             return $r;
         } else {
             $this->constructing = true;
