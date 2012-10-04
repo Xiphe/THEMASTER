@@ -12,7 +12,7 @@ See [Plugin Page](https://github.com/Xiphe/-THE-MASTER) for details
 Version
 -------
 
-3.0.10
+3.0.11
 
 
 Installation
@@ -123,10 +123,13 @@ Here is a list:
 Changelog
 ---------
 
+### 3.0.11
++ multiple methods can be bind to wordpress hook by using an array as value in the actions_ class variable.
++ Added .clear, hr.sep and hr.clear.sep as Buttons to TinyMCE
+
 ### 3.0.10
 + Introducing TM\WP() Method as shorthand for class_exists('\WP')
 + First standalone Bugfixes
-
 
 ### 3.0.9
 + Updated the PHPQuery helper.

@@ -1,0 +1,18 @@
+div.clear {
+	clear: both;
+	height: 5px;
+	margin: 0 0 5px;
+	border-bottom: 1px dotted #eee;
+}
+
+hr.sep {
+	border: none;
+	border-bottom: 1px solid #555;
+}
+
+hr.sep.clear {
+	clear: both;
+	border: none;
+	border-top: 1px dotted #eee;
+	border-bottom: 1px solid #666;
+}

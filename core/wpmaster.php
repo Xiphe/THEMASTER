@@ -41,7 +41,7 @@ require_once(THEMASTER_COREFOLDER.'wptools.php');
  *
  * @copyright Copyright (c) 2012, Hannes Diercks
  * @author  Hannes Diercks <xiphe@gmx.de>
- * @version 3.0.2
+ * @version 3.0.3
  * @link    https://github.com/Xiphe/-THE-MASTER/
  * @package !THE MASTER
  */
@@ -247,9 +247,9 @@ class THEWPMASTER extends THEWPUPDATES {
         /*
          * Register verry own one time init when wp is available.
          */
-        add_action('wp_head', array('Xiphe\THEMASTER\THEWPMASTER', 'twpm_wphead'), 999, 0);
-        add_action('admin_head', array('Xiphe\THEMASTER\THEWPMASTER', 'twpm_wphead'), 999, 0);
-        add_action('login_head', array('Xiphe\THEMASTER\THEWPMASTER', 'twpm_wphead'), 999, 0);
+        add_action('wp_enqueue_scripts', array('Xiphe\THEMASTER\THEWPMASTER', 'twpm_enqueue'), 99, 0);
+        add_action('admin_head', array('Xiphe\THEMASTER\THEWPMASTER', 'twpm_enqueue'), 99, 0);
+        add_action('login_head', array('Xiphe\THEMASTER\THEWPMASTER', 'twpm_enqueue'), 99, 0);
 
         /*
          * Register callbacks for printing js-variables.
@@ -283,6 +283,8 @@ class THEWPMASTER extends THEWPUPDATES {
          * Register callback for plugin dependency check.
          */
         add_action('after_setup_theme', array('Xiphe\THEMASTER\THEWPMASTER', 'twpm_check_initiated'));
+
+        add_action('init', array('Xiphe\THEMASTER\THEWPMASTER', 'twpm_wpinit'));
     }
 
 
@@ -548,7 +550,7 @@ class THEWPMASTER extends THEWPUPDATES {
      * Registeres 
      * @return [type] [description]
      */
-    final public static function twpm_wphead() {
+    final public static function twpm_enqueue() {
         wp_enqueue_script('jquery');
 
         foreach( THEBASE::sGet_registeredSources() as $dest => $sources) {
@@ -560,6 +562,7 @@ class THEWPMASTER extends THEWPUPDATES {
 
             foreach($sources as $type => $files) {
                 foreach($files as $file => $url) {
+                    // debug($url, $type);
                     $del = realpath(dirname($file).DS.'..'.DS.'..'.DS.'..'.DS.'..'.DS).DS;
                     $id = preg_replace('/[^A-Za-z0-9-_]/', '_', str_replace($del, '', $file));
                     if($type == 'js') {
@@ -582,20 +585,25 @@ class THEWPMASTER extends THEWPUPDATES {
         parent::_hooks();
         foreach( array( 'actions_', 'filters_' ) as $hooktype ) {
             if( isset( $this->$hooktype ) && is_array( $this->$hooktype ) ) {
-                foreach ( $this->$hooktype as $k => $hook ) {
-                    $e = explode( '|', $hook );
-                    $method = is_int( $k ) ? $e[0] : $k;
-                    $method = str_replace('-', '_', $method);
-                    $e[-1] = $e[0];
-                    $e[0] = array( $this, $method );
-                    if( method_exists( $this, $method ) ) {
-                        ksort( $e );
-                        call_user_func_array(
-                            $hooktype === 'actions_' ? 'add_action' : 'add_filter',
-                            $e
-                        );
-                    } else {
-                        throw new \Exception('THEMASTER ERROR: Should call Hook ' . $e[-1] . ' to unexistent method ' . $method . ' in class ' . get_class( $this ) . '.', 1);
+                foreach ( $this->$hooktype as $k => $hooks ) {
+                    if (!is_array($hooks)) {
+                        $hooks = array($hooks);
+                    }
+                    foreach ($hooks as $hook) {
+                        $e = explode( '|', $hook );
+                        $method = is_int( $k ) ? $e[0] : $k;
+                        $method = str_replace('-', '_', $method);
+                        $e[-1] = $e[0];
+                        $e[0] = array( $this, $method );
+                        if( method_exists( $this, $method ) ) {
+                            ksort( $e );
+                            call_user_func_array(
+                                $hooktype === 'actions_' ? 'add_action' : 'add_filter',
+                                $e
+                            );
+                        } else {
+                            throw new \Exception('THEMASTER ERROR: Should call Hook ' . $e[-1] . ' to unexistent method ' . $method . ' in class ' . get_class( $this ) . '.', 1);
+                        }
                     }
                 }
 
@@ -608,6 +616,41 @@ class THEWPMASTER extends THEWPUPDATES {
         // }
     }
     
+    final public static function twpm_wpinit()
+    {
+        if (is_admin()
+         && (current_user_can('edit_posts') || current_user_can('edit_pages'))
+         && get_user_option('rich_editing') == 'true'
+        ) {
+            add_filter('mce_css', array('Xiphe\THEMASTER\THEWPMASTER', "twpm_mce_css"));
+            add_filter("mce_external_plugins", array('Xiphe\THEMASTER\THEWPMASTER', "twpm_tinymce_plugin"));
+            add_filter('mce_buttons_2', array('Xiphe\THEMASTER\THEWPMASTER', 'twpm_myplugin_button'));
+        }
+    }
+
+    final public function twpm_mce_css($mce_css)
+    {
+        if (!empty($mce_css)) {
+            $mce_css .= ',';
+        }
+
+        $mce_css .= THEBASE::$sBaseUrl.'res/css/mce.css';
+
+        return $mce_css;
+    }
+
+    final public static function twpm_myplugin_button($buttons) {
+        array_unshift($buttons, "twpm_clear", "twpm_sep", "twpm_clearsep", '|');
+        return $buttons;
+    }
+
+    final public static function twpm_tinymce_plugin($plugin_array) {
+        $plugin_array['twpm_clear'] = THEBASE::$sBaseUrl.'res/js/tinymce/twpm_clear.js';
+        $plugin_array['twpm_sep'] = THEBASE::$sBaseUrl.'res/js/tinymce/twpm_sep.js';
+        $plugin_array['twpm_clearsep'] = THEBASE::$sBaseUrl.'res/js/tinymce/twpm_clearsep.js';
+        return $plugin_array;
+    }
+
     /** Can be called to print Admin Messages setted via set_adminMessage()
      *
      * @return void

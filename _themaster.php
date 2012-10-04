@@ -1,12 +1,12 @@
 <?php
 /*
 Plugin Name: !THE MASTER
-Plugin URI: http://plugins.red-thorn.de/libary/themaster/
+Plugin URI: https://github.com/Xiphe/-THE-MASTER
 Description: A Plugin to provide global access to the THEWPMASTER class. THEWPMASTER provides a lot of handy functions for plugins an themes.
-Version: 3.0.10
-Date: 2012-09-25 09:55:00 +02:00
+Version: 3.0.11
+Date: 2012-10-04 18:23:00 +02:00
 Author: Hannes Diercks
-Author URI: http://red-thorn.de/
+Author URI: https://github.com/Xiphe
 Update Server: http://plugins.red-thorn.de/v2/api/
 */
 
@@ -58,12 +58,22 @@ namespace Xiphe\THEMASTER;
     // define($tmSettingsID.'_DEBUG', true);
     // define($tmSettingsID.'_DEBUGMODE', 'FirePHP');
 
+
+/*
+ * Define THEMASTER_HAS_WPRDPRESS for use in WP().
+ */
 if (class_exists('\WP')) {
     define('THEMASTER_HAS_WPRDPRESS', true);
 } else {
     define('THEMASTER_HAS_WPRDPRESS', false);
 }
 
+/**
+ * Shorthand funcion to check if Wordpress is available.
+ *
+ * @uses    const THEMASTER_HAS_WPRDPRESS
+ * @return  bool  true if \WP Class exists - false if not.
+ */
 function WP()
 {
     return THEMASTER_HAS_WPRDPRESS;
@@ -171,7 +181,7 @@ if (!defined('THEWPMASTERAVAILABE')) {
             $GLOBALS['THEMINIMASTER'] = new THEMASTER('MINIMASTER');
             define('THEMINIMASTERAVAILABLE', true);
         }
-    } catch( \Exception $e ) {
+    } catch (\Exception $e) {
         /*
          * Errors Occured -> try to write an admin notice.
          */
@@ -179,7 +189,12 @@ if (!defined('THEWPMASTERAVAILABE')) {
     }
 }
 
-
+/**
+ * Basic Exception Handler.
+ * 
+ * @param  Exception $e Runtime Exception from MINIMASTER init.
+ * @return void
+ */
 function collect_tmInitErrors($e) {
     if (!isset($GLOBALS['THEWPMASTERINITERRORS'])) {
         if (WP()) {
@@ -191,7 +206,7 @@ function collect_tmInitErrors($e) {
             });
         } else {
             echo '<div class="error"><p>'.$e->getMessage().'<br />File:'.$e->getFile().' Line:'.$e->getLine().'</p></div>';
-            return false;
+            return;
         }
     }
     $k = $e->getFile().$e->getLine();
@@ -199,7 +214,7 @@ function collect_tmInitErrors($e) {
 }
 
 /**
- * initiation for Plugins and Themes that want to use THE MASTER.
+ * Initiation for Plugins and Themes that want to use THE MASTER.
  * Automaticaly parses initiation args from main plugin file or 
  * theme style.
  *
@@ -211,17 +226,17 @@ function collect_tmInitErrors($e) {
  *                           to get the called file.
  * @param   string $file     This can be a path to infofile if the first
  *                           param contains additional init args.    
- * @return  object           Instance of THEWPMASTER or false if error.
+ * @return  object           Instance of the Projects Master or false if error.
  */
-function INIT( $initArgs = null, $file = null ) {
-    
+function INIT($initArgs = null, $file = null)
+{
     /*
-     * If init args or key projectName is not set.
+     * If init args or key projectName is not set and given project-info-file is valid.
      */
-    if( ( !is_array( $initArgs ) || !isset( $initArgs['projectName'] ) )
-     && (   null === $initArgs
-         || ( is_string( $initArgs ) && file_exists( $initArgs ) )
-         || ( is_string( $file ) && file_exists( $file ) )
+    if ((!is_array($initArgs) || !isset($initArgs['projectName']))
+     && (null === $initArgs
+         || (is_string($initArgs) && file_exists($initArgs))
+         || (is_string($file) && file_exists($file))
     )) {
         /*
          * Get initiation arguments from project file.
@@ -236,7 +251,7 @@ function INIT( $initArgs = null, $file = null ) {
         }
 
         /*
-         * Check if additional were given and merge them.
+         * Check if additional args were given and merge them.
          */
         if (is_array($initArgs)) {
             $initArgs = array_merge($filesInitArgs, $initArgs);
@@ -255,7 +270,7 @@ function INIT( $initArgs = null, $file = null ) {
      */
     try {
         $r = THEWPMASTER::get_instance( 'Master', $initArgs );
-    } catch( \Exception $e ) {
+    } catch (\Exception $e) {
         /*
          * Errors Occured -> try to write an admin notice.
          */
@@ -286,17 +301,18 @@ function INIT( $initArgs = null, $file = null ) {
  *                         only one that's delivered at the time of 3.0
  * @return void
  */
-function BUILD( $extended = true, $template = 'def' ) {
+function BUILD($extended = true, $template = 'def')
+{
     $args = THEWPBUILDER::get_initArgs();
 
-    if( !isset( $args['projectName'] ) ) {
-        throw new Exception( 'BUILDTHEWPMASTERPLUGIN called in invalid file.', 1 );
-    } elseif( !isset( $args['date'] ) ) {
-        THEWPBUILDER::sbuild( 'init', $args, $template, $extended );
-    } elseif( !isset( $args['version'] ) ) {
-        THEWPBUILDER::missing_initArgs( $args );
+    if (!isset($args['projectName'])) {
+        throw new Exception('BUILDTHEWPMASTERPLUGIN called in invalid file.', 1);
+    } elseif (!isset($args['date'])) {
+        THEWPBUILDER::sbuild('init', $args, $template, $extended);
+    } elseif (!isset($args['version'])) {
+        THEWPBUILDER::missing_initArgs($args);
     } else {
-        THEWPBUILDER::sbuild( 'full', $args, $template, $extended );
+        THEWPBUILDER::sbuild('full', $args, $template, $extended);
     }
 }
 ?>
