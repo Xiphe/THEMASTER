@@ -1,24 +1,82 @@
 <?php 
 namespace Xiphe\THEMASTER;
 
+/**
+ * ResponsiveImages is a PHP Class served by !THE MASTER
+ *
+ * This class serves verry small images (50px width) on pageload and then loads
+ * bigger versions later by using javascript.
+ * It can use realpath or Wordpress attachement_IDs as source.
+ *
+ * @copyright Copyright (c) 2012, Hannes Diercks
+ * @author    Hannes Diercks <xiphe@gmx.de>
+ * @version   1.0.2
+ * @link      https://github.com/Xiphe/-THE-MASTER/
+ * @package   !THE MASTER
+ */
 class ResponsiveImages extends THEWPMASTER {
+    /* -------------------- *
+     *  INSTANCE VARIABLES  *
+     * -------------------- */
+
+    /**
+     * This is a singleton.
+     * 
+     * @var boolean
+     */
 	public $singleton = true;
 
+	/**
+	 * Action Hooks into Wordpress.
+	 * @var array
+	 */
 	protected $actions_ = array(
-		'wp_ajax_tm_responsiveimageget',
-		'wp_ajax_tm_responsiveimageget' => 'wp_ajax_nopriv_tm_responsiveimageget',
-		'wp_ajax_tm_responsivslideshowget',
-		'wp_ajax_tm_responsivslideshowget' => 'wp_ajax_nopriv_tm_responsivslideshowget',
+		'wp_ajax_tm_responsiveimageget' => array(
+			'wp_ajax_nopriv_tm_responsiveimageget',
+			'wp_ajax_tm_responsiveimageget'
+		),
+		'wp_ajax_tm_responsiveslideshowget' => array(
+			'wp_ajax_nopriv_tm_responsiveslideshowget',
+			'wp_ajax_tm_responsiveslideshowget'
+		)
 	);
 
+
+    /* -------------------- *
+     *  INITIATION METHODS  *
+     * -------------------- */
+
+	/**
+	 * First initiation.
+	 * 
+	 * @return void
+	 */
 	public function init() {
 		$this->reg_js('resizeend');
 		$this->reg_js('tm-responsiveimages');
 		$this->reg_jsVar('ajaxurl', admin_url('admin-ajax.php'));
 	}
 
+
+    /* -------------- *
+     *  AJAX METHODS  *
+     * -------------- */
+
+	/**
+	 * Ajax getter for the full image url.
+	 *
+	 * @access public
+	 * @return void
+	 */
 	public function wp_ajax_tm_responsiveimageget() {
+		/*
+		 * Cleanup the path.
+		 */
 		$img = THETOOLS::get_directPath(esc_attr($_REQUEST['image']));
+
+		/*
+		 * Verify Nonce.
+		 */
 		if (!isset($_REQUEST['nonce'])
 		 || !THEWPTOOLS::verify_noprivnonce(
 				esc_attr($_REQUEST['nonce']),
@@ -29,21 +87,44 @@ class ResponsiveImages extends THEWPMASTER {
 			$this->_exit('error', 'Authentication failed.', 1);
 		}
 
+		/*
+		 * If image is not an ID - Add the ABSPATH const.
+		 */
 		if (!is_numeric($img) && defined('ABSPATH')) {
 			$img = ABSPATH.$img;
 		}
 
+		/*
+		 * Get the requested image url and send it to the output array.
+		 */
 		$this->_r['uri'] = $this->get_url(
 			$img,
 			esc_attr($_REQUEST['width'])
 		);
+
+		/*
+		 * Check if the image was available.
+		 */
 		if ($this->_r['uri'] == false) {
 			$this->_exit('error', 'Image not available.', 2);
 		}
+
+		/*
+		 * Exit script and print the json encoded output array.
+		 */
 		$this->_exit('ok', 'URI is attached.', 0);
 	}
 
-	public function wp_ajax_tm_responsivslideshowget() {
+	/**
+	 * Ajax getter for the next slideshow-image.
+	 *
+	 * @access public
+	 * @return void
+	 */
+	public function wp_ajax_tm_responsiveslideshowget() {
+		/*
+		 * Verify nonce.
+		 */
 		if (!isset($_REQUEST['nonce'])
 		 || !THEWPTOOLS::verify_noprivnonce(
 				esc_attr($_REQUEST['nonce']),
@@ -53,6 +134,10 @@ class ResponsiveImages extends THEWPMASTER {
 		) {
 			$this->_exit('error', 'Authentication failed.', 2);
 		}
+
+		/*
+		 * Get the next image and put it into the output array.
+		 */
 		$this->_r['img'] = trim($this->get_image(
 			esc_attr($_REQUEST['image']),
 			esc_attr($_REQUEST['width']),
@@ -62,9 +147,32 @@ class ResponsiveImages extends THEWPMASTER {
 			(isset($_REQUEST['title']) ? esc_attr($_REQUEST['title']) : null)
 		));
 
+		/*
+		 * Check if the image was available.
+		 */
+		if (empty($this->_r['img'])) {
+			$this->_exit('error', 'Image not available.', 2);
+		}
+
+		/*
+		 * Exit script and print the json encoded output array.
+		 */
 		$this->_exit('ok', 'Image is attached', 0);
 	}
 
+
+    /* ---------------- *
+     *  GETTER METHODS  *
+     * ---------------- */
+
+    /**
+     * Getter for an image url in the specified with.
+     *
+     * @access public
+     * @param  string $image attachment ID or image path
+     * @param  mixed  $width the targeted image width.
+     * @return mixed         the image url or false if image not available.
+     */
 	public function get_url($image, $width = 'auto')
 	{
 		if (!($image = $this->_get_baseImageFile($image))) {
@@ -74,6 +182,15 @@ class ResponsiveImages extends THEWPMASTER {
 		return $this->_get_imageUrl($image, $width, $height);
 	}
 
+	/**
+	 * Getter for the absolute image file.
+	 *
+	 * @access public
+	 * @param  string  $image attachment ID or image path
+	 * @param  mixed   $width the targeted image width.
+	 * @param  boolean $round whether or not the end site should be rounded.
+	 * @return bookean        the image file path or false if image is not available.
+	 */
 	public function get_imagefile($image, $width = 'auto', $round = true)
 	{
 		if (!($image = $this->_get_baseImageFile($image))) {
@@ -83,7 +200,15 @@ class ResponsiveImages extends THEWPMASTER {
 		return $this->_get_imageFile($image, $width, $height);
 	}
 
-
+	/**
+	 * Getter for an array of tag attributes that should be attached to 
+	 * an html-tag when its using $image as background image.
+	 *
+	 * @access public
+	 * @param  string $image attachment ID or image path
+	 * @param  mixed  $width the targeted image width
+	 * @return mixed         the attr array or false if image is not available.
+	 */
 	public function get_bg_imageAttrs($image, $width = 'auto')
 	{
 		$slideshow = $this->_is_slideshow($image);
@@ -116,7 +241,18 @@ class ResponsiveImages extends THEWPMASTER {
 		);
 	}
 
-
+	/**
+	 * Getter for an responsive image tag.
+	 *
+	 * @access public
+	 * @param  string  $image    attachment ID or image path.
+	 * @param  mixed   $width    the targeted image width
+	 * @param  mixed   $addClass optional additional classes for the img tag
+	 * @param  string  $addId    optional id for the img tag
+	 * @param  string  $alt      optional alt attr for the tag. Set to false to disable the alt.
+	 * @param  string  $title    optional title attr for the tag. Set to false to disable the title.
+	 * @return mixed             the image tag or false on error.
+	 */
 	public function get_image($image, $width = 'auto', $addClass = false, $addId = null, $alt = null, $title = null)
 	{
 		/*
@@ -190,10 +326,36 @@ class ResponsiveImages extends THEWPMASTER {
 		return THEBASE::sget_HTML()->r_img($args);
 	}
 
+	/**
+	 * Echo wrapper for $this->get_image();
+	 * 
+	 * @access public
+	 * @param  string  $image    attachment ID or image path.
+	 * @param  mixed   $width    the targeted image width
+	 * @param  mixed   $addClass optional additional classes for the img tag
+	 * @param  string  $addId    optional id for the img tag
+	 * @param  string  $alt      optional alt attr for the tag. Set to false to disable the alt.
+	 * @param  string  $title    optional title attr for the tag. Set to false to disable the title.
+	 * @return void
+	 */
 	public function image($image, $width = 'auto', $addClass = false, $addId = null, $alt = null, $title = null) {
 		echo $this->get_image($image, $width, $addClass, $addId, $alt, $title);
 	}
 
+
+    /* ------------------ *
+     *  INTERNAL METHODS  *
+     * ------------------ */
+
+    /**
+     * Gets the dimensions in wich the image should be loaded.
+     *
+     * @access private 
+     * @param  string  $image   attachment ID or image path.
+     * @param  mixed   $width   the targeted image width
+     * @param  mixed   $height  the targeted image height
+     * @return intager          the loading width.
+     */
 	private function _get_loadWidh($image, &$width, &$height)
 	{
 		/*
@@ -223,6 +385,13 @@ class ResponsiveImages extends THEWPMASTER {
 		return $loadWidth;		
 	}
 
+	/**
+	 * Checks if the given image is single or slideshow.
+	 * 
+     * @access private 
+	 * @param  string  $image  attachment ID or image path.
+	 * @return boolean
+	 */
 	private function _is_slideshow(&$image)
 	{
 		$slideshow = false;
@@ -250,6 +419,15 @@ class ResponsiveImages extends THEWPMASTER {
 		return $slideshow;
 	}
 
+	/**
+	 * Getter for the url of the image in the given dimensions
+	 *
+     * @access private 
+	 * @param  string  $image   attachment ID or image path.
+     * @param  mixed   $width   the targeted image width
+     * @param  mixed   $height  the targeted image height
+	 * @return string           the url
+	 */
 	private function _get_imageUrl($image, $width, $height)
 	{
 		return $this->_gen_imageUrlFrom(
@@ -257,6 +435,14 @@ class ResponsiveImages extends THEWPMASTER {
 		);
 	}
 
+	/**
+	 * Replaces the ABSPATH in given File with the wordpress installation url
+	 * and cleans up the directory separators.
+	 *
+	 * @access private 
+	 * @param  string $file the image file
+	 * @return string       the image url
+	 */
 	private function _gen_imageUrlFrom($file)
 	{
 		return preg_replace(
@@ -270,20 +456,51 @@ class ResponsiveImages extends THEWPMASTER {
 		);
 	}
 
+	/**
+	 * Getter for the real image filepath.
+	 *
+	 * If the image does not exist it will be generated.
+	 *
+	 * @access private 
+	 * @param  string $image  the original image file
+	 * @param  mixed  $width  the targeted width
+	 * @param  mixed  $height the targeted height
+	 * @return string         the image filepath
+	 */
 	private function _get_imageFile($image, $width, $height)
 	{
 		$file = $this->_build_imageFileName($image, $width, $height);
 		if (!file_exists($file)) {
 			$this->_gen_image($image, $file, $width, $height);
 		}
+		debug($file, 'touched');
 		return $file;
 	}
 
+	/**
+	 * Constructs the new image file name by adding -[width]x[height] to the end of the name.
+	 * 
+	 * @access private 
+	 * @param  string $image  the original image file
+	 * @param  mixed  $width  the targeted width
+	 * @param  mixed  $height the targeted height
+	 * @return string         the target image path
+	 */
 	private function _build_imageFileName($image, $width, $height) {
 		return dirname($image).DS.'tm-responsive'.DS.pathinfo($image, PATHINFO_FILENAME)
 			.'-'.$width.'x'.$height.'.'.pathinfo($image, PATHINFO_EXTENSION);
 	}
 
+	/**
+	 * If the targeed image does not exist - this method generates the new, resized image.
+	 * 
+	 * @access private 
+	 * @param  string  $original path to the original image file
+	 * @param  string  $target   path where the resized image should be stored
+	 * @param  intager $width    the resize width
+	 * @param  intager $height   the resize height
+	 * @return boolean           true if the image creation was successfull
+	 */
 	private function _gen_image($original, $target, $width, $height)
 	{
 		$type = wp_check_filetype($original);
@@ -338,6 +555,14 @@ class ResponsiveImages extends THEWPMASTER {
 		return $r;
 	}
 
+	/**
+	 * Geter for the appropriate dimenseions of the target image.
+	 * 
+	 * @param  string  $image the original image file
+	 * @param  mixed   $width the targeted image width
+	 * @param  boolean $round whether or not the size should be rounded.
+	 * @return intager        the height for the target image.
+	 */
 	private function _get_dims($image, &$width, $round = true)
 	{
 		$dims = getimagesize($image);
@@ -368,6 +593,13 @@ class ResponsiveImages extends THEWPMASTER {
 		return round($width/($dims[0]/$dims[1]));
 	}
 
+	/**
+	 * Getter for the original image file.
+	 * Converts attachment IDs into real image paths.
+	 * 
+	 * @param  string $image attachment ID or image path
+	 * @return string        the original image path or false on error.
+	 */
 	private function _get_baseImageFile($image) {
 		if (!is_int($image)) {
 			if (file_exists($image)) {
