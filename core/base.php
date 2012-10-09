@@ -852,8 +852,20 @@ class THEBASE {
                 $Less->addImportDir(THEMASTER_PROJECTFOLDER.'res'.DS.'less');
                 
                 $CSS = $Less->compileFile($file);
-                $CSSfix = new \CSSfix();
-                $CSSfix->from_string($CSS);
+
+                $fix = true;
+                foreach (array(3, 4, 5) as $i) {
+                    if (trim($c[$i]) == '// NOFIX //') {
+                        $fix = false;
+                    }
+                }
+
+                if ($fix) {
+                    $CSSfix = new \CSSfix();
+                    $CSSfix->from_string($CSS);
+                    $CSS = $CSSfix->generate(false);
+                }
+
                 if (!file_exists($cssFile)) {
                     if (!is_dir(dirname($cssFile))) {
                         @mkdir(dirname($cssFile));
@@ -864,7 +876,8 @@ class THEBASE {
                     }
                     unset($h);
                 }
-                @file_put_contents($cssFile, $CSSfix->generate(false));
+
+                @file_put_contents($cssFile, $CSS);
 
             } catch (\Exception $e) {
                 THEDEBUG::debug('LESS ERROR: '.$e->getMessage()." \nFile: ".$e->getFile()." \nLine: ".$e->getLine(), 4);

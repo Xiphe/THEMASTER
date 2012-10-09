@@ -562,9 +562,7 @@ class THEWPMASTER extends THEWPUPDATES {
 
             foreach($sources as $type => $files) {
                 foreach($files as $file => $url) {
-                    // debug($url, $type);
-                    $del = realpath(dirname($file).DS.'..'.DS.'..'.DS.'..'.DS.'..'.DS).DS;
-                    $id = preg_replace('/[^A-Za-z0-9-_]/', '_', str_replace($del, '', $file));
+                    $id = substr(md5($file), 2, 8).'-'.preg_replace('/[^A-Za-z0-9-_]/', '-', pathinfo($file, PATHINFO_FILENAME));
                     if($type == 'js') {
                         wp_enqueue_script($id, $url);
                     } elseif($type == 'css') {

@@ -6,7 +6,7 @@ namespace Xiphe\THEMASTER;
  *
  * @copyright Copyright (c) 2012, Hannes Diercks
  * @author    Hannes Diercks <xiphe@gmx.de>
- * @version   3.0.1
+ * @version   3.0.2
  * @link      https://github.com/Xiphe/-THE-MASTER/
  * @package   !THE MASTER
  */
@@ -450,12 +450,7 @@ class THETOOLS {
      */
     private static function _is_browser($browser, $version = null, $strict = null)
     {
-        if (self::$s_BrowserObj == null) {
-            require_once(THEMASTER_PROJECTFOLDER.'classes'.DS.'Browser'.DS.'Browser.php');
-            self::$s_BrowserObj = new \Browser;
-            self::$s_browserVersion = self::$s_BrowserObj->getVersion();
-            self::$s_browser = self::$s_BrowserObj->getBrowser();
-        }
+        self::_get_browser();
         if (self::$s_browser == self::get_classConstant('Browser', 'BROWSER_'.$browser)) { 
             if ($version === null)
                 return true;
@@ -515,6 +510,95 @@ class THETOOLS {
             }
         }
         return false;
+    }
+
+    /**
+     * Generates and caches the Browser-Object
+     *
+     * @access private
+     * @return object
+     */
+    private function _get_browser()
+    {
+        if (self::$s_BrowserObj == null) {
+            require_once(THEMASTER_PROJECTFOLDER.'classes'.DS.'Browser'.DS.'Browser.php');
+            self::$s_BrowserObj = new \Browser;
+            self::$s_browserVersion = self::$s_BrowserObj->getVersion();
+            self::$s_browser = self::$s_BrowserObj->getBrowser();
+        }
+        return self::$s_BrowserObj;
+    }
+
+    /**
+     * Getter for the Browser.
+     *
+     * @access public
+     * @return string
+     */
+    public function get_browser()
+    {
+        self::_get_browser();
+        return self::$s_browser;
+    }
+
+    /**
+     * Getter for the Browser Version.
+     *
+     * @access public
+     * @return string
+     */
+    public function get_browserVersion()
+    {
+        self::_get_browser();
+        return self::$s_browserVersion;
+    }
+
+    /**
+     * Getter for the Browsers Layout Engine.
+     *
+     * @access public
+     * @return string
+     */
+    public function get_layoutEngine()
+    {
+        self::_get_browser();
+        switch (self::$s_browser) {
+            case 'iCab':
+            case 'OmniWeb':
+            case 'Safari':
+            case 'iPhone':
+            case 'iPod':
+            case 'iPad':
+            case 'Chrome':
+            case 'Android':
+            case 'BlackBerry':
+                return 'WebKit';
+
+            case 'Firebird':
+            case 'Firefox':
+            case 'Iceweasel':
+            case 'Mozilla':
+            case 'IceCat':
+            case 'Galeon':
+                return 'Gecko';
+
+            case 'Internet Explorer':
+            case 'Pocket Internet Explorer':
+                return 'Trident';
+
+            case 'Opera':
+            case 'Opera Mini':
+                return 'Presto';
+            
+            case 'Konqueror':
+                return 'KHTML';
+
+            case 'Amaya':
+                return 'Amaya';
+
+            default:
+                return false;
+        }
     }
 
     /**
@@ -816,148 +900,184 @@ class THETOOLS {
         return preg_match("/^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,3})$/", $email);
     }
 
+
+    /**
+     * Internal method for the slasher/deslasher methods.
+     * 
+     * @param  string  $str   the target.
+     * @param  string  $slash the slash.
+     * @param  boolean $pre   start or end of target?
+     * @param  boolean $add   add slash if not present?
+     * @param  boolean $unify unify all slashes in target?
+     * @return string         the (un)slashed target.
+     */
+    private static function _slash($str, $slash, $pre, $add, $unify)
+    {
+        if ($unify) {
+            $str = self::unify_slashes($str, $slash);
+        }
+
+        $r  = ($add && $pre ? $slash : '');
+        $r .= ($pre ? ltrim($str, $slash) : rtrim($str, $slash));
+        $r .= ($add && !$pre ? $slash : '');
+
+        return $r;
+    }
+
     /**
      * remove potential slash from the end of the string.
      *
      * @access public
-     * @param  string $str the string to be unslashed
-     * @return string      the unslashed string
+     * @param  string  $str    the string to be unslashed
+     * @param  boolean $unify  set true to unify all slashes in $str
+     * @return string          the unslashed string
      */
-    public static function unSlash($str)
+    public static function unSlash($str, $unify = false)
     {
-        return rtrim($str, '/');
+        return self::_slash($str, '/', false, false, $unify);
     }
 
     /**
      * remove potential DIRECTORY_SEPARATOR from the end of the string.
      *
      * @access public
-     * @param  string $str the string to be unslashed
-     * @return string      the unslashed string
+     * @param  string  $str    the string to be unslashed
+     * @param  boolean $unify  set true to unify all slashes in $str
+     * @return string          the unslashed string
      */
-    public static function unDS($str)
+    public static function unDS($str, $unify = false)
     {
-        return rtrim($str, DIRECTORY_SEPARATOR);
+        return self::_slash($str, DS, false, false, $unify);
     }
 
     /**
      * remove potential backslash from the end of the string.
      *
      * @access public
-     * @param  string $str the string to be unbackslashed
-     * @return string      the unbackslashed string
+     * @param  string  $str    the string to be unbackslashed
+     * @param  boolean $unify  set true to unify all slashes in $str
+     * @return string          the unbackslashed string
      */
-    public static function unBackSlash($str)
+    public static function unBackSlash($str, $unify = false)
     {
-        return rtrim($str, '\\');
+        return self::_slash($str, '\\', false, false, $unify);
     }
 
     /**
      * add slash to the end of the string.
      *
      * @access public
-     * @param  string $str the string to be slashed
-     * @return string      the slashed string
+     * @param  string  $str    the string to be slashed
+     * @param  boolean $unify  set true to unify all slashes in $str
+     * @return string          the slashed string
      */
-    public static function slash($str)
+    public static function slash($str, $unify = false)
     {
-        return rtrim($str, '/').'/';
+        return self::_slash($str, '/', false, true, $unify);
     }
 
     /**
      * add DIRECTORY_SEPARATOR to the end of the string.
      *
      * @access public
-     * @param  string $str the string to be slashed
-     * @return string      the slashed string
+     * @param  string  $str    the string to be slashed
+     * @param  boolean $unify  set true to unify all slashes in $str
+     * @return string          the slashed string
      */
-    public static function DS($str)
+    public static function DS($str, $unify = false)
     {
-        return rtrim($str, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
+        return self::_slash($str, DS, false, true, $unify);
     }
 
     /**
      * add backslash to the end of the string.
      *
      * @access public
-     * @param  string $str the string to be backslash
-     * @return string      the backslashed string
+     * @param  string  $str    the string to be backslash
+     * @param  boolean $unify  set true to unify all slashes in $str
+     * @return string          the backslashed string
      */
-    public static function backSlash($str)
+    public static function backSlash($str, $unify = false)
     {
-        return rtrim($str, '\\').'\\';
+        return self::_slash($str, '\\', false, true, $unify);
     }
 
     /**
      * remove potential slash from the front of the string.
      *
      * @access public
-     * @param  string $str the string to be unslashed
-     * @return string      the unslashed string
+     * @param  string  $str    the string to be unslashed
+     * @param  boolean $unify  set true to unify all slashes in $str
+     * @return string          the unslashed string
      */
-    public static function unPreSlash($str)
+    public static function unPreSlash($str, $unify = false)
     {
-        return ltrim($str, '/');
+        return self::_slash($str, '/', true, false, $unify);
     }
 
     /**
      * remove potential DIRECTORY_SEPARATOR from the front of the string.
      *
      * @access public
-     * @param  string $str the string to be unslashed
-     * @return string      the unslashed string
+     * @param  string  $str    the string to be unslashed
+     * @param  boolean $unify  set true to unify all slashes in $str
+     * @return string          the unslashed string
      */
-    public static function unPreDS($str)
+    public static function unPreDS($str, $unify = false)
     {
-        return ltrim($str, DIRECTORY_SEPARATOR);
+        return self::_slash($str, DS, true, false, $unify);
     }
 
     /**
      * remove potential backslash from the front of the string.
      *
      * @access public
-     * @param  string $str the string to be unbackslashed
-     * @return string      the unbackslashed string
+     * @param  string  $str    the string to be unbackslashed
+     * @param  boolean $unify  set true to unify all slashes in $str
+     * @return string          the unbackslashed string
      */
-    public static function unPreBackSlash($str)
+    public static function unPreBackSlash($str, $unify = false)
     {
-        return ltrim($str, '\\');
+        return self::_slash($str, '\\', true, false, $unify);
     }
 
     /**
      * add slash to the front of the string.
      *
      * @access public
-     * @param  string $str the string to be slashed
-     * @return string      the slashed string
+     * @param  string  $str    the string to be slashed
+     * @param  boolean $unify  set true to unify all slashes in $str
+     * @return string          the slashed string
      */
-    public static function preSlash($str)
+    public static function preSlash($str, $unify = false)
     {
-        return '/'.ltrim($str, '/');
+        return self::_slash($str, '/', true, true, $unify);
     }
 
     /**
      * add DIRECTORY_SEPARATOR to the front of the string.
      *
      * @access public
-     * @param  string $str the string to be slashed
-     * @return string      the slashed string
+     * @param  string  $str    the string to be slashed
+     * @param  boolean $unify  set true to unify all slashes in $str
+     * @return string          the slashed string
      */
-    public static function preDS($str)
+    public static function preDS($str, $unify = false)
     {
-        return DIRECTORY_SEPARATOR.ltrim($str, DIRECTORY_SEPARATOR);
+        return self::_slash($str, DS, true, true, $unify);
     }
 
     /**
      * add backslash to the front of the string.
      *
      * @access public
-     * @param  string $str the string to be backslashed
-     * @return string      the backslashed string
+     * @param  string  $str    the string to be backslashed
+     * @param  boolean $unify  set true to unify all slashes in $str
+     * @return string          the backslashed string
      */
-    public static function preBackSlash($str)
+    public static function preBackSlash($str, $unify = false)
     {
-        return '\\'.ltrim($str, '\\');
+        return self::_slash($str, '\\', true, true, $unify);
     }
     
     /**
@@ -1010,7 +1130,7 @@ class THETOOLS {
     }
     
     /**
-     * Deletes ../ in pathes and cleans it with self::get_cleanedPath()
+     * Deletes ../ in pathes and cleans it with self::unify_slashes()
      *
      * @access public
      * @param  string $path input path.
@@ -1018,9 +1138,8 @@ class THETOOLS {
      */
     public static function get_directPath($path)
     {
-        return str_replace('..' . DS, '', self::get_cleanedPath($path));
+        return str_replace('..' . DS, '', self::unify_slashes($path, DS));
     }
-    
     
     /** 
      * Replaces / & \ to DIRECTORY_SEPERATOR in $path
@@ -1028,9 +1147,22 @@ class THETOOLS {
      * @access public
      * @param string $path input path
      * @return string
-     * @date Jan 22th 2012
      */
     public static function get_cleanedPath($path)
+    {
+        deprecated('unify_slashes');
+        return self::unify_slashes($path, DS);
+    }
+    
+    /** 
+     * Replaces / & \ to $slash in $path
+     *
+     * @access public
+     * @param  string $path  input path
+     * @param  string $slash the new slash char default: DIRECTORY_SEPERATOR
+     * @return string
+     */
+    public static function unify_slashes($path, $slash = DS)
     {
         return preg_replace("/[\/\\\]+/", DS, $path);
     }

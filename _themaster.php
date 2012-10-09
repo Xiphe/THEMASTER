@@ -3,8 +3,8 @@
 Plugin Name: !THE MASTER
 Plugin URI: https://github.com/Xiphe/-THE-MASTER
 Description: A Plugin to provide global access to the THEWPMASTER class. THEWPMASTER provides a lot of handy functions for plugins an themes.
-Version: 3.0.11
-Date: 2012-10-04 18:23:00 +02:00
+Version: 3.0.12
+Date: 2012-10-09 17:30:00 +02:00
 Author: Hannes Diercks
 Author URI: https://github.com/Xiphe
 Update Server: http://plugins.red-thorn.de/v2/api/

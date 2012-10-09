@@ -12,7 +12,7 @@ See [Plugin Page](https://github.com/Xiphe/-THE-MASTER) for details
 Version
 -------
 
-3.0.11
+3.0.12
 
 
 Installation
@@ -123,6 +123,16 @@ Here is a list:
 Changelog
 ---------
 
+### 3.0.12
++ Added option to disable CSSFix for a .less file. Just add "// NOFIX //" in the 5th or 6th line of your less file.
++ Internal enhancement of the THETOOLS::is_browser() method.
++ Added THETOOLS::get\_browser(), THETOOLS::get\_browserVersion() and THETOOLS::get\_layoutEngine()
++ Enhanced the slash methods in THETOOLS. They all now accept a boolean as second argument. When true the slashes in the passed string will be unified.
++ Deprecated THETOOLS::get\_cleanedPath() in favor of THETOOLS::unify\_slashes(). Same logic -> more semantic name.
++ Nicer ID for registered sources in THEWPMASTER::twpm_enqueue()
++ Added a > img { border: 0; } to base.less
++ Added and enhanced the gradient-mixins in elements.less
+
 ### 3.0.11
 + multiple methods can be bind to wordpress hook by using an array as value in the actions_ class variable.
 + Added .clear, hr.sep and hr.clear.sep as Buttons to TinyMCE
@@ -204,6 +214,9 @@ Changelog
 
 Upgrade Notice
 --------------
+
+### 3.0.12
++ Deprecated THETOOLS::get\_cleanedPath()
 
 ### 3.0.0
 + incompatibility with old red thorn update api.

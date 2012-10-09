@@ -9,12 +9,35 @@
       Ryan Faerman
 
     More info at: http://lesselements.com
+
+    Edited by [Xiphe](https://github.com/Xiphe/).
 -----------------------------------------------------*/
-@gradient(@color: #F5F5F5, @start: #EEE, @stop: #FFF) {
-  background: @color;
-  background: linear-gradient(bottom,
-              @start,
-              @stop);
+@gradient(@start: #EEE, @stop: #FFF) {
+  @gradientNoIE(@start, @stop);
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='@{start}', endColorstr='@{stop}', GradientType=0); /* IE6-9 */
+}
+@gradientNoIE(@start: #EEE, @stop: #FFF) {
+  background: @start/2 + @stop/2;
+  background: -moz-linear-gradient(top, @start 0%, @stop 100%); /* FF3.6+ */
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, @start), color-stop(100%, @stop)); /* Chrome,Safari4+ */
+  background: -webkit-linear-gradient(top, @start 0%, @stop 100%); /* Chrome10+,Safari5.1+ */
+  background: -o-linear-gradient(top, @start 0%, @stop 100%); /* Opera 11.10+ */
+  background: -ms-linear-gradient(top, @start 0%, @stop 100%); /* IE10+ */
+  background: linear-gradient(to bottom, @start 0%, @stop 100%);
+}
+@gradient4(@start: #1E5799, @stop: #7db9e8, @mid1: #2989D8, @loc1: 50%, @mid2: #207cca, @loc2: 51%) {
+  @gradient4noIE(@start, @stop, @mid1, @loc1, @mid2, @loc2);
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='@{start}', endColorstr='@{stop}',GradientType=0);
+}
+@gradient4noIE(@start: #1E5799, @stop: #7db9e8, @mid1: #2989D8, @loc1: 50%, @mid2: #207cca, @loc2: 51%) {
+  background: @start/2 + @stop/2;
+  background: -moz-linear-gradient(top, @start 0%, @mid1 @loc1, @mid2 @loc2, @stop 100%); /* FF3.6+ */
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,@start), 
+    color-stop(@loc1, @mid1), color-stop(@loc2, @mid2), color-stop(100%, @stop)); /* Chrome,Safari4+ */
+  background: -webkit-linear-gradient(top, @start 0%, @mid1 @loc1, @mid2 @loc2, @stop 100%); /* Chrome10+,Safari5.1+ */
+  background: -o-linear-gradient(top, @start 0%, @mid1 @loc1, @mid2 @loc2, @stop 100%); /* Opera 11.10+ */
+  background: -ms-linear-gradient(top, @start 0%, @mid1 @loc1, @mid2 @loc2, @stop 100%); /* IE10+ */
+  background: linear-gradient(to bottom, @start 0%, @mid1 @loc1, @mid2 @loc2, @stop 100%);
 }
 @bw-gradient(@color: #F5F5F5, @start: 0, @stop: 255) {
   background: @color;

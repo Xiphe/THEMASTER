@@ -1,6 +1,8 @@
 THE MASTER CHANGELOG
 ====================
 
+### 3.0
++   see [readme.md](https://github.com/Xiphe/-THE-MASTER/blob/master/readme.md)
 
 ### 2.1.1
 +	added THEWPMASTER::twpm_wp_login() and his friends to enable &forceRederect=(true||'hash') in wordpress login url
