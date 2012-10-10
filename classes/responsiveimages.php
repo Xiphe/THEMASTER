@@ -537,7 +537,7 @@ class ResponsiveImages extends THEWPMASTER {
       	);
 
       	if (!is_dir(dirname($target))) {
-      		mkdir(dirname($target));
+      		mkdir(dirname($target), 0777);
       	}
       	switch ($type) {
 			case 'image/gif':

@@ -29,13 +29,29 @@ class THEWPBUILDER extends THEMASTER {
 
 	private static $_ftp_conn_id;
 
+	protected static $s_masterStructure = array(
+		'classes' => 0775,
+		'core' => 0775,
+		'languages' => 0775,
+		'res' => array(
+			'chmod' => 0775,
+			'css' => 0777,
+			'img' => 0775,
+			'includes' => 0775,
+			'js' => 0775,
+			'less' => 0775
+		),
+		'templates' => 0775
+	);
+
 	public static $sDefaultStructure = array(
 		'classes' => 0775,
 		'res' => array(
 			'chmod' => 0775,
 			'css' => 0777,
-			'less' => 0775,
-			'js' => 0775
+			'img' => 0775,
+			'js' => 0775,
+			'less' => 0775
 		)
 	);
 
@@ -44,12 +60,14 @@ class THEWPBUILDER extends THEMASTER {
 		'res' => array(
 			'chmod' => 0775,
 			'css' => 0777,
-			'less' => 0775,
+			'img' => 0775,
+			'includes' => 0775,
 			'js' => 0775,
-			'includes' => 0775
+			'less' => 0775
 		),
 		'models' => 0775,
-		'views' => 0775
+		'views' => 0775,
+		'languages' => 0775,
 	);
 
 	/**
@@ -121,7 +139,12 @@ class THEWPBUILDER extends THEMASTER {
 	}
 
 	protected function check_folderStructure_($basePath, $structure = null) {
-		if (!isset(self::$_ftp_conn_id) && defined('FTP_HOST') && defined('FTP_USER') && defined('FTP_PASS')) {
+		if (!isset(self::$_ftp_conn_id)
+		 && defined('FTP_HOST')
+		 && defined('FTP_USER')
+		 && defined('FTP_PASS')
+		 && defined('FTP_WORKING_PATH')
+		) {
 			self::$_ftp_conn_id = ftp_connect(FTP_HOST);
 			$login_result = ftp_login(self::$_ftp_conn_id, FTP_USER, FTP_PASS);
 			if (!$login_result) {
@@ -145,14 +168,30 @@ class THEWPBUILDER extends THEMASTER {
 	private static function _check_folderStructureWalker($structure, $ftpRoot, $root, $basedir = '') {
 		foreach($structure as $folder => $chmod) {
 			$subfolders = null;
+
+			$tRoot = $root;
+			$tFtpRoot = $ftpRoot;
+			$tBaseDir = $basedir;
+
 			if(is_array($chmod)) {
 				$t = $chmod['chmod'];
 				unset($chmod['chmod']);
 				$subfolders = $chmod;
 				$chmod = $t;
 			}
-			$relDir = THETOOLS::unPreDS(THETOOLS::DS($ftpRoot.$basedir.$folder));
-			$dir = THETOOLS::DS($root.$basedir.$folder);
+
+			if (substr($folder, 0, 1) == '/') {
+				$folder = THETOOLS::unPreSlash($folder);
+				$tBaseDir = '';
+				if (defined('FTP_WORKING_PATH')) {
+					$tFtpRoot = str_replace(FTP_WORKING_PATH, '', THETOOLS::DS(ABSPATH, true)).'wp-content'.DS;
+				}
+				$tRoot = THETOOLS::DS(ABSPATH, true).'wp-content'.DS;
+			}
+
+			$relDir = THETOOLS::unPreDS(THETOOLS::DS($tFtpRoot.$tBaseDir.$folder, true));
+			$dir = THETOOLS::DS($tRoot.$tBaseDir.$folder, true);
+
 			if(is_dir($dir)) {
 				if(!isset(self::$_ftp_conn_id)) {
 					@chmod($dir, $chmod);
@@ -169,7 +208,7 @@ class THEWPBUILDER extends THEMASTER {
 			}
 			
 			if(is_array($subfolders)) {
-				self::_check_folderStructureWalker($subfolders, $ftpRoot, $root, $basedir.$folder.DS);
+				self::_check_folderStructureWalker($subfolders, $tFtpRoot, $tRoot, $tBaseDir.$folder.DS);
 			}
 		}
 	}
