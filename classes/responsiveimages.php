@@ -473,7 +473,6 @@ class ResponsiveImages extends THEWPMASTER {
 		if (!file_exists($file)) {
 			$this->_gen_image($image, $file, $width, $height);
 		}
-		debug($file, 'touched');
 		return $file;
 	}
 

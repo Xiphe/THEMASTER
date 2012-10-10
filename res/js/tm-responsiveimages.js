@@ -76,7 +76,7 @@ jQuery(document).ready(function($) {
 
 		if (typeof slideimgs[$(this).attr('data-slideshow')] === 'undefined') {
 			var args = {
-					action:  'tm_responsivslideshowget',
+					action:  'tm_responsiveslideshowget',
 					width:   'drct'+$(this).width(),
 					image:   $(this).attr('data-slideshow'),
 					nonce:   $(this).attr('data-slidenonce'),
