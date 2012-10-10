@@ -194,7 +194,9 @@ class THEDEBUG {
 
 			
 				self::$s_enabled = true;
-				self::debug(sprintf(__('Debug is on and Mode is set to %s.', 'themaster'), self::$s_mode), 2);
+				if ((!defined('DOING_AJAX') || !DOING_AJAX)) {
+					self::debug(sprintf(__('Debug is on and Mode is set to %s.', 'themaster'), self::$s_mode), 2);
+				}
 			} // ENDIF ( THESETTINGS::get_setting( 'debug', '_themaster' ) )
 		} // ENDIF ( !self::$s_initiated )
 	} // ENDMETHOD sInit
