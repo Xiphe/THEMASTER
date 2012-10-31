@@ -1,5 +1,7 @@
 <?php 
-namespace Xiphe\THEMASTER;
+namespace Xiphe\THEMASTER\classes;
+
+use Xiphe\THEMASTER\core as core;
 
 /**
  * ResponsiveImages is a PHP Class served by !THE MASTER
@@ -14,7 +16,7 @@ namespace Xiphe\THEMASTER;
  * @link      https://github.com/Xiphe/-THE-MASTER/
  * @package   !THE MASTER
  */
-class ResponsiveImages extends THEWPMASTER {
+class ResponsiveImages extends core\THEWPMASTER {
     /* -------------------- *
      *  INSTANCE VARIABLES  *
      * -------------------- */

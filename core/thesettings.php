@@ -1,10 +1,7 @@
 <?php
-namespace Xiphe\THEMASTER;
+namespace Xiphe\THEMASTER\core;
 
-/*
- * Include parent class.
- */
-require_once(THEMASTER_COREFOLDER.'base.php');
+use Xiphe as X;
 
 /**
  * THESETTINGS is used to manage Master settings set by constants 
@@ -25,8 +22,9 @@ class THESETTINGS extends THEBASE {
 			
 	private static  $s_forcedSettings = array();
 	
-	public function __construct( $initArgs ) {
-		if( !isset( $this->constructing ) || $this->constructing !== true ) {
+	public function __construct($initArgs)
+	{
+		if (!isset( $this->constructing) || $this->constructing !== true) {
 			throw new Exception("ERROR: THESETTINGS is not ment to be constructed directly.", 1);
 			return false;
 		}
@@ -34,7 +32,7 @@ class THESETTINGS extends THEBASE {
 		$this->add_requiredInitArgs_( array( 'textID' ) );
 
 		if( !self::$s_initiated ) {
-			self::$s_settings[ THEBASE::get_textID( THEMASTER_PROJECTFILE ) ] = array(
+			self::$s_settings[X\THETOOLS::get_textID(THEMASTER_PROJECTFILE)] = array(
 				'debug' => false,
 				'debugMode' => 'inline',  // inline, mail, FirePHP, summed
 				'debugGet' => false,
@@ -48,14 +46,15 @@ class THESETTINGS extends THEBASE {
 			self::$s_initiated = true;
 		}
 
-		return parent::__construct( $initArgs );
+		return parent::__construct($initArgs);
 	}
 
-	protected function _masterInit() {
-		if( !isset( $this ) ) {
+	protected function _masterInit()
+	{
+		if (!isset($this)) {
 			throw new Exception("_masterInit should not be called staticaly.", 1);
 		}
-		if( isset( $this->_masterInitiated ) && $this->_masterInitiated === true ) {
+		if ( isset( $this->_masterInitiated ) && $this->_masterInitiated === true) {
 			return;
 		}
 
@@ -73,7 +72,7 @@ class THESETTINGS extends THEBASE {
 
 
 	public static function sGet_setting( $key, $textID = null ) {
-		if( class_exists( 'Xiphe\THEMASTER\THEWPSETTINGS' ) ) {
+		if (class_exists(THE::WPSETTINGS)) {
 			return THEWPSETTINGS::sGet_setting( $key, $textID );
 		} else {
 			return self::_get_setting( $key, $textID );

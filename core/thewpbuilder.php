@@ -1,10 +1,7 @@
 <?php
-namespace Xiphe\THEMASTER;
+namespace Xiphe\THEMASTER\core;
 
-/*
- * Include parent class.
- */
-require_once(THEMASTER_COREFOLDER.'master.php');
+use Xiphe as X;
 
 /**
  * THEWPBUILDER can extract Masters initiation arguments from Plug-in and Theme files
@@ -75,13 +72,16 @@ class THEWPBUILDER extends THEMASTER {
 	 *
 	 * @param	array	$initArgs	the initiation arguments
 	 */
-	public function __construct( $initArgs ) {
-		if( !self::$s_initiated ) {
-			THEBASE::sRegister_callback( 'afterBaseS_init', array( 'Xiphe\THEMASTER\THEWPBUILDER', 'sinit' ) );
+	public function __construct($initArgs) {
+		if (!self::$s_initiated) {
+			if( function_exists( 'get_option' ) ) {
+				self::$s_initArgsCache = get_option( 'Xiphe\THEMASTER\cachedInitArgs', array() );
+			}
+			THEBASE::sRegister_callback('afterBaseS_init', array(THE::WPBUILDER, 'sinit'));
 		}
 
 		// Pass ball to parent.
-		return parent::__construct( $initArgs );
+		return parent::__construct($initArgs);
 	}
 
 	/**
@@ -90,20 +90,17 @@ class THEWPBUILDER extends THEMASTER {
 	public static function sinit() {
 		if( !self::$s_initiated ) {
 			// Get all options from database.
-			if( function_exists( 'get_option' ) ) {
-				self::$s_initArgsCache = get_option( 'Xiphe\THEMASTER\cachedInitArgs', array() );
-			}
 
 			if( isset( $GLOBALS['pagenow'] ) 
 			 && in_array( $GLOBALS['pagenow'], array( 'plugins.php', 'themes.php' ) )
 			 && function_exists( 'is_admin' ) && is_admin()
 			) {
 				self::$s_access = true;
-				add_action( 'init', array( 'Xiphe\THEMASTER\THEWPBUILDER', 'sStartToBuild' ) );	
+				add_action( 'init', array(THE::WPBUILDER, 'sStartToBuild' ) );	
 			}
 
 			if (function_exists('add_action')) {
-				add_action('shutdown', array('Xiphe\THEMASTER\THEWPBUILDER','sCacheInitArgs'));
+				add_action('shutdown', array(THE::WPBUILDER,'sCacheInitArgs'));
 			}
 
 			// Prevent this from beeing executed twice.
@@ -181,16 +178,16 @@ class THEWPBUILDER extends THEMASTER {
 			}
 
 			if (substr($folder, 0, 1) == '/') {
-				$folder = THETOOLS::unPreSlash($folder);
+				$folder = X\THETOOLS::unPreSlash($folder);
 				$tBaseDir = '';
 				if (defined('FTP_WORKING_PATH')) {
-					$tFtpRoot = str_replace(FTP_WORKING_PATH, '', THETOOLS::DS(ABSPATH, true)).'wp-content'.DS;
+					$tFtpRoot = str_replace(FTP_WORKING_PATH, '', X\THETOOLS::DS(ABSPATH, true)).'wp-content'.DS;
 				}
-				$tRoot = THETOOLS::DS(ABSPATH, true).'wp-content'.DS;
+				$tRoot = X\THETOOLS::DS(ABSPATH, true).'wp-content'.DS;
 			}
 
-			$relDir = THETOOLS::unPreDS(THETOOLS::DS($tFtpRoot.$tBaseDir.$folder, true));
-			$dir = THETOOLS::DS($tRoot.$tBaseDir.$folder, true);
+			$relDir = X\THETOOLS::unPreDS(X\THETOOLS::DS($tFtpRoot.$tBaseDir.$folder, true));
+			$dir = X\THETOOLS::DS($tRoot.$tBaseDir.$folder, true);
 
 			if(is_dir($dir)) {
 				if(!isset(self::$_ftp_conn_id)) {
@@ -232,7 +229,7 @@ class THEWPBUILDER extends THEMASTER {
 		$configFile = strstr( $file, 'wp-content' . DS . 'themes' ) || strstr( $file, 'htdocs' . DS . '__THEMES' ) ?
 			dirname( $file ) . DS . 'style.css' : $file;
 
-		$textID = THETOOLS::get_textID( $configFile );
+		$textID = X\THETOOLS::get_textID( $configFile );
 
 		if( isset( self::$s_initArgsCache[$textID] )
 		 && !empty(self::$s_initArgsCache[$textID]['args'])
@@ -348,7 +345,7 @@ class THEWPBUILDER extends THEMASTER {
 		}
 
 		if( !isset( $iA['textID'] ) ) {
-			$iA['textID'] =  THETOOLS::get_textID( $iA['configFile'] );
+			$iA['textID'] =  X\THETOOLS::get_textID( $iA['configFile'] );
 		}
 
 		self::$s_initArgsCache[ $iA['textID'] ] = array(
@@ -567,7 +564,7 @@ class THEWPBUILDER extends THEMASTER {
 		if( file_exists( ( $dir = self::s_getBaseTemplatePath() . $path ) ) 
 		 && is_dir( $dir )
 		) {
-			foreach( THETOOLS::get_dirArray( $dir, null, array( 9, array( '.', '..', '.DS_Store' ) ) ) as $file ) {
+			foreach( X\THETOOLS::get_dirArray( $dir, null, array( 9, array( '.', '..', '.DS_Store' ) ) ) as $file ) {
 				$target = $file;
 				if( substr( $file, 0, 4 ) === '-n- ' ) {
 					if( $n == false ) { continue; }

@@ -1,10 +1,7 @@
 <?php
-namespace Xiphe\THEMASTER;
+namespace Xiphe\THEMASTER\core;
 
-/*
- * Include parent class.
- */
-require_once(THEMASTER_COREFOLDER.'wpbuilder.php');
+use Xiphe as X;
 
 /**
  * THEWPSETTINGS is used to manage Master Settings stored in the Wordpress DB.
@@ -53,21 +50,21 @@ class THEWPSETTINGS extends THEWPBUILDER {
 	 */
 	function __construct( $initArgs ) {
 		if( !isset( $this->constructing ) || $this->constructing !== true ) {
-			throw new Exception( "ERROR: THEWPSETTINGS is not ment to be constructed directly.", 1 );
+			throw new \Exception( "ERROR: THEWPSETTINGS is not ment to be constructed directly.", 1 );
 			return false;
 		}
 
 		if( !self::$s_initiated ) {
-			self::$s_settings[ THETOOLS::get_textID( THEMASTER_PROJECTFILE ) ] = array(
+			self::$s_settings[ X\THETOOLS::get_textID( THEMASTER_PROJECTFILE ) ] = array(
 				'name' => 'THE MASTER',
-				'settings' => array( 'Xiphe\THEMASTER\THEWPSETTINGS', 'tmgl_settings' )
+				'settings' => array(THE::WPSETTINGS, 'tmgl_settings' )
 			);
 
 			// Get all options from database.
 			if( function_exists( 'get_option' ) ) {
 				self::$s_userSettings = get_option( 'Xiphe\THEMASTER\allsettings', array() );
 			}
-			THEBASE::sRegister_callback( 'afterBaseS_init', array( 'Xiphe\THEMASTER\THEWPSETTINGS', 'sinit' ), 1, null, null, 1 );
+			THEBASE::sRegister_callback( 'afterBaseS_init', array(THE::WPSETTINGS, 'sinit' ), 1, null, null, 1 );
 		}
 
 		return parent::__construct($initArgs);
@@ -81,12 +78,17 @@ class THEWPSETTINGS extends THEWPBUILDER {
 			// Register one-time-hooks.
 			self::s_hooks();
 
-			THEBASE::sRegister_callback( 'beforeMasterInit', array(
-				'Xiphe\THEMASTER\THEWPSETTINGS', 'sCheckSettings'
-			), '*' );
+			THEBASE::sRegister_callback(
+				'beforeMasterInit',
+				array(
+					THE::WPSETTINGS,
+					'sCheckSettings'
+				),
+				'*'
+			);
 
 			if (function_exists('add_action')) {
-                add_action('shutdown', array('Xiphe\THEMASTER\THEWPSETTINGS','sSaveTheSettings'));
+                add_action('shutdown', array(THE::WPSETTINGS,'sSaveTheSettings'));
             }
 
 			// Prevent this from beeing executed twice.
@@ -99,8 +101,8 @@ class THEWPSETTINGS extends THEWPBUILDER {
 	 */
 	private static function s_hooks() {
 		if( function_exists( 'add_action' ) ) {
-			add_action( 'admin_init', array( 'Xiphe\THEMASTER\THEWPSETTINGS', 'sAdmin_init' ) );
-			add_action( 'admin_menu', array( 'Xiphe\THEMASTER\THEWPSETTINGS', 'sAdmin_menu' ) );
+			add_action( 'admin_init', array(THE::WPSETTINGS, 'sAdmin_init' ) );
+			add_action( 'admin_menu', array(THE::WPSETTINGS, 'sAdmin_menu' ) );
 		}
 	}
 		
@@ -142,7 +144,7 @@ class THEWPSETTINGS extends THEWPBUILDER {
 
 	public static function _get_setting( $key, $textID = null, $noDefaults = false, $silent = false ) {
 		if( $textID === null ) {
-			throw new Exception( 'Tried to get setting "' . $key . '" without textID.' );
+			throw new \Exception( 'Tried to get setting "' . $key . '" without textID.' );
 			return;
 		}
 		// THEDEBUG::debug(  self::$s_settings, 'self::$s_settings' );
@@ -177,8 +179,8 @@ class THEWPSETTINGS extends THEWPBUILDER {
 	}
 
 	private static function s_getSettings( $textID ) {
-		if ( isset( self::$s_settings[$textID]['settings'] ) ) {
-			if ( is_callable( self::$s_settings[$textID]['settings'] ) ) {
+		if (isset(self::$s_settings[$textID]['settings'])) {
+			if (is_callable( self::$s_settings[$textID]['settings'])) {
 				self::$s_settings[$textID]['settings'] =
 					call_user_func( self::$s_settings[$textID]['settings'] );
 			}
@@ -188,7 +190,7 @@ class THEWPSETTINGS extends THEWPBUILDER {
 	}
 
 	public static function sAdmin_init() {
-		add_action( 'wp_ajax_tm-savesetting', array( 'Xiphe\THEMASTER\THEWPSETTINGS', 'sSave_settings' ) );
+		add_action( 'wp_ajax_tm-savesetting', array(THE::WPSETTINGS, 'sSave_settings' ) );
 	}
 
 	public static function sAdmin_menu() {
@@ -198,8 +200,8 @@ class THEWPSETTINGS extends THEWPBUILDER {
 				 && $GLOBALS['pagenow'] === 'plugins.php'
 				 && current_user_can('manage_options')
 				) {
-					add_filter( 'plugin_action_links_' . $k , array( 'Xiphe\THEMASTER\THEWPSETTINGS', 'sInject_settingsLink' ), 10, 2 );
-					add_action( 'after_plugin_row_' . $k, array( 'Xiphe\THEMASTER\THEWPSETTINGS', 'inject_settingsRow'), 10, 3 );
+					add_filter( 'plugin_action_links_' . $k , array(THE::WPSETTINGS, 'sInject_settingsLink' ), 10, 2 );
+					add_action( 'after_plugin_row_' . $k, array(THE::WPSETTINGS, 'inject_settingsRow'), 10, 3 );
 				} elseif(pathinfo($k, PATHINFO_EXTENSION) == 'css'
 				 && current_user_can('edit_theme_options')
 				) {
@@ -209,7 +211,7 @@ class THEWPSETTINGS extends THEWPBUILDER {
 						__( 'Settings', 'themaster' ),
 						'edit_theme_options',
 						'tm_themesettings',
-						array( 'Xiphe\THEMASTER\THEWPSETTINGS', 'sAdd_themeSettings' )
+						array(THE::WPSETTINGS, 'sAdd_themeSettings' )
 					);
 				}
 			}

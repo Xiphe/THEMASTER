@@ -1,5 +1,7 @@
 <?php
-namespace Xiphe\THEMASTER;
+namespace Xiphe\THEMASTER\core;
+
+use Xiphe as X;
 
 /**
  * THEWPMODEL extends THEMODEL and adds a connection to the Wordpress database.

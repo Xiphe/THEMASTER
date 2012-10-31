@@ -1,5 +1,5 @@
 <?php 
-namespace Xiphe\THEMASTER;
+namespace Xiphe;
 
 /**
  * THEWPTOOLS is a collection of standalone methods related to Wordpress used by !THE MASTER.

@@ -1,5 +1,7 @@
 <?php
-namespace Xiphe\THEMASTER;
+namespace Xiphe;
+
+use Xiphe\THEMASTER\core as core;
 
 /**
  * THEDEBUG is a standalone class for debugging purposes used by !THE MASTER
@@ -103,16 +105,7 @@ class THEDEBUG {
 		if (isset(self::$s_singleton) && is_object(self::$s_singleton)) {
 			return self::$s_singleton;
 		} elseif (!self::$s_initiated) {
-			if (class_exists('Xiphe\THEMASTER\THEBASE')) {
-				THEBASE::sRegister_callback(
-					'afterBaseS_init',
-					array('Xiphe\THEMASTER\THEDEBUG', 'sinit' ),
-					1,
-					null,
-					null,
-					2
-				);
-			} else {
+			if (!class_exists(core\THE::BASE)) {
 				self::sInit();
 			}
 		}
@@ -126,7 +119,7 @@ class THEDEBUG {
 				self::$s_mode = self::_get_setting('debugMode');
 				self::$s_getMode = self::_get_setting('debugGet');
 
-				if (!function_exists('__') && !function_exists('Xiphe\THEMASTER\__')) {
+				if (!function_exists('__') && !function_exists('Xiphe\__')) {
 					function __($str) {
 						return $str;
 					}
@@ -142,8 +135,8 @@ class THEDEBUG {
 				if (self::$s_mode === 'FirePHP') {
 					try {
 						if( !class_exists( '\FirePHP' ) ) {
-							if (class_exists('Xiphe\THEMASTER\THEBASE')) {
-								$firePHP = THEBASE::$sBasePath.'classes'.DS.'FirePHPCore'.DS.'fb.php';
+							if (class_exists(core\THE::BASE)) {
+								$firePHP = core\THEBASE::$sBasePath.'classes'.DS.'FirePHPCore'.DS.'fb.php';
 							} else {
 								$firePHP = self::$s_firePHPPath;
 							}
@@ -153,8 +146,8 @@ class THEDEBUG {
 							$FB = \FirePHP::getInstance( true );
 						}
 					} catch(\Exception $e) {
-						if (class_exists('Xiphe\THEMASTER\THESETTINGS')) {
-							THESETTINGS::_set_setting('debugMode', 'themaster', 'inline');
+						if (class_exists(core\THE::SETTINGS)) {
+							core\THESETTINGS::_set_setting('debugMode', 'themaster', 'inline');
 						}
 						self::$s_mode = 'inline';
 						echo self::_get_debug('Debug mode reset to inline because FirePHP could not be initiated', 4);
@@ -164,10 +157,10 @@ class THEDEBUG {
 					self::$s_debugEmail = self::_get_setting('debugEmail');
 
 					if ((
-						 class_exists('Xiphe\THEMASTER\THETOOLS')
+						 class_exists('Xiphe\THETOOLS')
 					 	 && !THETOOLS::isValidEmail(self::$s_debugEmail)
 					   ) || (
-					   	 !class_exists('Xiphe\THEMASTER\THETOOLS')
+					   	 !class_exists('Xiphe\THETOOLS')
 					   	 && !preg_match("/^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,3})$/", self::$s_debugEmail)
 					   )
 					) {
@@ -219,8 +212,8 @@ class THEDEBUG {
 
 	private static function _get_setting($key)
 	{
-		if(class_exists('Xiphe\THEMASTER\THESETTINGS')) {
-			return THESETTINGS::sGet_setting($key, THEBASE::$sTextID);
+		if(class_exists(core\THE::SETTINGS)) {
+			return core\THESETTINGS::sGet_setting($key, core\THEBASE::$sTextID);
 		} else {
 			return self::$s_settings[$key];
 		}
@@ -277,7 +270,7 @@ class THEDEBUG {
 			
 		}
 		call_user_func( array( 
-				isset( $this ) ? $this : 'Xiphe\THEMASTER\THEDEBUG',
+				isset( $this ) ? $this : 'Xiphe\THEDEBUG',
 				'_inner_debug' 
 			),
 			array( $stack, 'Call Info', 2, 0 )
@@ -304,7 +297,7 @@ class THEDEBUG {
 			}
 		} else {
 			call_user_func( array(
-					isset( $this ) ? $this : 'Xiphe\THEMASTER\THEDEBUG',
+					isset( $this ) ? $this : 'Xiphe\THEDEBUG',
 					'_inner_debug' 
 				),
 				func_get_args()
@@ -485,7 +478,7 @@ class THEDEBUG {
 				self::$s_cSorting = $sorting;
 			}
 			self::$s_cDirection = $dir;
-			usort( self::$s_debugs, array('Xiphe\THEMASTER\THEDEBUG', '_sortDebugs' ) );
+			usort( self::$s_debugs, array('Xiphe\THEDEBUG', '_sortDebugs' ) );
 		}
 		foreach( self::$s_debugs as $k => $debug ) {
 			echo self::_get_debug( $debug );
@@ -506,7 +499,7 @@ class THEDEBUG {
 		
 		$args = func_get_args();
 		call_user_func_array(
-			array( 'Xiphe\THEMASTER\THEDEBUG', '_debug' ),
+			array( 'Xiphe\THEDEBUG', '_debug' ),
 			$args
 		);
 		
@@ -515,7 +508,7 @@ class THEDEBUG {
 			$d += $args[3];
 		}
 		call_user_func_array(
-			array( 'Xiphe\THEMASTER\THEDEBUG', '_debug' ),
+			array( 'Xiphe\THEDEBUG', '_debug' ),
 			array( 'Script got murdered by diebug.', 2, null, $d )
 		);
 		die();
@@ -525,7 +518,7 @@ class THEDEBUG {
 		if( !self::$s_enabled ) return;
 		
 		call_user_func_array(
-			array( 'Xiphe\THEMASTER\THEDEBUG', '_debug' ),
+			array( 'Xiphe\THEDEBUG', '_debug' ),
 			func_get_args()
 		);
 		return $var;
@@ -535,7 +528,7 @@ class THEDEBUG {
 		if( !self::$s_enabled ) return;
 		
 		call_user_func_array(
-			array( 'Xiphe\THEMASTER\THEDEBUG', '_debug' ),
+			array( 'Xiphe\THEDEBUG', '_debug' ),
 			func_get_args()
 		);
 	}
@@ -603,7 +596,7 @@ class THEDEBUG {
 		$method = $continue ? 'debug' : 'diebug';
 
 		call_user_func_array(
-			array( 'Xiphe\THEMASTER\THEDEBUG', $method ),
+			array( 'Xiphe\THEDEBUG', $method ),
 			$args
 		);
 		self::_set_btDeepth( '--' );
@@ -620,20 +613,20 @@ $GLOBALS['THEDEBUG'] = new THEDEBUG;
 if( !function_exists( 'debug' ) ) {
 	function debug() {
 		THEDEBUG::_set_btDeepth( 7 );
-		call_user_func_array( array('Xiphe\THEMASTER\THEDEBUG', 'debug' ), func_get_args() );
+		call_user_func_array( array('Xiphe\THEDEBUG', 'debug' ), func_get_args() );
 		THEDEBUG::_reset_btDeepth();
 	}
 }
 if( !function_exists( 'diebug' ) ) {
 	function diebug() {
 		THEDEBUG::_set_btDeepth( 7 );
-		call_user_func_array( array('Xiphe\THEMASTER\THEDEBUG', 'diebug' ), func_get_args() );
+		call_user_func_array( array('Xiphe\THEDEBUG', 'diebug' ), func_get_args() );
 	}
 }
 if( !function_exists( 'rebug' ) ) {
 	function rebug() {
 		THEDEBUG::_set_btDeepth( 7 );
-		$r = call_user_func_array( array( 'Xiphe\THEMASTER\THEDEBUG', 'rebug' ), func_get_args() );
+		$r = call_user_func_array( array( 'Xiphe\THEDEBUG', 'rebug' ), func_get_args() );
 		THEDEBUG::_reset_btDeepth();
 		return $r;
 	}
@@ -641,7 +634,7 @@ if( !function_exists( 'rebug' ) ) {
 if( !function_exists( 'countbug' ) ) {
 	function countbug() {
 		THEDEBUG::_set_btDeepth( 7 );
-		call_user_func_array(array('Xiphe\THEMASTER\THEDEBUG', 'countbug'), func_get_args() );
+		call_user_func_array(array('Xiphe\THEDEBUG', 'countbug'), func_get_args() );
 		THEDEBUG::_reset_btDeepth();
 	}
 }
@@ -651,16 +644,16 @@ if( !function_exists( 'deprecated' ) ) {
 		THEDEBUG::_set_btDeepth( 7 );
 		$bto = $bto+2;
 		return call_user_func_array(
-			array('Xiphe\THEMASTER\THEDEBUG', 'deprecated'),
+			array('Xiphe\THEDEBUG', 'deprecated'),
 			array( $alternative, $contunue, $bto )
 		);
 		THEDEBUG::_reset_btDeepth();
 	}
 }
 if( !class_exists('\WP') ) {
-	register_shutdown_function( array( 'Xiphe\THEMASTER\THEDEBUG', 'print_debugcounts' ) );
+	register_shutdown_function( array( 'Xiphe\THEDEBUG', 'print_debugcounts' ) );
 	if( THEDEBUG::get_mode() === 'summed' ) {
-		register_shutdown_function( array('Xiphe\THEMASTER\THEDEBUG', 'print_debug' ) );
+		register_shutdown_function( array('Xiphe\THEDEBUG', 'print_debug' ) );
 	}
 }
 ?>

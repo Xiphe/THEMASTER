@@ -1,10 +1,7 @@
 <?php
-namespace Xiphe\THEMASTER;
+namespace Xiphe\THEMASTER\core;
 
-/*
- * Include parent class.
- */
-require_once(THEMASTER_COREFOLDER.'settings.php');
+use Xiphe as X;
 
 /**
  * THEMASTER is last class in !THE MASTERS that does not make intense use of 
@@ -84,7 +81,7 @@ class THEMASTER extends THESETTINGS {
         ) );
 
         if( !self::$s_initiated ) {
-            THEBASE::sRegister_callback( 'afterBaseS_init', array( 'Xiphe\THEMASTER\THEMASTER', 'sinit' ) );
+            THEBASE::sRegister_callback( 'afterBaseS_init', array(THE::MASTER, 'sinit' ) );
         }
 
         return parent::__construct( $initArgs );
@@ -122,7 +119,7 @@ class THEMASTER extends THESETTINGS {
          */
         if( isset( $this->requiredPlugins )
          && ( is_array( $this->requiredPlugins ) || is_object( $this->requiredPlugins ) )
-         && !THETOOLS::group_in_array( $this->requiredPlugins, self::$s_initiatedProjects )
+         && !X\THETOOLS::group_in_array( $this->requiredPlugins, self::$s_initiatedProjects )
         ) {
             /*
              * Register for later initiation into the toBeInitiated array.
@@ -148,7 +145,7 @@ class THEMASTER extends THESETTINGS {
                     call_user_func( $call['method'] );
                 }
                 
-                if( class_exists( 'Xiphe\THEMASTER\THEWPMASTER' ) ) {
+                if (class_exists(THE::WPMASTER)) {
                     return true;
                 } else {
                     $this->_masterInitiated();
@@ -166,8 +163,8 @@ class THEMASTER extends THESETTINGS {
         unset( $args[0] );
         try {
             return call_user_func_array( $func, $args );
-        } catch( \Exception $e ) {
-            if( class_exists( 'Xiphe\THEMASTER\THEWPMASTER' ) ) {
+        } catch (\Exception $e) {
+            if (class_exists(THE::WPMASTER)) {
                 THEWPMASTER::sTryError( $e );
             } else {
                 self::sTryToError( $e );
@@ -209,7 +206,7 @@ class THEMASTER extends THESETTINGS {
                 $this->_r[$k] = $$k;
             }
         }
-        if( $this->_get_setting( 'debug', THETOOLS::get_textID( THEMASTER_PROJECTFILE ) ) === true
+        if( $this->_get_setting( 'debug', X\THETOOLS::get_textID( THEMASTER_PROJECTFILE ) ) === true
          && isset( $_REQUEST['debug'] )
          && $_REQUEST['debug'] == 'true'
         ) {

@@ -1,5 +1,5 @@
 <?php 
-namespace Xiphe\THEMASTER;
+namespace Xiphe;
 
 /**
  * THETOOLS is a collection of standalone methods used by !THE MASTER.

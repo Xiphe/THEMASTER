@@ -2,9 +2,10 @@
 /*
 Plugin Name: !THE MASTER
 Plugin URI: https://github.com/Xiphe/-THE-MASTER
+Namespace: Xiphe\THEMASTER
 Description: A Plugin to provide global access to the THEWPMASTER class. THEWPMASTER provides a lot of handy functions for plugins an themes.
-Version: 3.0.12.3
-Date: 2012-10-09 17:30:00 +02:00
+Version: 3.1.0
+Date: 2012-30-10 22:00:00 +02:00
 Author: Hannes Diercks
 Author URI: https://github.com/Xiphe
 Update Server: http://plugins.red-thorn.de/v2/api/
@@ -121,6 +122,23 @@ define('THEMASTER_PROJECTFOLDER', dirname(__FILE__).DS);
  */
 define('THEMASTER_COREFOLDER', dirname(__FILE__).DS.'core'.DS);
 
+
+spl_autoload_register(function($class) {
+    if (strpos($class, 'Xiphe\THEMASTER\\') === 0) {
+        $path = explode('\\', $class);
+        $name = end($path);
+        $path = array_splice($path, 2, -1);
+        $path[] = strtolower($name).'.php';
+        $path = implode(DS, $path);
+
+        require(THEMASTER_PROJECTFOLDER.$path);
+    } elseif(in_array($class, array('Xiphe\THETOOLS', 'Xiphe\THEWPTOOLS', 'Xiphe\THEDEBUG'))) {
+        $file = str_replace('xiphe\\', '', strtolower($class)).'.php';
+        include(THEMASTER_PROJECTFOLDER.'tools'.DS.$file);
+    }
+});
+
+
 if (WP()) {
 
     /**
@@ -149,8 +167,7 @@ if (WP()) {
     register_activation_hook(
         get_wpInstallPath(__FILE__),
         function () {
-            require_once(THEMASTER_COREFOLDER.'wpmaster.php');
-            THEWPMASTER::_masterActivate();
+            core\THEWPMASTER::_masterActivate();
         }
     );
 
@@ -160,8 +177,7 @@ if (WP()) {
     register_deactivation_hook(
         get_wpInstallPath(__FILE__),
         function () {
-            require_once(THEMASTER_COREFOLDER.'wpmaster.php');
-            THEWPMASTER::_masterDeactivate();
+            core\THEWPMASTER::_masterDeactivate();
         }
     );
 }
@@ -173,12 +189,10 @@ if (WP()) {
 if (!defined('THEWPMASTERAVAILABE')) {
     try {
         if (!defined('THEMINIWPMASTERAVAILABLE') && WP()) {
-            require_once(THEMASTER_COREFOLDER.'wpmaster.php');
-            $GLOBALS['THEMINIWPMASTER'] = new THEWPMASTER('MINIMASTER');
+            $GLOBALS['THEMINIWPMASTER'] = new core\THEWPMASTER('MINIMASTER');
             define('THEMINIWPMASTERAVAILABLE', true);
         } elseif (!defined('THEMINIMASTERAVAILABLE')) {
-            require_once(THEMASTER_COREFOLDER.'master.php');
-            $GLOBALS['THEMINIMASTER'] = new THEMASTER('MINIMASTER');
+            $GLOBALS['THEMINIMASTER'] = new core\THEMASTER('MINIMASTER');
             define('THEMINIMASTERAVAILABLE', true);
         }
     } catch (\Exception $e) {
@@ -241,7 +255,7 @@ function INIT($initArgs = null, $file = null)
         /*
          * Get initiation arguments from project file.
          */
-        $filesInitArgs = THEWPBUILDER::get_initArgs($initArgs, $file);
+        $filesInitArgs = core\THEWPBUILDER::get_initArgs($initArgs, $file);
 
         /*
          * Error occurred.
@@ -269,7 +283,7 @@ function INIT($initArgs = null, $file = null)
      * Try to build a new Master with the initiation arguments.
      */
     try {
-        $r = THEWPMASTER::get_instance( 'Master', $initArgs );
+        $r = core\THEWPMASTER::get_instance( 'Master', $initArgs );
     } catch (\Exception $e) {
         /*
          * Errors Occured -> try to write an admin notice.
@@ -303,16 +317,16 @@ function INIT($initArgs = null, $file = null)
  */
 function BUILD($extended = true, $template = 'def')
 {
-    $args = THEWPBUILDER::get_initArgs();
+    $args = core\THEWPBUILDER::get_initArgs();
 
     if (!isset($args['projectName'])) {
-        throw new Exception('BUILDTHEWPMASTERPLUGIN called in invalid file.', 1);
+        throw new \Exception('BUILDTHEWPMASTERPLUGIN called in invalid file.', 1);
     } elseif (!isset($args['date'])) {
-        THEWPBUILDER::sbuild('init', $args, $template, $extended);
+        core\THEWPBUILDER::sbuild('init', $args, $template, $extended);
     } elseif (!isset($args['version'])) {
-        THEWPBUILDER::missing_initArgs($args);
+        core\THEWPBUILDER::missing_initArgs($args);
     } else {
-        THEWPBUILDER::sbuild('full', $args, $template, $extended);
+        core\THEWPBUILDER::sbuild('full', $args, $template, $extended);
     }
 }
 ?>

@@ -1,20 +1,7 @@
 <?php
-namespace Xiphe\THEMASTER;
+namespace Xiphe\THEMASTER\core;
 
-/*
- * Register base model file.
- */
-require_once(THEMASTER_COREFOLDER.'model.php');
-
-/*
- * Register THEDEBUG file.
- */
-require_once(THEMASTER_COREFOLDER.'debug.php');
-
-/*
- * Register THETOOLS file.
- */
-require_once(THEMASTER_COREFOLDER.'tools.php');
+use Xiphe as X;
 
 /**
  * THEBASE is the backbone of !THE MASTER
@@ -148,26 +135,7 @@ class THEBASE {
      */
     public static $sTextID;
 
-    /**
-     * Array of all classes based on THEBASE
-     *
-     * @access public
-     * @var    array
-     */
-    public static $THECLASSES = array(
-        'THEWPMASTER',
-        'THEWPSETTINGS',
-        'THEWPUPDATES',
-        'THEWPBUILDER',
-        'THEMASTER',
-        'THESETTINGS',
-        'THEBASE',
-        'THEDEBUG',
-        'THETOOLS',
-        'THEMODEL',
-        'THEWPMODEL'
-    );
-
+    public static $X;
 
     /* -------------------- *
      *  INSTANCE VARIABLES  *
@@ -275,7 +243,7 @@ class THEBASE {
             $this->_requiredInitArgs,
             $this->requiredInitArgs
         );
-        $err = THETOOLS::get_requiredArgsError( $initArgs, $reqInitArgs );
+        $err = X\THETOOLS::get_requiredArgsError( $initArgs, $reqInitArgs );
         
 
         if ($err === false) {
@@ -325,7 +293,7 @@ class THEBASE {
 
     private static function s_init() {
         if( !self::$s_initiated ) {
-            THETOOLS::session();
+            X\THETOOLS::session();
 
             self::$s_themastersInitArgs['projectFile']
                 = self::$sProjectFile = THEMASTER_PROJECTFILE;
@@ -337,12 +305,14 @@ class THEBASE {
                 = self::$sTextdomain = 'themaster';
             self::$s_themastersInitArgs['textID']
                 = self::$sTextID = self::$sFolderName.'/'.basename(self::$sProjectFile);
+                
+            X\THEDEBUG::sInit();
 
             self::$s_themastersInitArgs['namespace'] = 'Xiphe\\THEMASTER';
             self::$s_themastersInitArgs['projectName'] = '!THE MASTER';
             self::$s_themastersInitArgs['updatable'] = true;
 
-            if (class_exists('Xiphe\THEMASTER\THEWPBUILDER')) {
+            if (class_exists(THE::WPBUILDER)) {
                 self::$sVersion = THEWPBUILDER::get_initArgs(THEMASTER_PROJECTFILE,false);
                 self::$s_themastersInitArgs['version']
                     = self::$sVersion = self::$sVersion['version'];
@@ -350,7 +320,7 @@ class THEBASE {
 
             if( function_exists( 'plugins_url' )) {
                 self::$s_themastersInitArgs['baseUrl']
-                    = self::$sBaseUrl = THETOOLS::slash(plugins_url('_'.self::$sTextdomain));
+                    = self::$sBaseUrl = X\THETOOLS::slash(plugins_url('_'.self::$sTextdomain));
             }
             
             if( THESETTINGS::sGet_setting( 'errorReporting', self::$sTextID ) === true ) {
@@ -550,7 +520,7 @@ class THEBASE {
             }
             
             foreach( array( $this->basePath, self::$sBasePath ) as $basePath ) {
-                $file = $basePath . 'views' . DS . THETOOLS::get_directPath( $view ) . '.php';
+                $file = $basePath . 'views' . DS . X\THETOOLS::get_directPath( $view ) . '.php';
 
                 if( file_exists( $file ) ) {
                     if (!is_array( $args )) $args = array($args);
@@ -573,7 +543,7 @@ class THEBASE {
 
             throw new \Exception('Error: View File not Found (' . $file . ')', 1);
         } catch(\Exception $e) {
-            THEDEBUG::debug($e);
+            X\THEDEBUG::debug($e);
         }
     }
 
@@ -674,7 +644,7 @@ class THEBASE {
         /*
          * Disable ../ in filenames.
          */
-        $filename = THETOOLS::get_directPath($filename);
+        $filename = X\THETOOLS::get_directPath($filename);
 
         /*
          * Check if the filename contained a sub-folder.
@@ -743,7 +713,7 @@ class THEBASE {
                 /*
                  * Is folder and not added so get the valid files from the folder and add them.
                  */
-                foreach (THETOOLS::get_dirArray($file) as $subFile) {
+                foreach (X\THETOOLS::get_dirArray($file) as $subFile) {
                     if (pathinfo($subFile, PATHINFO_EXTENSION) == $suffix) {
                         $this->_reg_source( 
                             $source,
@@ -769,14 +739,10 @@ class THEBASE {
                     $suffix = 'less.css';
                 }
 
-                $url = THETOOLS::slash($url).str_replace(DS, '/', $relpath).$filename.'.'.$suffix;
+                $url = X\THETOOLS::slash($url).str_replace(DS, '/', $relpath).$filename.'.'.$suffix;
                 $url .= is_array($vars) ? '?'.http_build_query($vars) : '';
 
-                if (defined('HTMLCLASSAVAILABLE')) {
-                    self::$s_registeredSources[$foa][$source][$file] = self::get_HTML()->escape_mBB($url);
-                } else {
-                    self::$s_registeredSources[$foa][$source][$file] = $url;
-                }
+                self::$s_registeredSources[$foa][$source][$file] = $url;
 
                 return true;
             }
@@ -880,7 +846,7 @@ class THEBASE {
                 @file_put_contents($cssFile, $CSS);
 
             } catch (\Exception $e) {
-                THEDEBUG::debug('LESS ERROR: '.$e->getMessage()." \nFile: ".$e->getFile()." \nLine: ".$e->getLine(), 4);
+                X\THEDEBUG::debug('LESS ERROR: '.$e->getMessage()." \nFile: ".$e->getFile()." \nLine: ".$e->getLine(), 4);
                 return false;
             }
         }
@@ -996,7 +962,7 @@ class THEBASE {
      */
     final public function incl($source, $include = false)
     {
-        $source = THETOOLS::get_verryCleanedDirectPath($source).'.php';
+        $source = X\THETOOLS::get_verryCleanedDirectPath($source).'.php';
         $paths = array();
         if (isset($this)) {
             $paths[] = $this->basePath;
@@ -1098,7 +1064,7 @@ class THEBASE {
                 try {
                     call_user_func(
                         array(
-                            isset($this) ? $this : '\Xiphe\THEMASTER\THEBASE',
+                            isset($this) ? $this : THE::BASE,
                             'reg_model'
                         ),
                         $modelname
@@ -1144,6 +1110,7 @@ class THEBASE {
      */
     final public function get_instance($classname, $initArgs = array())
     {
+        
         $paths = array();
         if ($classname === 'Master') {
             if (isset($initArgs['basePath']) && $initArgs['namespace']) {
@@ -1157,7 +1124,7 @@ class THEBASE {
             }
         } else {
             if (isset($this)
-             && get_class($this) != 'Xiphe\THEMASTER\THEWPMASTER'
+             && get_class($this) != THE::WPMASTER
              && isset($this->namespace)
              && isset($this->basePath)
             ) {
@@ -1180,7 +1147,7 @@ class THEBASE {
 
         foreach ($paths as $k => $data) {
             extract($data);
-            $cID = $namespace.'\\'.$classname;
+            $cID = $namespace.'\classes\\'.$classname;
 
             if (isset(self::$s_singletons[$cID]) && is_object(self::$s_singletons[$cID])) {
                 return self::$s_singletons[$cID];
@@ -1191,7 +1158,6 @@ class THEBASE {
 
             if (file_exists($file)) {
                 include_once($file);
-                
 
                 if (!class_exists($cID)) {
                     throw new \Exception('<strong>!THE MASTER ERROR:</strong> Class '.$cID.' is not available.', 2);
@@ -1256,7 +1222,7 @@ class THEBASE {
 
         if(!isset($obj) || !$obj) {
             if (isset($this)
-             && class_exists('Xiphe\THEMASTER\THEWPBUILDER')
+             && class_exists(THE::WPBUILDER)
              && isset($this->buildMissingClasses)
              && $this->buildMissingClasses === true
             ) {
@@ -1383,7 +1349,7 @@ class THEBASE {
                     ) {
                         array_unshift($callbackArgs, $cb);
                         call_user_func_array(
-                            array('Xiphe\THEMASTER\THEMASTER', 'sTryTo'),
+                            array(THE::MASTER, 'sTryTo'),
                             $callbackArgs
                         );
                         
@@ -1439,10 +1405,10 @@ class THEBASE {
          * Check if method is available in THETOOLS.
          */
         elseif (
-            class_exists($class = 'Xiphe\THEMASTER\THETOOLS')
+            class_exists($class = 'Xiphe\THETOOLS')
          && method_exists($class, $method)
         ) {
-            THEDEBUG::debug('Indirect call of THETOOLS::'.$method.' please try to call it directly', null, 3, 2);
+            X\THEDEBUG::debug('Indirect call of THETOOLS::'.$method.' please try to call it directly', null, 3, 2);
             return call_user_func_array(array($class, $method), $args);
         }
 
@@ -1450,13 +1416,13 @@ class THEBASE {
          * Check if the method is available in THEDEBUG.
          */
         elseif (
-            class_exists($class = 'Xiphe\THEMASTER\THEDEBUG')
+            class_exists($class = 'Xiphe\THEDEBUG')
          && method_exists($class, $method )
         ) {
-            THEDEBUG::debug('Indirect call of THEDEBUG::'.$method.' please try to call it directly', null, 3, 2);
-            THEDEBUG::_set_btDeepth(7);
+            X\THEDEBUG::debug('Indirect call of THEDEBUG::'.$method.' please try to call it directly', null, 3, 2);
+            X\THEDEBUG::_set_btDeepth(7);
             return call_user_func_array(array($class, $method), $args);
-            THEDEBUG::_reset_btDeepth();
+            X\THEDEBUG::_reset_btDeepth();
         }
 
         /*
@@ -1471,7 +1437,7 @@ class THEBASE {
          * Throw exception.
          */
         } else {
-            THEDEBUG::debug('callstack', null, null, 2);
+            X\THEDEBUG::debug('callstack', null, null, 2);
             throw new \Exception('Call to undefined method '.$method, 1);
         }
     }

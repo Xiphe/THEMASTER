@@ -18,22 +18,9 @@
  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-namespace Xiphe\THEMASTER;
+namespace Xiphe\THEMASTER\core;
 
-/*
- * Include parent class.
- */
-require_once(THEMASTER_COREFOLDER.'wpupdates.php');
-
-/*
- * Include the model basic class
- */
-require_once(THEMASTER_COREFOLDER.'wpmodel.php');
-
-/*
- * Include THEWPTOOLS class
- */
-require_once(THEMASTER_COREFOLDER.'wptools.php');
+use Xiphe as X;
 
 /**
  * THEWPMASTER is the last class inside !THE MASTER and the one that
@@ -156,7 +143,7 @@ class THEWPMASTER extends THEWPUPDATES {
             if (function_exists('load_plugin_textdomain')) {
                 load_plugin_textdomain('themaster', false, '_themaster/languages/');
             }
-            THEBASE::sRegister_callback('afterBaseS_init', array('Xiphe\THEMASTER\THEWPMASTER', 'sinit'));
+            THEBASE::sRegister_callback('afterBaseS_init', array(THE::WPMASTER, 'sinit'));
         }
 
         /*
@@ -166,7 +153,7 @@ class THEWPMASTER extends THEWPUPDATES {
 
 
         if ($initArgs === 'MINIMASTER') {
-            if (class_exists('Xiphe\THEMASTER\THEWPMASTER')) {
+            if (\Xiphe\THEMASTER\WP()) {
                 $this->_versionCheck();
             }
         }
@@ -187,7 +174,7 @@ class THEWPMASTER extends THEWPUPDATES {
             }
 
             if (function_exists('add_action')) {
-                add_action('shutdown', array('Xiphe\THEMASTER\THEWPMASTER','sSaveTheVersions'));
+                add_action('shutdown', array(THE::WPMASTER,'sSaveTheVersions'));
             }
 
             /*
@@ -198,7 +185,9 @@ class THEWPMASTER extends THEWPUPDATES {
             } else {
                 THEBASE::reg_adminLess('tm-admin');
                 THEBASE::reg_adminJs('tm-admin');
-                THEBASE::get_instance('FileSelect');
+                add_action('plugins_loaded', function() {
+                    THEBASE::get_instance('FileSelect');
+                });
             }
 
             /*
@@ -247,44 +236,44 @@ class THEWPMASTER extends THEWPUPDATES {
         /*
          * Register verry own one time init when wp is available.
          */
-        add_action('wp_enqueue_scripts', array('Xiphe\THEMASTER\THEWPMASTER', 'twpm_enqueue'), 99, 0);
-        add_action('admin_head', array('Xiphe\THEMASTER\THEWPMASTER', 'twpm_enqueue'), 99, 0);
-        add_action('login_head', array('Xiphe\THEMASTER\THEWPMASTER', 'twpm_enqueue'), 99, 0);
+        add_action('wp_enqueue_scripts', array(THE::WPMASTER, 'twpm_enqueue'), 99, 0);
+        add_action('admin_head', array(THE::WPMASTER, 'twpm_enqueue'), 99, 0);
+        add_action('login_head', array(THE::WPMASTER, 'twpm_enqueue'), 99, 0);
 
         /*
          * Register callbacks for printing js-variables.
          */
-        add_action('wp_head', array('Xiphe\THEMASTER\THEWPMASTER', 'twpm_print_jsVars'), 999, 0);
-        add_action('admin_head', array('Xiphe\THEMASTER\THEWPMASTER', 'twpm_print_adminJsVars'), 999, 0);
+        add_action('wp_head', array(THE::WPMASTER, 'twpm_print_jsVars'), 999, 0);
+        add_action('admin_head', array(THE::WPMASTER, 'twpm_print_adminJsVars'), 999, 0);
 
         /*
          * Spice the Login Screen 
          */
-        add_action('login_head', array('Xiphe\THEMASTER\THEWPMASTER', 'twpm_login_head'));
-        add_action('wp_login', array('Xiphe\THEMASTER\THEWPMASTER', 'twpm_wp_login'));
-        add_filter('login_message', array('Xiphe\THEMASTER\THEWPMASTER', 'twpm_loginMsg'));
-        add_action('wp_ajax_twpm_hashRederect', array('Xiphe\THEMASTER\THEWPMASTER', 'twpm_ajax_hashRederect'));
-        add_action('wp_ajax_nopriv_twpm_hashRederect', array('Xiphe\THEMASTER\THEWPMASTER', 'twpm_ajax_hashRederect'));
+        add_action('login_head', array(THE::WPMASTER, 'twpm_login_head'));
+        add_action('wp_login', array(THE::WPMASTER, 'twpm_wp_login'));
+        add_filter('login_message', array(THE::WPMASTER, 'twpm_loginMsg'));
+        add_action('wp_ajax_twpm_hashRederect', array(THE::WPMASTER, 'twpm_ajax_hashRederect'));
+        add_action('wp_ajax_nopriv_twpm_hashRederect', array(THE::WPMASTER, 'twpm_ajax_hashRederect'));
 
         /*
          * Register callback for admin notices.
          */
-        add_action('admin_notices', array('Xiphe\THEMASTER\THEWPMASTER', 'twpm_admin_notices'), 999, 0);
+        add_action('admin_notices', array(THE::WPMASTER, 'twpm_admin_notices'), 999, 0);
 
         /*
          * Register callback for printing debugs from THEDEBUG.
          */
-        add_action('shutdown', array( 'Xiphe\THEMASTER\THEDEBUG', 'print_debugcounts'), 0, 0);
-        if (THEDEBUG::get_mode() === 'summed') {
-            add_action('shutdown', array('Xiphe\THEMASTER\THEDEBUG', 'print_debug'), 0, 0);
+        add_action('shutdown', array('Xiphe\THEDEBUG', 'print_debugcounts'), 0, 0);
+        if (X\THEDEBUG::get_mode() === 'summed') {
+            add_action('shutdown', array('Xiphe\THEDEBUG', 'print_debug'), 0, 0);
         }
 
         /*
          * Register callback for plugin dependency check.
          */
-        add_action('after_setup_theme', array('Xiphe\THEMASTER\THEWPMASTER', 'twpm_check_initiated'));
+        add_action('after_setup_theme', array(THE::WPMASTER, 'twpm_check_initiated'));
 
-        add_action('init', array('Xiphe\THEMASTER\THEWPMASTER', 'twpm_wpinit'));
+        add_action('init', array(THE::WPMASTER, 'twpm_wpinit'));
     }
 
 
@@ -355,8 +344,8 @@ class THEWPMASTER extends THEWPUPDATES {
             throw new Exception('Invalid call of _versionCheck', 1);
         }
 
-        if (get_class($this) == 'Xiphe\THEMASTER\THEWPMASTER') {
-            $textdomain = 'Xiphe\THEMASTER\THEWPMASTER';
+        if (get_class($this) == THE::WPMASTER) {
+            $textdomain = THE::WPMASTER;
             $version = THEBASE::$sVersion;
         } else {
             $textdomain = get_class($this);
@@ -366,7 +355,7 @@ class THEWPMASTER extends THEWPUPDATES {
         if (!isset(self::$s_theVersions[$textdomain])
          || version_compare(self::$s_theVersions[$textdomain], $version, '<')
         ) {
-            if (get_class($this) == 'Xiphe\THEMASTER\THEWPMASTER') {
+            if (get_class($this) == THE::WPMASTER) {
                 $ok = self::_masterUpdate();
             } else {
                 if (isset($this->folderStructure_) && !is_array($this->folderStructure_)) {
@@ -508,7 +497,7 @@ class THEWPMASTER extends THEWPUPDATES {
                 'error'
             );
         } else {
-            THEDEBUG::debug( $msg, 'error', 4 ); 
+            X\THEDEBUG::debug( $msg, 'error', 4 ); 
         }
     }
         
@@ -532,7 +521,7 @@ class THEWPMASTER extends THEWPUPDATES {
     final public static function twpm_print_jsVars($admin = false) {
         $source = $admin ? THEBASE::sGet_registeredAdminJsVars() : THEBASE::sGet_registeredJsVars();
         if (is_object($HTML = THEBASE::sget_HTML(true))) {
-            $HTML->sg_script();
+            $HTML->s_script();
             foreach ($source as $name => $var) {
                 $HTML->blank('var '.$name.' = '.json_encode($var).';');
             }
@@ -620,9 +609,9 @@ class THEWPMASTER extends THEWPUPDATES {
          && (current_user_can('edit_posts') || current_user_can('edit_pages'))
          && get_user_option('rich_editing') == 'true'
         ) {
-            add_filter('mce_css', array('Xiphe\THEMASTER\THEWPMASTER', "twpm_mce_css"));
-            add_filter("mce_external_plugins", array('Xiphe\THEMASTER\THEWPMASTER', "twpm_tinymce_plugin"));
-            add_filter('mce_buttons_2', array('Xiphe\THEMASTER\THEWPMASTER', 'twpm_myplugin_button'));
+            add_filter('mce_css', array(THE::WPMASTER, "twpm_mce_css"));
+            add_filter("mce_external_plugins", array(THE::WPMASTER, "twpm_tinymce_plugin"));
+            add_filter('mce_buttons_2', array(THE::WPMASTER, 'twpm_myplugin_button'));
         }
     }
 
@@ -714,7 +703,7 @@ class THEWPMASTER extends THEWPUPDATES {
         if($key == null)
             return self::$sCurrentUser;
         else
-            return THETOOLS::rget(self::$sCurrentUser, $key);
+            return X\THETOOLS::rget(self::$sCurrentUser, $key);
     }
     
     public function set_user($key, $value) {
@@ -741,7 +730,7 @@ class THEWPMASTER extends THEWPUPDATES {
      * @deprecated since 3.0
      */
     public function fireContentTag($tag) {
-        THEDEBUG::deprecated('Wordpress\'s do_shortcode()', false);
+        X\THEDEBUG::deprecated('Wordpress\'s do_shortcode()', false);
         // http://codex.wordpress.org/Function_Reference/do_shortcode      
     }
     
@@ -755,7 +744,7 @@ class THEWPMASTER extends THEWPUPDATES {
      * @return void
      */
     protected function add_contentTag($tag, $callback) {
-        THEDEBUG::deprecated('Wordpress\'s add_shortcode()', false);
+        X\THEDEBUG::deprecated('Wordpress\'s add_shortcode()', false);
         // http://codex.wordpress.org/Shortcode_API
     }
     
@@ -768,7 +757,7 @@ class THEWPMASTER extends THEWPUPDATES {
      * @return string the new content string
      */
     public static function do_ContentTags($content) {
-        THEDEBUG::deprecated('Wordpress\'s do_shortcode()', false);
+        X\THEDEBUG::deprecated('Wordpress\'s do_shortcode()', false);
         // http://codex.wordpress.org/Function_Reference/do_shortcode
     }
     
@@ -836,14 +825,14 @@ class THEWPMASTER extends THEWPUPDATES {
             THEBASE::reg_jsVar('ajaxurl', admin_url('admin-ajax.php'));
             THEBASE::reg_jsVar('twpm_rederect', true);
             THEBASE::echo_jsVars();
-            THETOOLS::session();
+            X\THETOOLS::session();
             $_SESSION['twpm_loginrederect'] = $_GET['redirect_to'];
             // self::inst()->debug( $_SESSION );
         }
     }
     
     private static function _get_loginRederectUrl( $full = true ) {
-        THETOOLS::session();
+        X\THETOOLS::session();
         $t = false;
         if( isset( $_SESSION['twpm_loginrederect'] ) ) {
             $t = $_SESSION['twpm_loginrederect'];
@@ -855,7 +844,7 @@ class THEWPMASTER extends THEWPUPDATES {
     }
     
     private function _del_loginRederectSession() {
-        THETOOLS::session();
+        X\THETOOLS::session();
         if( isset( $_SESSION['twpm_loginrederect'] ) ) 
             unset( $_SESSION['twpm_loginrederect'] );
         if( isset( $_SESSION['twpm_loginrederectHash'] ) ) 

@@ -1,5 +1,7 @@
 <?php
-namespace Xiphe\THEMASTER;
+namespace Xiphe\THEMASTER\classes;
+
+use Xiphe\THEMASTER\core as core;
 
 /**
  * Provides themes and plugins with a form interface to select a file from the Media Library.
@@ -9,7 +11,7 @@ namespace Xiphe\THEMASTER;
  *           Adjustments and Conversion into TM-Class: [Hannes Diercks](xiphe@gmx.de)
  * @version  0.2.1
  */
-class FileSelect extends THEWPMASTER {
+class FileSelect extends core\THEWPMASTER {
 	public $singleton = true;
 
     private $_typeErrors = array();

@@ -1,10 +1,7 @@
 <?php
-namespace Xiphe\THEMASTER;
+namespace Xiphe\THEMASTER\core;
 
-/*
- * Include parent class.
- */
-require_once(THEMASTER_COREFOLDER.'wpsettings.php');
+use Xiphe as X;
 
 /**
  * THEWPUPDATES handles updates via the (WP-Project-Update-API)[https://github.com/Xiphe/WP-Project-Update-API]
@@ -49,7 +46,7 @@ class THEWPUPDATES extends THEWPSETTINGS {
 	 */
 	function __construct( $initArgs ) {
 		if ( !isset( $this->constructing ) || $this->constructing !== true ) {
-			throw new Exception("ERROR: THEWPUPDATES is not ment to be constructed directly.", 1);
+			throw new \Exception("ERROR: THEWPUPDATES is not ment to be constructed directly.", 1);
 			return false;
 		}
 
@@ -57,7 +54,7 @@ class THEWPUPDATES extends THEWPSETTINGS {
 		$this->add_requiredInitArgs_( array( 'updatable' ) );
 
 		if ( !self::$s_initiated ) {
-			THEBASE::sRegister_callback( 'afterBaseS_init', array( 'Xiphe\THEMASTER\THEWPUPDATES', 'sinit' ) );
+			THEBASE::sRegister_callback( 'afterBaseS_init', array(THE::WPUPDATES, 'sinit' ) );
 		}
 
 		// pass the Ball
@@ -111,14 +108,14 @@ class THEWPUPDATES extends THEWPSETTINGS {
 	 */
 	private static function s_hooks() {
 		if ( function_exists( 'add_action' ) ) {
-			add_action( 'plugins_loaded', array( 'Xiphe\THEMASTER\THEWPUPDATES', '_checkConstants' ) );
+			add_action( 'plugins_loaded', array(THE::WPUPDATES, '_checkConstants' ) );
 		}
 
 		if ( function_exists( 'add_filter' ) ) {
-			add_filter( 'pre_set_site_transient_update_themes', array( 'Xiphe\THEMASTER\THEWPUPDATES', '_check_for_project_update' ) );
-			add_filter( 'pre_set_site_transient_update_plugins', array( 'Xiphe\THEMASTER\THEWPUPDATES', '_check_for_project_update' ) );
-			add_filter( 'themes_api', array( 'Xiphe\THEMASTER\THEWPUPDATES', '_project_api_call' ), 10, 3);
-			add_filter( 'plugins_api', array( 'Xiphe\THEMASTER\THEWPUPDATES', '_project_api_call' ), 10, 3);
+			add_filter( 'pre_set_site_transient_update_themes', array(THE::WPUPDATES, '_check_for_project_update' ) );
+			add_filter( 'pre_set_site_transient_update_plugins', array(THE::WPUPDATES, '_check_for_project_update' ) );
+			add_filter( 'themes_api', array(THE::WPUPDATES, '_project_api_call' ), 10, 3);
+			add_filter( 'plugins_api', array(THE::WPUPDATES, '_project_api_call' ), 10, 3);
 			// add_filter( 'upgrader_source_selection', array( 'THEWPUPDATES', 'sSourceSelection' ), 10, 3);
 			// add_filter( 'plugins_api_result', function( $a ) {
 			// 	THEDEBUG::debug( $a, 'pluginsApiResult' );
@@ -165,9 +162,9 @@ class THEWPUPDATES extends THEWPSETTINGS {
 			foreach ( $const['user'] as $const => $name ) {
 				if ( strstr( $const, 'THEUPDATES_UPDATABLE' )) {
 					if ( count( ( $e = explode( '|', $name ) ) ) == 2 ) {
-						self::updatable( THETOOLS::get_textID( $e[0] ), $e[1] );
+						self::updatable(X\THETOOLS::get_textID($e[0]), $e[1]);
 					} else {
-						self::updatable( THETOOLS::get_textID( $e[0] ) );
+						self::updatable(X\THETOOLS::get_textID($e[0]));
 					}
 				}
 			}
@@ -262,7 +259,7 @@ class THEWPUPDATES extends THEWPSETTINGS {
 			if ( isset( $response )
 			 && !empty( $response )
 			 && ( is_object( $response ) || is_array( $response ) )
-			 && THETOOLS::rget( $response, 'new_version' ) !== null
+			 && X\THETOOLS::rget( $response, 'new_version' ) !== null
 			) {
 				$checked_data->response[$textID] = $response;
 			}
