@@ -279,57 +279,69 @@ class THEWPBUILDER extends THEMASTER {
 		$iA['configFile'] = $iA['projectType'] === 'plugin'
 			? $iA['projectFile'] : $iA['basePath'] . 'style.css';
 
-		// Read the file and fill additional initiation arguments with information.
-		foreach( file( $iA['configFile'] ) as $l ) {
-			if( count( ( $p = explode(':', $l, 2 ) ) ) > 1 ) {
-				if( trim( $p[1] ) === '' ) continue;
+		$hasFileDoc = false;
 
-				switch( preg_replace('/[^a-z0-9]/', '', strtolower( $p[0] ))) {
-					case 'date' :
-						$iA['date'] = trim( $p[1] );
-						break;
-					case 'pluginname':
-						$iA['projectName'] = trim( $p[1] );
-						break;
-					case 'themename':
-						$iA['projectName'] = trim( $p[1] );
-						break;
-					case 'description':
-						$iA['projectDesc'] = trim( $p[1] );
-						break;
-					case 'version':
-						$iA['version'] = trim( $p[1] );
-						break;
-					case 'branch':
-						$iA['branch'] = trim( $p[1] );
-						break;
-					case 'updateserver':
+		// Read the file and fill additional initiation arguments with information.
+		foreach (file($iA['configFile']) as $l) {
+			if (!$hasFileDoc && count(($p = explode(':', $l, 2))) > 1) {
+				if(trim($p[1]) === '') continue;
+
+				switch (preg_replace('/[^a-z0-9]/', '', strtolower($p[0]))) {
+				case 'date' :
+					$iA['date'] = trim( $p[1] );
+					break;
+				case 'pluginname':
+					$iA['projectName'] = trim( $p[1] );
+					break;
+				case 'themename':
+					$iA['projectName'] = trim( $p[1] );
+					break;
+				case 'description':
+					$iA['projectDesc'] = trim( $p[1] );
+					break;
+				case 'version':
+					$iA['version'] = trim( $p[1] );
+					break;
+				case 'branch':
+					$iA['branch'] = trim( $p[1] );
+					break;
+				case 'updateserver':
+					$iA['updatable'] = true;
+					$iA['updateServer'] = trim( $p[1] );
+					break;
+				case 'author':
+					$iA['author'] = trim( $p[1] );
+					break;
+				case 'updatable':
+					if( trim( $p[1] ) != 'false' )
 						$iA['updatable'] = true;
-						$iA['updateServer'] = trim( $p[1] );
-						break;
-					case 'author':
-						$iA['author'] = trim( $p[1] );
-						break;
-					case 'updatable':
-						if( trim( $p[1] ) != 'false' )
-							$iA['updatable'] = true;
-						break;
-					case 'requiredplugins':
-						$iA['requiredPlugins'] = array();
-						foreach( explode(',', trim( $p[1] ) ) as $rqrd ) {
-							array_push( $iA['requiredPlugins'], trim($rqrd) );
-						}
-						break;
-					case 'namespace':
-						$iA['namespace'] = trim( $p[1] );
-						break;
-					default:
-						break;
+					break;
+				case 'requiredplugins':
+					$iA['requiredPlugins'] = array();
+					foreach( explode(',', trim( $p[1] ) ) as $rqrd ) {
+						array_push( $iA['requiredPlugins'], trim($rqrd) );
+					}
+					break;
+				case 'namespace':
+					$iA['namespace'] = trim( $p[1] );
+					break;
+				default:
+					break;
 				}
 			}
-			// Stop reading when the first comment is closed.
-			if( trim($l) == '*/' )
-				break;
+
+			if( trim($l) == '/**' ) {
+				$hasFileDoc = true;
+			}
+
+			// Stop reading when the comment is closed.
+			if(trim($l) == '*/') {
+				if ($hasFileDoc) {
+					$hasFileDoc = false;
+				} else {
+					break;
+				}
+			}
 		}
 
 		// Check if a prefix is set or generate it from the first two uppercase chars of the projectName.

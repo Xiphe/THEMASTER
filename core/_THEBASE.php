@@ -375,7 +375,7 @@ class THEBASE {
         if( is_array( $initArgs )) {
             $this->_requiredInitArgs = array_merge( $this->_requiredInitArgs, $initArgs );
         } elseif( is_string( $initArgs )) {
-            array_push( $this->_requiredInitArgs, $initArgs );
+            $this->_requiredInitArgs[] = $initArgs;
         }
     }
     

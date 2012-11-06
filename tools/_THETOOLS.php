@@ -145,37 +145,6 @@ class THETOOLS {
     }
     
     /**
-     * Parses an url adds and removes get-query arguments and rebuilds the url.
-     *
-     * @access public
-     * @param  string $url       the url string
-     * @param  array  $filterArr Array of query keys that should be removed or keeped.
-     * @param  string $method    'remove' deletes all $filterArr keys from query, 
-     *                           'keep' deletes all args that are not in $filterArr
-     * @param  array  $add       optional array of values to be added to the query
-     * @return void
-     */
-    public static function filter_urlQuery(&$url, $filterArr, $method = 'remove', array $add = array()) {
-        $pUrl = parse_url($url);
-        $qry;
-        parse_str($pUrl['query'], $qry);
-
-        foreach ($qry as $k => $v) {
-            if (($method == 'remove' && in_array($k, $filterArr))
-             || ($method == 'keep' && !in_array($k, $filterArr))
-            ) {
-                unset($qry[$k]);
-            } 
-        }
-
-        if (!empty($add)) {
-            $qry = array_merge($qry, $add);
-        }
-        $pUrl['query'] = http_build_query($qry);
-        $url = self::unparse_url($pUrl);
-    }
-
-    /**
      * Creates a sprite image at $dest from image files in $imgs array.
      *
      * @access public
@@ -1328,7 +1297,109 @@ class THETOOLS {
         return basename(dirname($file)).'/'.basename($file);
     }
 
-        /**
+    /**
+     * Parses an url adds and removes get-query arguments and rebuilds the url.
+     *
+     * @access public
+     * @param  string $url       the url string
+     * @param  array  $filterArr Array of query keys that should be removed or keeped.
+     * @param  string $method    'remove' deletes all $filterArr keys from query, 
+     *                           'keep' deletes all args that are not in $filterArr
+     * @param  array  $add       optional array of values to be added to the query
+     * @return void
+     */
+    public static function filter_urlQuery(&$url, $filterArr, $method = 'remove', array $add = array()) {
+        $pUrl = parse_url($url);
+        $qry;
+        parse_str($pUrl['query'], $qry);
+
+       
+
+        if (!empty($add)) {
+            $qry = array_merge($qry, $add);
+        }
+        $pUrl['query'] = http_build_query($qry);
+        $url = self::unparse_url($pUrl);
+    }
+
+    public static function filter_data($data, $filterArr, $method = 'keep', $add = false)
+    {
+        foreach ($data as $k => $v) {
+            if (($method == 'remove' && in_array($k, $filterArr))
+             || ($method == 'keep' && !in_array($k, $filterArr))
+            ) {
+                if (is_array($data)) {
+                    unset($data[$k]);
+                } elseif (is_object($data)) {
+                    unset($data->$k);
+                }
+            }
+        }
+
+        if (!empty($add)) {
+            $data = self::merge_data($data, $add);
+        }
+
+        return $data;
+    }
+
+    /**
+     * Allows merging of arrays and objects. same usage
+     * as array_merge.
+     *
+     * @param array|object $a target
+     * @param array|object $b addition
+     *
+     * @return array|object same type as $a
+     */
+    public static function merge_data($a, $b)
+    {
+        $args = func_get_args();
+        $t = $args[0];
+        $array = is_array($t);
+
+        foreach ($args as $k => $a) {
+            $args[$k] = self::ar($a);
+        }
+
+        $args = call_user_func_array('array_merge', $args);
+        
+        if (!$array) {
+            $args = self::sc($args);
+        }
+        
+        return $args;
+    }
+
+    /**
+     * Allows deep merging of arrays and objects. same usage
+     * as array_merge_recursive.
+     *
+     * @param array|object $a target
+     * @param array|object $b addition
+     *
+     * @return array|object same type as $a
+     */
+    public static function merge_data_recursive($a, $b)
+    {
+        $args = func_get_args();
+        $t = $args[0];
+        $array = is_array($t);
+
+        foreach ($args as $k => $a) {
+            $args[$k] = self::ar($a, null, true);
+        }
+
+        $args = call_user_func_array('array_merge_recursive', $args);
+        
+        if (!$array) {
+            $args = self::sc($args, null, true);
+        }
+
+        return $args;
+    }
+
+    /**
      * returns an array containing the keys of $data, starting with the given prefix.
      * 
      * $data = array( 'foo_bar1' => 'bar, 'bar_bar2' => 'foo' );

@@ -112,10 +112,12 @@ class THESETTINGS extends THEBASE {
 	}
 
 	public function sSet_setting( $key, $textID, $value ) {
-		if( isset( self::$s_settings[$textID][$key] ) ) {
+		if (isset(self::$s_settings[$textID][$key])
+			|| (class_exists(THE::WPSETTINGS) && THEWPSETTINGS::settingExists($key, $textID))
+		) {
 			self::$s_forcedSettings[$textID][$key] = $value;
 		} else {
-			throw new Exception( 'Tried to set non-existent setting "' . $textID . ': ' . $key . '".' );
+			throw new \Exception( 'Tried to set non-existent setting "' . $textID . ': ' . $key . '".' );
 		}
 	}
 }

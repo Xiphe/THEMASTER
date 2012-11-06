@@ -108,7 +108,7 @@ class THEWPUPDATES extends THEWPSETTINGS {
 	 */
 	private static function s_hooks() {
 		if ( function_exists( 'add_action' ) ) {
-			add_action( 'plugins_loaded', array(THE::WPUPDATES, '_checkConstants' ) );
+			add_action( 'plugins_loaded', array(THE::WPUPDATES, 'checkGlobal' ) );
 		}
 
 		if ( function_exists( 'add_filter' ) ) {
@@ -118,7 +118,7 @@ class THEWPUPDATES extends THEWPSETTINGS {
 			add_filter( 'plugins_api', array(THE::WPUPDATES, '_project_api_call' ), 10, 3);
 			// add_filter( 'upgrader_source_selection', array( 'THEWPUPDATES', 'sSourceSelection' ), 10, 3);
 			// add_filter( 'plugins_api_result', function( $a ) {
-			// 	THEDEBUG::debug( $a, 'pluginsApiResult' );
+			// 	\Xiphe\debug( $a, 'pluginsApiResult' );
 			// 	return $a;
 			// } );
 			// add_filter( 'unzip_file_use_ziparchive', function() { return false; } );
@@ -156,19 +156,17 @@ class THEWPUPDATES extends THEWPSETTINGS {
 		}
 	}
 	
-	public function _checkConstants() {
-		if ( !self::$s_constantsChecked ) {
-			$const = get_defined_constants( true );
-			foreach ( $const['user'] as $const => $name ) {
-				if ( strstr( $const, 'THEUPDATES_UPDATABLE' )) {
-					if ( count( ( $e = explode( '|', $name ) ) ) == 2 ) {
-						self::updatable(X\THETOOLS::get_textID($e[0]), $e[1]);
-					} else {
-						self::updatable(X\THETOOLS::get_textID($e[0]));
-					}
-				}
+	public function checkGlobal() {
+		if (isset($GLOBALS['Xiphe\THEMASTER\Updatable'])
+			&& is_array($GLOBALS['Xiphe\THEMASTER\Updatable'])
+		) {
+			foreach($GLOBALS['Xiphe\THEMASTER\Updatable'] as $projectFile) {
+				$projectInfo = THEWPBUILDER::get_initArgs($projectFile);
+				self::updatable(
+					$projectInfo['textID'],
+					isset($projectInfo['updateServer']) ? $projectInfo['updateServer'] : null
+				);
 			}
-			self::$s_constantsChecked = true;
 		}
 	}
 
@@ -211,20 +209,23 @@ class THEWPUPDATES extends THEWPSETTINGS {
 	
 	
 	public function _check_for_project_update( $checked_data ) {
-		self::_checkConstants();
+		self::checkGlobal();
 		// THEDEBUG::debug( $checked_data, 'check' );
 		if ( empty( $checked_data->checked ) )
 			return $checked_data;
 		
-		// THEDEBUG::debug( $checked_data );
+		X\debug(self::$s_updatables, '$s_updatables');
+		
+		// X\debug($checked_data, 'checked_data');
 		foreach ( self::$s_updatables as $textID => $server ) {
-
 			$fullTextID = $textID;
 			$isTheme = false;
 			if( basename( $textID ) === 'style.css' ) {
 				$textID = dirname( $textID );
 				$isTheme = true;
 			}
+
+			X\debug($textID, 'textID');
 
 			if ( !isset( $checked_data->checked[$textID] ) ) {
 				continue;
@@ -233,6 +234,8 @@ class THEWPUPDATES extends THEWPSETTINGS {
 			$pData = THEWPBUILDER::get_initArgs( ABSPATH . 'wp-content' . DS
 				. ( $isTheme ? 'themes' : 'plugins' ) . DS . $fullTextID );
 
+			// X\debug($request_args, 'request_args');
+
 			$request_args = array(
 				'slug' => $pData['textdomain'],
 				'version' => $checked_data->checked[$textID],
@@ -240,15 +243,16 @@ class THEWPUPDATES extends THEWPSETTINGS {
 			if( isset( $pData['branch'] ) ) {
 				$request_args['branch'] = $pData['branch'];
 			}
+			
 
 			$request_string = self::_prepare_request( 'basic_check', $request_args, $fullTextID );
-			// THEDEBUG::debug( $request_string, 'request_string' );
+			X\debug($request_string, 'request_string');
 			
 			// Start checking for an update
 
 
-			$raw_response = wp_remote_post( $server, $request_string );
-			// THEDEBUG::debug( $raw_response, 'raw_response' );
+			$raw_response = wp_remote_post($server, $request_string);
+			X\debug($raw_response, 'raw_response');
 				
 
 			if ( !is_wp_error( $raw_response ) && ( $raw_response['response']['code'] == 200 ) ) {
