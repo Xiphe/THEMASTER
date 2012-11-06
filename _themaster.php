@@ -105,7 +105,7 @@ if (!defined('DS')) {
  * This is the easyest way to enable the update logic of THEWPUPDATES
  * to a plugin that does not use !THE MASTER.
  */
-define('THEUPDATES_UPDATABLE_THEMASTER', __FILE__);
+$GLOBALS['Xiphe\THEMASTER\Updatable'][] = __FILE__;
 
 /*
  * Save the path to this file.
@@ -128,12 +128,12 @@ spl_autoload_register(function($class) {
         $path = explode('\\', $class);
         $name = end($path);
         $path = array_splice($path, 2, -1);
-        $path[] = strtolower($name).'.php';
+        $path[] = $name.'.php';
         $path = implode(DS, $path);
 
         require(THEMASTER_PROJECTFOLDER.$path);
     } elseif(in_array($class, array('Xiphe\THETOOLS', 'Xiphe\THEWPTOOLS', 'Xiphe\THEDEBUG'))) {
-        $file = str_replace('xiphe\\', '', strtolower($class)).'.php';
+        $file = str_replace('Xiphe\\', '', $class).'.php';
         include(THEMASTER_PROJECTFOLDER.'tools'.DS.$file);
     }
 });
