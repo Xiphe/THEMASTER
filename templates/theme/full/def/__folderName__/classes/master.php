@@ -1,9 +1,18 @@
 <?php
+/**
+ * Master file for __projectName__
+ *
+ * @category: Wordpress Theme
+ * @package: __namespace__
+ * @author: __author__
+ * @link: __themeuri__
+ */
+
 namespace __namespace__;
 
 use Xiphe\THEMASTER as TM;
 
-class Master extends TM\THEWPMASTER {
+class Master extends TM\core\THEWPMASTER {
 	/* STATIC VARS */
 
 
@@ -19,10 +28,12 @@ class Master extends TM\THEWPMASTER {
 	/* 
 	 * Add Filters and Actions into this array. A simple Value will look for a similar called method
 	 * in this class. The Methodname can be specifyed by the key. Priority and accepted args can be
-	 * adjusted by adding them to the hookname. ( 'init|1|3' ).
+	 * adjusted by adding them to the hookname. ('init|1|3').
 	 */
 	// **EXTENDED_END** //
-	// protected $actions_ = array( 'wpinit' => 'init' );
+	// protected $actions_ = array(
+	// 	'wpinit' => 'init'
+	// );
 	// protected $filters_ = array();
 
 	// given throu initiation.
@@ -84,7 +95,7 @@ class Master extends TM\THEWPMASTER {
 	// public function settings() {
 	// 	return array(
 	// 		'updateApikey' => array(
-	// 			'label' => __( 'Product Key', '__textdomain__' ),
+	// 			'label' => __('Product Key', '__textdomain__'),
 	// 			'type' => 'input',
 	// 			'default' => ''
 	// 		)

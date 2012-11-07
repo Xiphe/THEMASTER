@@ -1,9 +1,20 @@
 <?php
+/**
+ * Content file for __projectName__
+ *
+ * @category: Wordpress Theme
+ * @package: __namespace__
+ * @author: __author__
+ * @link: __themeuri__
+ */
+
 namespace __namespace__;
 
 use Xiphe\THEMASTER as TM;
 
-if (!isset($Master)) extract(extr());
+if (!isset($Master)) {
+    extract(extr());
+}
 
 $HTML->s_article('#post-'.get_the_ID().'|class='.implode(' ', get_post_class()))
     ->s_header('.entry-header')
@@ -22,14 +33,19 @@ $HTML->s_article('#post-'.get_the_ID().'|class='.implode(' ', get_post_class()))
         $HTML->div(TM\THEWPTOOLS::posted_on(), '.entry-meta');
     }
 
-    if(is_search()) {
+    if (is_search()) {
         $HTML->s_div('.entry-summary');
             the_excerpt();
         $HTML->end();
     } else {
         $HTML->s_div('.entry-content');
-            the_content(__( 'Continue reading <span class="meta-nav">&rarr;</span>', '__textdomain__' ));
-            wp_link_pages( array( 'before' => '<div class="page-link"><span>' . __( 'Pages:', '__textdomain__' ) . '</span>', 'after' => '</div>' ) );
+            the_content(__('Continue reading <span class="meta-nav">&rarr;</span>', '__textdomain__'));
+            wp_link_pages(
+                array(
+                    'before' => '<div class="page-link"><span>'.__('Pages:', '__textdomain__').'</span>',
+                    'after' => '</div>'
+                )
+            );
         $HTML->end();
     }
 
@@ -39,13 +55,10 @@ $HTML->s_article('#post-'.get_the_ID().'|class='.implode(' ', get_post_class()))
         if ('post' == get_post_type()) {
             $categories_list = get_the_category_list(__(', ', '__textdomain__'));
             if ($categories_list) {
-                $HTML->span(
-                    sprintf( 
-                        __('<span class="%1$s">Posted in</span> %2$s', '__textdomain__'),
-                        'entry-utility-prep entry-utility-prep-cat-links', $categories_list
-                    ),
-                    '.cat-links'
-                );
+                $HTML->s_span('.cat-links')
+                    ->span(__('Posted in', '__textdomain__'), '.entry-utility-prep entry-utility-prep-cat-links')
+                    ->blank($categories_list)
+                ->end();    
                 $show_sep = true;
             }
             $tags_list = get_the_tag_list('', __(', ','__textdomain__'));
@@ -54,18 +67,15 @@ $HTML->s_article('#post-'.get_the_ID().'|class='.implode(' ', get_post_class()))
                 if ($show_sep) {
                     $HTML->span(' | ', 'sep');
                 }
-                $HTML->span(
-                    printf(
-                        __( '<span class="%1$s">Tagged</span> %2$s', '__textdomain__' ),
-                        'entry-utility-prep entry-utility-prep-tag-links', $tags_list
-                    ),
-                    '.tag-links'
-                );
+                $HTML->s_span('.tag-links')
+                    ->span(__('Tagged', '__textdomain__'), '.entry-utility-prep entry-utility-prep-tag-links')
+                    ->blank($tags_list)
+                ->end();                    
                 $show_sep = true;
             }
         }
 
-        edit_post_link(__( 'Edit', '__textdomain__' ), '<span class="edit-link">', '</span>');
+        edit_post_link(__('Edit', '__textdomain__'), '<span class="edit-link">', '</span>');
 
 $HTML->end('#post-'.get_the_ID());
 ?>

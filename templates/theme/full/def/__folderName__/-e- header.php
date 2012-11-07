@@ -1,11 +1,23 @@
 <?php
+/**
+ * Header file for __projectName__
+ *
+ * @category: Wordpress Theme
+ * @package: __namespace__
+ * @author: __author__
+ * @link: __themeuri__
+ */
+
 namespace __namespace__;
 
-use Xiphe\THEMASTER as TM;
+use Xiphe as X;
 
-if(!isset($Master)) extract(extr());
-$HTML->HTML5(array('html' => TM\THEWPTOOLS::get_language_attributes()))
-	->title(TM\THEWPTOOLS::get_title())
+if (!isset($Master)) {
+	extract(extr());
+}
+
+$HTML->HTML5(array('html' => X\THEWPTOOLS::get_language_attributes()))
+	->title(X\THEWPTOOLS::get_title())
 	->description(get_bloginfo('description', 'display'))
 	->viewport();
 
@@ -14,4 +26,3 @@ $HTML->end('head')
 	->s_body(implode(' ', get_body_class()))
 	->s_div('#page|.hfeed');
 
-?>

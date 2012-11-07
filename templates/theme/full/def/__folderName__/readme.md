@@ -7,9 +7,8 @@ __projectDesc__
 Installation
 ------------
 
-1. Upload the plugin directory to the `/wp-content/plugins/` directory
-2. Activate the plugin through the 'Plugins' menu in WordPress
-3. 
+1. Upload the theme directory to the `/wp-content/themes/` directory
+2. Activate the theme through the 'Design/Themes' menu in WordPress
 
 
 Support
