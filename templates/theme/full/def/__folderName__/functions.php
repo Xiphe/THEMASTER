@@ -5,7 +5,8 @@
  * @category: Wordpress Theme
  * @package: __namespace__
  * @author: __author__
- * @link: __themeuri__
+ * @license: __license__
+ * @link: __projectURI__
  */
 
 namespace __namespace__;
@@ -22,7 +23,7 @@ if (!defined('WPMASTERAVAILABE') || WPMASTERAVAILABE != true) {
 }
 
 function extr() {
-	if (!class_exists('__namespace__\Master') || !is_array($r = Master::extr())) {
+	if (!class_exists('__namespace__\classes\Master') || !is_array($r = Master::extr())) {
 		printf(
 			__(
 				'An Error occured: The current Theme could not be initiated. Please contact an %sAdministrator%s.',

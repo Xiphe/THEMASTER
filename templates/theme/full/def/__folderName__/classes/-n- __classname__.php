@@ -5,10 +5,11 @@
  * @category: Wordpress Theme
  * @package: __namespace__
  * @author: __author__
- * @link: __themeuri__
+ * @license: __license__
+ * @link: __projectURI__
  */
 
-namespace __namespace__;
+namespace __namespace__\classes;
 
 use Xiphe\THEMASTER as TM;
 
@@ -59,4 +60,4 @@ class __ClassName__ extends TM\core\THEWPMASTER {
 	// }
 
 	// **EXTENDED_END** //
-} ?>
+}

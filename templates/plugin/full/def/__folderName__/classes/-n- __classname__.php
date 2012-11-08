@@ -1,23 +1,34 @@
 <?php
-namespace __namespace__;
+/**
+ * __ClassName__ file for __projectName__
+ *
+ * @category: Wordpress Plugin
+ * @package: __namespace__
+ * @author: __author__
+ * @license: __license__
+ * @link: __themeuri__
+ */
+
+namespace __namespace__\classes;
 
 use Xiphe\THEMASTER as TM;
 
-class __ClassName__ extends TM\THEWPMASTER {
+class __ClassName__ extends TM\core\THEWPMASTER {
 
 	/* VARS */
 
 	public $singleton = true; // Prevents the contruction of a second instance by THEBASE.
-	// public $HTML = true; // This Master Uses the !HTML Class.
 	
 	// **EXTENDED** //
 	/* 
 	 * Add Filters and Actions into this array. A simple Value will look for a similar called method
 	 * in this class. The Methodname can be specifyed by the key. Priority and accepted args can be
-	 * adjusted by adding them to the hookname. ( 'init|1|3' ).
+	 * adjusted by adding them to the hookname. ('init|1|3').
 	 */
 	// **EXTENDED_END** //
-	// protected $actions_ = array( 'wpinit' => 'init' );
+	// protected $actions_ = array(
+	// 	'wpinit' => 'init'
+	// );
 	// protected $filters_ = array();
 
 
@@ -49,4 +60,4 @@ class __ClassName__ extends TM\THEWPMASTER {
 	// }
 
 	// **EXTENDED_END** //
-} ?>
+}

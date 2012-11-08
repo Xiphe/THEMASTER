@@ -7,8 +7,9 @@ __projectDesc__
 Installation
 ------------
 
-1. Upload the theme directory to the `/wp-content/themes/` directory
-2. Activate the theme through the 'Design/Themes' menu in WordPress
+1. Make sure you have [THE MASTER](https://github.com/Xiphe/THEMASTER) installed.
+2. Upload the theme directory to the `/wp-content/themes/` directory
+3. Activate the theme through the 'Design/Themes' menu in WordPress
 
 
 Support

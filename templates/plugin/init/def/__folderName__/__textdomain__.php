@@ -1,9 +1,20 @@
 <?php
+/**
+ * Initiation file for __projectName__
+ *
+ * @category: Wordpress Plugin
+ * @package: __namespace__
+ * @author: __author__
+ * @license: __license__
+ * @link: __themeuri__
+ */
+
 /*
 Plugin Name: __projectName__
 */
 // Description: 
 // Plugin URI: 
+// License: 
 // Namespace: __namespace__
 // Version: 
 // Tested: 
@@ -23,10 +34,14 @@ namespace __namespace__;
 use Xiphe\THEMASTER as TM;
 
 // **EXTENDED_END** //
-if( !defined( 'WPMASTERAVAILABE' ) || WPMASTERAVAILABE != true ) {
-	add_action( 'admin_notices', function() {
-		echo '<div class="error"><p>Warning - The Plugin "__projectName__" could not be initiated because Plugin <a href="http://plugins.red-thorn.de/libary/!themaster/">!THE MASTER</a> is not available.</p></div>';
-	});
+if (!defined('WPMASTERAVAILABE' ) || WPMASTERAVAILABE != true) {
+	add_action(
+		'admin_notices',
+		function () {
+			echo '<div class="error"><p>Warning - The Plugin "__projectName__" could not be initiated because Plugin '
+				.'<a href="http://plugins.red-thorn.de/libary/!themaster/">!THE MASTER</a> is not available.</p></div>';
+		}
+	);
 } else {
 	TM\BUILD(__tmminimal____tmtemplate__);
 }

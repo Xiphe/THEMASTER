@@ -95,11 +95,13 @@ class THEMASTER extends THESETTINGS {
 
             if( defined( 'HTMLCLASSAVAILABLE' ) && HTMLCLASSAVAILABLE === true ) {
                 // Register !html as available plugin
-                array_push( self::$s_initiatedProjects, '!html' );
+                self::$s_initiatedProjects[] = 'html';
+                self::$s_initiatedProjects[] = '!html';
             }
 
             // Register themaster as available plugin.
-            array_push( self::$s_initiatedProjects, '!themaster' );
+            self::$s_initiatedProjects[] = 'themaster';
+            self::$s_initiatedProjects[] = '!themaster';
 
             // Prevent this from beeing executed twice.
             self::$s_initiated = true;

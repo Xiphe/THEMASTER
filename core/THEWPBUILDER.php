@@ -287,20 +287,25 @@ class THEWPBUILDER extends THEMASTER {
 				if(trim($p[1]) === '') continue;
 
 				switch (preg_replace('/[^a-z0-9]/', '', strtolower($p[0]))) {
-				case 'date' :
-					$iA['date'] = trim( $p[1] );
+				case 'date':
+					$iA['date'] = trim($p[1]);
 					break;
 				case 'pluginname':
-					$iA['projectName'] = trim( $p[1] );
-					break;
 				case 'themename':
-					$iA['projectName'] = trim( $p[1] );
+					$iA['projectName'] = trim($p[1]);
 					break;
 				case 'description':
-					$iA['projectDesc'] = trim( $p[1] );
+					$iA['projectDesc'] = trim($p[1]);
+					break;
+				case 'themeuri':
+				case 'pluginuri':
+					$iA['projectURI'] = trim($p[1]);
 					break;
 				case 'version':
 					$iA['version'] = trim( $p[1] );
+					break;
+				case 'license':
+					$iA['license'] = trim($p[1]);
 					break;
 				case 'branch':
 					$iA['branch'] = trim( $p[1] );
@@ -476,8 +481,8 @@ class THEWPBUILDER extends THEMASTER {
 			return false;
 		}
 
-		$template = array( DS . $Master->folderName . DS . 'classes' . DS . '__classname__.php' => file_get_contents( self::s_getBaseTemplatePath() . $template . '__foldername__'
-			. DS . 'classes' . DS . '-n- __classname__.php' ) );
+		$template = array( DS . $Master->folderName . DS . 'classes' . DS . '__ClassName__.php' => file_get_contents( self::s_getBaseTemplatePath() . $template . '__foldername__'
+			. DS . 'classes' . DS . '-n- __ClassName__.php' ) );
 
 		$template = self::s_fillTemplate(
 			$template,
@@ -519,8 +524,13 @@ class THEWPBUILDER extends THEMASTER {
 		}
 		preg_match_all( '/__(\w[^_]*)__/', $string, $m );
 
-		foreach( $m[1] as $var ) {
-			$val = isset( $args[$var] ) ? $args[$var] : self::s_additionalArg( $var, $args, $extended, $baseTemplateName );
+		foreach ($m[1] as $var) {
+			if (isset($args[$var])) {
+				$val = $args[$var];
+			} else {
+				$val = self::s_additionalArg($var, $args, $extended, $baseTemplateName);
+			}
+
 			$string = str_replace( '__' . $var . '__', $val, $string );
 		}
 		return $string;

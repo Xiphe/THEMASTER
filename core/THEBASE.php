@@ -1189,7 +1189,7 @@ class THEBASE {
 
                         if (isset($obj->HTML) && $obj->HTML === true) {
                             if (defined('HTMLCLASSAVAILABLE') && HTMLCLASSAVAILABLE === true) {
-                                $obj->HTML = new \HTML($obj->baseUrl);
+                                $obj->HTML = new X\HTML($obj->baseUrl);
                             } else {
                                 throw new \Exception( '<strong>!THE MASTER ERROR:</strong> Class "'
                                     .get_class($obj).'" should have been initiated whith HTML Object,'
