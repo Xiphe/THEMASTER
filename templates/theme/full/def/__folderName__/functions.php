@@ -23,7 +23,7 @@ if (!defined('WPMASTERAVAILABE') || WPMASTERAVAILABE != true) {
 }
 
 function extr() {
-	if (!class_exists('__namespace__\classes\Master') || !is_array($r = Master::extr())) {
+	if (!class_exists('__namespace__\classes\Master') || !is_array($r = classes\Master::extr())) {
 		printf(
 			__(
 				'An Error occured: The current Theme could not be initiated. Please contact an %sAdministrator%s.',
