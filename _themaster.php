@@ -1,12 +1,12 @@
 <?php
 /*
-Plugin Name: !THE MASTER
+Plugin Name: THE MASTER
 Plugin URI: https://github.com/Xiphe/-THE-MASTER
 Namespace: Xiphe\THEMASTER
 Description: A Plugin to provide global access to the THEWPMASTER class. THEWPMASTER provides a lot of handy functions for plugins an themes.
-Version: 3.1.0.2
+Version: 3.1.0.3
 Date: 2012-30-10 22:00:00 +02:00
-Author: Hannes Diercks
+Author: Hannes Diercks aka Xiphe
 Author URI: https://github.com/Xiphe
 Update Server: http://plugins.red-thorn.de/v2/api/
 Branch: 3.1_Alpha

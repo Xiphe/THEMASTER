@@ -1001,15 +1001,16 @@ class THEBASE {
         );
         $ePaths = array();
 
+
         foreach ($paths as $k => $data) {
             extract($data);
-            $mID = $namespace.'\\'.$modelname;
+            $mID = $namespace.'\models\\'.$modelname;
 
             if (class_exists($mID)) {
                 return $mID;
             }
 
-            $inclPath = $basePath.'models'.DS.strtolower($modelname).'.php';
+            $inclPath = $basePath.'models'.DS.$modelname.'.php';
             $ePaths[] = $inclPath;
 
             if (file_exists($inclPath)) {
@@ -1058,8 +1059,11 @@ class THEBASE {
         );
         $ePaths = array();
 
+        
         foreach ($paths as $k => $data) {
-            $mID = $namespace.'\\'.$modelname;
+            extract($data);
+            $mID = $namespace.'\models\\'.$modelname;
+
             if (!class_exists($mID)) {
                 try {
                     call_user_func(

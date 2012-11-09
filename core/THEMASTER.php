@@ -121,7 +121,7 @@ class THEMASTER extends THESETTINGS {
          */
         if( isset( $this->requiredPlugins )
          && ( is_array( $this->requiredPlugins ) || is_object( $this->requiredPlugins ) )
-         && !X\THETOOLS::group_in_array( $this->requiredPlugins, self::$s_initiatedProjects )
+         && !X\THETOOLS::group_in_array($this->requiredPlugins, self::$s_initiatedProjects)
         ) {
             /*
              * Register for later initiation into the toBeInitiated array.
