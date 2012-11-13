@@ -460,7 +460,7 @@ class THEWPBUILDER extends THEMASTER {
 		THEWPMASTER::set_adminMessage( $msg, 'info' );
 	}
 
-	public static function sBuildClass( $className, $args, $Master ) {
+	public static function sBuildClass($className, $args, $Master) {
 		$template = $Master->projectType . DS . 'full' . DS;
 		$extended = true;
 		if( $Master->buildMissingClasses == true ) {
@@ -484,11 +484,14 @@ class THEWPBUILDER extends THEMASTER {
 		$template = array( DS . $Master->folderName . DS . 'classes' . DS . '__ClassName__.php' => file_get_contents( self::s_getBaseTemplatePath() . $template . '__foldername__'
 			. DS . 'classes' . DS . '-n- __ClassName__.php' ) );
 
+		$justName = explode('\\', $className);
+		$justName = $justName[count($justName)-1];
+
 		$template = self::s_fillTemplate(
 			$template,
 			array_merge(
 				$Master->_mastersInitArgs,
-				array( 'ClassName' => $className )
+				array('ClassName' => $justName)
 			),
 			$extended,
 			''
@@ -503,7 +506,7 @@ class THEWPBUILDER extends THEMASTER {
 			),
 			'success'
 		);
-		return $Master->get_instance( $className, $args );
+		return $Master->get_instance( $justName, $args );
 	}
 
 	private static function s_fillTemplate( $template, $args, $extended, $baseTemplateName ) {

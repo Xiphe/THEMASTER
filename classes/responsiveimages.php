@@ -1,6 +1,7 @@
 <?php 
-namespace Xiphe\THEMASTER\classes;
 
+namespace Xiphe\THEMASTER\classes;
+use Xiphe as X;
 use Xiphe\THEMASTER\core as core;
 
 /**
@@ -74,13 +75,13 @@ class ResponsiveImages extends core\THEWPMASTER {
 		/*
 		 * Cleanup the path.
 		 */
-		$img = THETOOLS::get_directPath(esc_attr($_REQUEST['image']));
+		$img = X\THETOOLS::get_directPath(esc_attr($_REQUEST['image']));
 
 		/*
 		 * Verify Nonce.
 		 */
 		if (!isset($_REQUEST['nonce'])
-		 || !THEWPTOOLS::verify_noprivnonce(
+		 || !X\THEWPTOOLS::verify_noprivnonce(
 				esc_attr($_REQUEST['nonce']),
 				'tm-responsive',
 				$img
@@ -128,7 +129,7 @@ class ResponsiveImages extends core\THEWPMASTER {
 		 * Verify nonce.
 		 */
 		if (!isset($_REQUEST['nonce'])
-		 || !THEWPTOOLS::verify_noprivnonce(
+		 || !X\THEWPTOOLS::verify_noprivnonce(
 				esc_attr($_REQUEST['nonce']),
 				'tm-responsive',
 				esc_attr($_REQUEST['image'])
@@ -220,8 +221,9 @@ class ResponsiveImages extends core\THEWPMASTER {
 			return false;
 		}
 
+		$ratio;
 		$height;
-		$loadWidth = $this->_get_loadWidh($image, $width, $height);
+		$loadWidth = $this->_get_loadWidh($image, $width, $height, $ratio);
 
 		$url = $this->get_url(
 			$image, 
@@ -231,15 +233,10 @@ class ResponsiveImages extends core\THEWPMASTER {
 		return array(
 			'style' => "background-image: url('$url');",
 			'class' => 'tm-responsiveimage tm-responsivebgimage',
-			'data-width' => $width,
-			'data-height' => $height,
-			'data-ratio' => ($height/$width),
+			'data-ratio' => $ratio,
 			'data-origin' => $origin,
 			'data-loaded' => $loadWidth,
-			'data-template' => $this->_gen_imageUrlFrom(
-				$this->_build_imageFileName($image, ':w', ':h')
-			),
-			'data-nonce' => THEWPTOOLS::create_noprivnonce('tm-responsive', $origin),
+			'data-nonce' => X\THEWPTOOLS::create_noprivnonce('tm-responsive', $origin),
 		);
 	}
 
@@ -286,7 +283,8 @@ class ResponsiveImages extends core\THEWPMASTER {
 		}
 
 		$height;
-		$loadWidth = $this->_get_loadWidh($image, $width, $height);
+		$ratio;
+		$loadWidth = $this->_get_loadWidh($image, $width, $height, $ratio);
 
 		$url = $this->get_url(
 			$image, 
@@ -296,15 +294,10 @@ class ResponsiveImages extends core\THEWPMASTER {
 		$args = array(
 			'src' => $url,
 			'class' => trim('tm-responsiveimage'.(!empty($addClass) ? ' '.str_replace('tm-responsiveimage', '', $addClass) : '')),
-			'data-width' => $width,
-			'data-height' => $height,
-			'data-ratio' => ($height/$width),
+			'data-ratio' => $ratio,
 			'data-origin' => $origin,
 			'data-loaded' => $loadWidth,
-			'data-template' => $this->_gen_imageUrlFrom(
-				$this->_build_imageFileName($image, ':w', ':h')
-			),
-			'data-nonce' => THEWPTOOLS::create_noprivnonce('tm-responsive', $origin),
+			'data-nonce' => X\THEWPTOOLS::create_noprivnonce('tm-responsive', $origin),
 			'width' => '100%',
 			'id' => $addId
 		);
@@ -323,9 +316,9 @@ class ResponsiveImages extends core\THEWPMASTER {
 				}
 			}
 			$args['data-slideshow'] = implode(',', $slideshow);
-			$args['data-slidenonce'] = THEWPTOOLS::create_noprivnonce('tm-responsive', $args['data-slideshow']);
+			$args['data-slidenonce'] = X\THEWPTOOLS::create_noprivnonce('tm-responsive', $args['data-slideshow']);
 		}
-		return THEBASE::sget_HTML()->r_img($args);
+		return core\THEBASE::sget_HTML()->r_img($args);
 	}
 
 	/**
@@ -358,7 +351,7 @@ class ResponsiveImages extends core\THEWPMASTER {
      * @param  mixed   $height  the targeted image height
      * @return intager          the loading width.
      */
-	private function _get_loadWidh($image, &$width, &$height)
+	private function _get_loadWidh($image, &$width, &$height, &$ratio)
 	{
 		/*
 		 * Check if image should be delivered in full size directly.
@@ -373,7 +366,7 @@ class ResponsiveImages extends core\THEWPMASTER {
 		/*
 		 * Get the potential dimensions.
 		 */		
-		$height = $this->_get_dims($image, $width, false);
+		$height = $this->_get_dims($image, $width, false, $ratio);
 
 		/*
 		 * Get the url of mini-thumb or direct full image if drct prefix was set.
@@ -564,9 +557,10 @@ class ResponsiveImages extends core\THEWPMASTER {
 	 * @param  boolean $round whether or not the size should be rounded.
 	 * @return intager        the height for the target image.
 	 */
-	private function _get_dims($image, &$width, $round = true)
+	private function _get_dims($image, &$width, $round = true, &$ratio = null)
 	{
 		$dims = getimagesize($image);
+		$ratio = $height = $dims[1];
 		if ($width == 'auto') {
 			$width = $dims[0];
 			return $dims[1];
@@ -591,7 +585,9 @@ class ResponsiveImages extends core\THEWPMASTER {
 			$width = $dims[0];
 			return $dims[1];
 		}
-		return round($width/($dims[0]/$dims[1]));
+
+		$ratio = round($dims[0]/$dims[1], 4);
+		return round($width/$ratio);
 	}
 
 	/**

@@ -29,9 +29,16 @@ jQuery(document).ready(function($) {
 			nW = Math.ceil($(this).width()/rnd)*rnd;
 
 		if(parseInt($(this).attr('data-loaded'), 10) !== nW) {
-			var	nH = Math.round(nW*$(this).attr('data-ratio')),
-				url = $(this).attr('data-template').replace(':h', nH).replace(':w', nW),
-				$img = $('<img />');
+			var	nH = Math.round(nW/$(this).attr('data-ratio')),
+				url = $(this).attr('src'),
+				$img = $('<img />'),
+				n;
+
+			url = url.split('.');
+			n = url[url.length-2].split('-');
+			n[n.length-1] = nW+'x'+nH;
+			url[url.length-2] = n.join('-');
+			url = url.join('.');
 
 			$img.load(function() {
 				setImg.call(thiz, url, nW);
@@ -138,7 +145,7 @@ jQuery(document).ready(function($) {
 
 	resize = function() {
 		$.each($('.tm-responsiveimage'), function() {
-			$(this).attr('height', Math.round($(this).width()*$(this).attr('data-ratio')));
+			$(this).attr('height', Math.round($(this).width()/$(this).attr('data-ratio')));
 		});
 	};
 	

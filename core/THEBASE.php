@@ -68,6 +68,13 @@ class THEBASE {
      */
     private static $s_singletons = array();
 
+    /**
+     * Holds Namespaces of Projects that were registered for Autoloading.
+     *
+     * @var array
+     */
+    private static $s_registeredAutoLoads = array();
+
     private static $s_themastersInitArgs = array();
     /* PUBLIC */
 
@@ -1001,15 +1008,16 @@ class THEBASE {
         );
         $ePaths = array();
 
+
         foreach ($paths as $k => $data) {
             extract($data);
-            $mID = $namespace.'\\'.$modelname;
+            $mID = $namespace.'\models\\'.$modelname;
 
             if (class_exists($mID)) {
                 return $mID;
             }
 
-            $inclPath = $basePath.'models'.DS.strtolower($modelname).'.php';
+            $inclPath = $basePath.'models'.DS.$modelname.'.php';
             $ePaths[] = $inclPath;
 
             if (file_exists($inclPath)) {
@@ -1058,8 +1066,11 @@ class THEBASE {
         );
         $ePaths = array();
 
+        
         foreach ($paths as $k => $data) {
-            $mID = $namespace.'\\'.$modelname;
+            extract($data);
+            $mID = $namespace.'\models\\'.$modelname;
+
             if (!class_exists($mID)) {
                 try {
                     call_user_func(
@@ -1098,6 +1109,27 @@ class THEBASE {
         }
     }
 
+    private static function s_registerAutoLoadFor($initArgs) {
+        if (in_array($initArgs['namespace'], self::$s_registeredAutoLoads)) {
+            return true;
+        }
+        spl_autoload_register(function ($class) use ($initArgs) {
+            if (strpos($class, $initArgs['namespace']) === 0) {
+                $path = explode('\\', $class);
+                $name = end($path);
+                $path = array_splice($path, 2, -1);
+                $path[] = $name.'.php';
+                $path = implode(DS, $path);
+
+                if (file_exists($initArgs['basePath'].$path)) {
+                    include $initArgs['basePath'].$path;
+                }
+            }
+        });
+        self::$s_registeredAutoLoads[] = $initArgs['namespace'];
+        return true;
+    }
+
     /**
      * Trys to get a class File named example.php from 
      * "classes"-Subfolder of defined basePath and return a 
@@ -1108,12 +1140,13 @@ class THEBASE {
      * @param  array  $initArgs  optional initiation arguments for the instance.
      * @return mixed             the instance or false if not available.
      */
-    final public function get_instance($classname, $initArgs = array())
+    final public function get_instance($name, $initArgs = array())
     {
         
         $paths = array();
-        if ($classname === 'Master') {
+        if ($name === 'Master') {
             if (isset($initArgs['basePath']) && $initArgs['namespace']) {
+                self::s_registerAutoLoadFor($initArgs);
                 $paths[]  = array(
                     'namespace' => $initArgs['namespace'],
                     'basePath' => $initArgs['basePath']
@@ -1139,29 +1172,21 @@ class THEBASE {
             );
         }
 
-        $classname = trim($classname);
-        $filename = strtolower($classname);
-        $lcn = strtolower($classname);
         $ePaths = array();
-        
+        $buildClass = false;
 
         foreach ($paths as $k => $data) {
             extract($data);
-            $cID = $namespace.'\classes\\'.$classname;
-
-            if (isset(self::$s_singletons[$cID]) && is_object(self::$s_singletons[$cID])) {
-                return self::$s_singletons[$cID];
+            $classname = $namespace.'\classes\\'.$name;
+            if ($buildClass === false && count($paths) > 1) {
+                $buildClass = $classname;
             }
 
-            $file = $basePath.'classes'.DS.$filename.'.php';
-            $ePaths[] = $file;
+            if (isset(self::$s_singletons[$classname]) && is_object(self::$s_singletons[$classname])) {
+                return self::$s_singletons[$classname];
+            }
 
-            if (file_exists($file)) {
-                include_once($file);
-
-                if (!class_exists($cID)) {
-                    throw new \Exception('<strong>!THE MASTER ERROR:</strong> Class '.$cID.' is not available.', 2);
-                }
+            if (class_exists($classname)) {
 
                 if (isset($this)) {
                     $initArgs = array_merge(
@@ -1212,10 +1237,10 @@ class THEBASE {
                     function ($condArgs, $givenArgs) {
                         return $condArgs['class'] === $givenArgs['class'];
                     },
-                    array('class' => $cID)
+                    array('class' => $classname)
                 );
 
-                $obj = new $cID($initArgs);
+                $obj = new $classname($initArgs);
                 break;
             }
         }
@@ -1226,9 +1251,8 @@ class THEBASE {
              && isset($this->buildMissingClasses)
              && $this->buildMissingClasses === true
             ) {
-                return THEWPBUILDER::sBuildClass($classname, $initArgs, $this);
+                return THEWPBUILDER::sBuildClass($buildClass, $initArgs, $this);
             } else {
-                               
                 $msg = sprintf(__( '**!THE MASTER ERROR:** Class File for %s expected here: "%s".', 'themaster' ),
                     $classname,
                     implode(__('" or here "', 'themaster'), $ePaths)
