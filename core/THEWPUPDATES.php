@@ -214,7 +214,7 @@ class THEWPUPDATES extends THEWPSETTINGS {
 		if ( empty( $checked_data->checked ) )
 			return $checked_data;
 		
-		X\debug(self::$s_updatables, '$s_updatables');
+		// X\debug(self::$s_updatables, '$s_updatables');
 		
 		// X\debug($checked_data, 'checked_data');
 		foreach ( self::$s_updatables as $textID => $server ) {
@@ -246,13 +246,13 @@ class THEWPUPDATES extends THEWPSETTINGS {
 			
 
 			$request_string = self::_prepare_request( 'basic_check', $request_args, $fullTextID );
-			X\debug($request_string, 'request_string');
+			// X\debug($request_string, 'request_string');
 			
 			// Start checking for an update
 
 
 			$raw_response = wp_remote_post($server, $request_string);
-			X\debug($raw_response, 'raw_response');
+			// X\debug($raw_response, 'raw_response');
 				
 
 			if ( !is_wp_error( $raw_response ) && ( $raw_response['response']['code'] == 200 ) ) {
