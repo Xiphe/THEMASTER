@@ -12,6 +12,7 @@
 namespace __namespace__;
 
 use Xiphe\THEMASTER as TM;
+use Xiphe as X;
 
 if (!isset($Master)) {
     extract(extr());
@@ -31,7 +32,7 @@ $HTML->s_article('#post-'.get_the_ID().'|class='.implode(' ', get_post_class()))
     ->end('.entry-header');
 
     if ('post' == get_post_type()) {
-        $HTML->div(TM\THEWPTOOLS::posted_on(), '.entry-meta');
+        $HTML->div(X\THEWPTOOLS::posted_on(), '.entry-meta');
     }
 
     if (is_search()) {
