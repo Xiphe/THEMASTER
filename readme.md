@@ -118,6 +118,12 @@ Here is a list:
 * **[Tablesorter](http://tablesorter.com/docs/)**  
   License: http://opensource.org/licenses/mit-license.php
   Developed by [Christian Bach](https://twitter.com/lovepeacenukes)
+* **[timing — a jQuery core plugin](http://creativecouple.github.com/jquery-timing/)**  
+  License: [MIT License](http://www.opensource.org/licenses/mit-license.php)
+  Developed by [CreativeCouple](http://www.creativecouple.de/)
+* **[-prefix-free](http://leaverou.github.com/prefixfree/)**  
+  License: [MIT License](http://www.opensource.org/licenses/mit-license.php)
+  Developed by [Lea Verou](http://lea.verou.me/)
 
 
 Changelog

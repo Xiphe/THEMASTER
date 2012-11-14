@@ -248,6 +248,7 @@ class THEWPBUILDER extends THEMASTER {
 
 		// Generate basePath and folderName from projectFile.
 		$iA['basePath'] = dirname( $iA['projectFile'] ) . DS;
+
 		$iA['folderName'] = basename( $iA['basePath'] );
 
 		// If path contains wp-content/themes project seems to be a theme.
@@ -257,6 +258,20 @@ class THEWPBUILDER extends THEMASTER {
 			$iA['projectType'] = 'theme';
 		} else {
 			$iA['projectType'] = 'plugin';
+		}
+
+		if (X\THEMASTER\WP()) {
+			$iA['basePath'] = dirname(
+				X\THEMASTER\get_wpInstallPath(
+					$iA['projectFile'],
+					($iA['projectType'] === 'theme'),
+					in_array(
+						strtolower(basename(dirname($iA['projectFile']))),
+						array('themes', '__themes', 'plugins', '__plugins')
+					)
+				)
+			);
+			$iA['basePath'] .= DS;
 		}
 
 		// Set textdomain to foldername for themes and to filebasename for plugins.

@@ -181,6 +181,7 @@ class ResponsiveImages extends core\THEWPMASTER {
 		if (!($image = $this->_get_baseImageFile($image))) {
 			return false;
 		}
+
 		$height = $this->_get_dims($image, $width);
 		return $this->_get_imageUrl($image, $width, $height);
 	}
@@ -208,11 +209,11 @@ class ResponsiveImages extends core\THEWPMASTER {
 	 * an html-tag when its using $image as background image.
 	 *
 	 * @access public
-	 * @param  string $image attachment ID or image path
-	 * @param  mixed  $width the targeted image width
-	 * @return mixed         the attr array or false if image is not available.
+	 * @param  string $image    attachment ID or image path
+	 * @param  mixed  $maxWidth the targeted image width
+	 * @return mixed            the attr array or false if image is not available.
 	 */
-	public function get_bg_imageAttrs($image, $width = 'auto')
+	public function get_bg_imageAttrs($image, $maxWidth = 'auto')
 	{
 		$slideshow = $this->_is_slideshow($image);
 
@@ -222,8 +223,8 @@ class ResponsiveImages extends core\THEWPMASTER {
 		}
 
 		$ratio;
-		$height;
-		$loadWidth = $this->_get_loadWidh($image, $width, $height, $ratio);
+		$loadedHeight;
+		$loadWidth = $this->_get_loadWidh($image, $maxWidth, $loadedHeight, $ratio);
 
 		$url = $this->get_url(
 			$image, 
@@ -236,7 +237,7 @@ class ResponsiveImages extends core\THEWPMASTER {
 			'data-ratio' => $ratio,
 			'data-origin' => $origin,
 			'data-loaded' => $loadWidth,
-			'data-maxwidth' => $width,
+			'data-maxwidth' => $maxWidth,
 			'data-nonce' => X\THEWPTOOLS::create_noprivnonce('tm-responsive', $origin),
 		);
 	}
@@ -253,7 +254,7 @@ class ResponsiveImages extends core\THEWPMASTER {
 	 * @param  string  $title    optional title attr for the tag. Set to false to disable the title.
 	 * @return mixed             the image tag or false on error.
 	 */
-	public function get_image($image, $width = 'auto', $addClass = false, $addId = null, $alt = null, $title = null)
+	public function get_image($image, $maxWidth = 'auto', $addClass = false, $addId = null, $alt = null, $title = null)
 	{
 		/*
 		 * Check if $image is array or object initiate slideshow and use first entry as startimage.
@@ -280,12 +281,16 @@ class ResponsiveImages extends core\THEWPMASTER {
 		}
 
 		if (!is_numeric($origin) && defined('ABSPATH')) {
-			$origin = str_replace(ABSPATH, '', $origin);
+			$origin = str_replace(
+				X\THETOOLS::unify_slashes(ABSPATH),
+				'',
+				X\THETOOLS::unify_slashes($origin)
+			);
 		}
 
-		$height;
+		$loadHeight;
 		$ratio;
-		$loadWidth = $this->_get_loadWidh($image, $width, $height, $ratio);
+		$loadWidth = $this->_get_loadWidh($image, $maxWidth, $loadHeight, $ratio);
 
 		$url = $this->get_url(
 			$image, 
@@ -298,7 +303,7 @@ class ResponsiveImages extends core\THEWPMASTER {
 			'data-ratio' => $ratio,
 			'data-origin' => $origin,
 			'data-loaded' => $loadWidth,
-			'data-maxwidth' => $width,
+			'data-maxwidth' => $maxWidth,
 			'data-nonce' => X\THEWPTOOLS::create_noprivnonce('tm-responsive', $origin),
 			'width' => '100%',
 			'id' => $addId
@@ -365,20 +370,23 @@ class ResponsiveImages extends core\THEWPMASTER {
 			$width = intval(str_replace('drct', '', $width));
 		}
 
+		$maxWidth;
+
 		/*
 		 * Get the potential dimensions.
 		 */		
-		$height = $this->_get_dims($image, $width, false, $ratio);
+		$height = $this->_get_dims($image, $width, false, $ratio, $maxWidth);
 
 		/*
 		 * Get the url of mini-thumb or direct full image if drct prefix was set.
 		 */
 		if ($direct) {
 			$loadWidth = $width;
-			$this->_get_dims($image, $loadWidth);
+			$this->_get_dims($image, $loadWidth, false, $ratio, $maxWidth);
 		} else {
 			$loadWidth = 50;
 		}
+		$width = $maxWidth;
 		return $loadWidth;		
 	}
 
@@ -442,15 +450,13 @@ class ResponsiveImages extends core\THEWPMASTER {
 	 */
 	private function _gen_imageUrlFrom($file)
 	{
-		return preg_replace(
-			'/[\/\\\\]/',
-			'/',
-			get_bloginfo('wpurl').'\\'.str_replace(
-				ABSPATH,
-				'',
-				$file
-			)
-		);
+		$file = X\THETOOLS::unify_slashes($file);
+		$abspath = X\THETOOLS::unify_slashes(ABSPATH);
+		$url = X\THETOOLS::slash(get_bloginfo('wpurl'));
+		$path = str_replace($abspath, '', $file);
+		$url .= X\THETOOLS::unify_slashes($path, '/', true);
+
+		return $url;
 	}
 
 	/**
@@ -559,40 +565,41 @@ class ResponsiveImages extends core\THEWPMASTER {
 	 * @param  boolean $round whether or not the size should be rounded.
 	 * @return intager        the height for the target image.
 	 */
-	private function _get_dims($image, &$width, $round = true, &$ratio = null)
+	private function _get_dims($image, &$width, $round = true, &$ratio = null, &$fullWidth = null)
 	{
 		$dims = getimagesize($image);
 		$height = $dims[1];
 		$ratio = round($dims[0]/$dims[1], 4);
 
-		$wWidth = $width;
-		$width = $dims[0];
+		$fullWidth = $dims[0];
 
 		if ($width == 'auto') {
+			$width = $dims[0];
 			return $dims[1];
 		}
 
-		if (strstr($wWidth, '%')) {
-			$wWidth = floatval('0.'.str_replace('%', '', $wWidth));
-			$wWidth = round($dims[0]*$wWidth);
+		if (strstr($width, '%')) {
+			$width = floatval('0.'.str_replace('%', '', $width));
+			$width = round($dims[0]*$width);
 		}
 
+
 		if ($round) {
-			if($wWidth < 200) {
+			if($width < 200) {
 				$rnd = 50;
-			} elseif($wWidth < 1000) {
+			} elseif($width < 1000) {
 				$rnd = 100;
 			} else {
 				$rnd = 200;
 			}
-			$wWidth = ceil(intval($wWidth)/$rnd)*$rnd;
+			$width = ceil(intval($width)/$rnd)*$rnd;
 		}
-		if ($wWidth > $dims[0]) {
-			$wWidth = $dims[0];
+		if ($width > $dims[0]) {
+			$width = $dims[0];
 			return $dims[1];
 		}
 
-		return round($wWidth/$ratio);
+		return round($width/$ratio);
 	}
 
 	/**

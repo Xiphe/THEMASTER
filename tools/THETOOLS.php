@@ -1127,13 +1127,19 @@ class THETOOLS {
      * Replaces / & \ to $slash in $path
      *
      * @access public
-     * @param  string $path  input path
-     * @param  string $slash the new slash char default: DIRECTORY_SEPERATOR
+     * @param string  $path        input path
+     * @param string  $slash       the new slash char default: DIRECTORY_SEPERATOR
+     * @param boolean $allowDouble set true to allow multiple slashes following each other. (//)
+     * 
      * @return string
      */
-    public static function unify_slashes($path, $slash = DS)
+    public static function unify_slashes($path, $slash = DS, $allowDouble = false)
     {
-        return preg_replace("/[\/\\\]+/", DS, $path);
+        if ($allowDouble) {
+            return preg_replace("/[\/\\\]/", $slash, $path);
+        } else {
+            return preg_replace("/[\/\\\]+/", $slash, $path);
+        }
     }
 
 
