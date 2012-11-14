@@ -236,6 +236,7 @@ class ResponsiveImages extends core\THEWPMASTER {
 			'data-ratio' => $ratio,
 			'data-origin' => $origin,
 			'data-loaded' => $loadWidth,
+			'data-maxwidth' => $width,
 			'data-nonce' => X\THEWPTOOLS::create_noprivnonce('tm-responsive', $origin),
 		);
 	}
@@ -297,6 +298,7 @@ class ResponsiveImages extends core\THEWPMASTER {
 			'data-ratio' => $ratio,
 			'data-origin' => $origin,
 			'data-loaded' => $loadWidth,
+			'data-maxwidth' => $width,
 			'data-nonce' => X\THEWPTOOLS::create_noprivnonce('tm-responsive', $origin),
 			'width' => '100%',
 			'id' => $addId
@@ -560,34 +562,37 @@ class ResponsiveImages extends core\THEWPMASTER {
 	private function _get_dims($image, &$width, $round = true, &$ratio = null)
 	{
 		$dims = getimagesize($image);
-		$ratio = $height = $dims[1];
+		$height = $dims[1];
+		$ratio = round($dims[0]/$dims[1], 4);
+
+		$wWidth = $width;
+		$width = $dims[0];
+
 		if ($width == 'auto') {
-			$width = $dims[0];
 			return $dims[1];
 		}
 
-		if (strstr($width, '%')) {
-			$width = floatval('0.'.str_replace('%', '', $width));
-			$width = round($dims[0]*$width);
+		if (strstr($wWidth, '%')) {
+			$wWidth = floatval('0.'.str_replace('%', '', $wWidth));
+			$wWidth = round($dims[0]*$wWidth);
 		}
 
 		if ($round) {
-			if($width < 200) {
+			if($wWidth < 200) {
 				$rnd = 50;
-			} elseif($width < 1000) {
+			} elseif($wWidth < 1000) {
 				$rnd = 100;
 			} else {
 				$rnd = 200;
 			}
-			$width = ceil(intval($width)/$rnd)*$rnd;
+			$wWidth = ceil(intval($wWidth)/$rnd)*$rnd;
 		}
-		if ($width > $dims[0]) {
-			$width = $dims[0];
+		if ($wWidth > $dims[0]) {
+			$wWidth = $dims[0];
 			return $dims[1];
 		}
 
-		$ratio = round($dims[0]/$dims[1], 4);
-		return round($width/$ratio);
+		return round($wWidth/$ratio);
 	}
 
 	/**

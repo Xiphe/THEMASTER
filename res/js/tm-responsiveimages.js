@@ -26,13 +26,28 @@ jQuery(document).ready(function($) {
 			rnd = 200;
 		}
 		var thiz = this,
-			nW = Math.ceil($(this).width()/rnd)*rnd;
+			nW = Math.ceil($(this).width()/rnd)*rnd,
+			maxWidth = parseInt($(this).attr('data-maxwidth'));
+
+		if (nW > maxWidth) {
+			nW = maxWidth;
+		}
 
 		if(parseInt($(this).attr('data-loaded'), 10) !== nW) {
 			var	nH = Math.round(nW/$(this).attr('data-ratio')),
-				url = $(this).attr('src'),
+				url,
 				$img = $('<img />'),
 				n;
+
+			if ($(this).hasClass('tm-responsivebgimage')) {
+				url = $(this).attr('style').match(/url\((["|']+)([^\1]+)\1\)/);
+				if (!url || url.length <= 2) {
+					return false;
+				}
+				url = url[2];
+			} else {
+				url = $(this).attr('src')
+			}
 
 			url = url.split('.');
 			n = url[url.length-2].split('-');

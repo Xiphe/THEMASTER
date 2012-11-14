@@ -2,6 +2,7 @@
 namespace Xiphe\THEMASTER\classes;
 
 use Xiphe\THEMASTER\core as core;
+use Xiphe as X;
 
 /**
  * Provides themes and plugins with a form interface to select a file from the Media Library.
@@ -62,7 +63,7 @@ class FileSelect extends core\THEWPMASTER {
         $validation = false,
         $multiple = false
     ) {
-    	$HTML = THEBASE::sget_HTML()->s_div('.tm-fileselect_fullwrap');
+    	$HTML = core\THEBASE::sget_HTML()->s_div('.tm-fileselect_fullwrap');
         if (empty($label) && $label !== false) {
             $label = __('Select file', 'themaster');
         }
@@ -223,9 +224,9 @@ class FileSelect extends core\THEWPMASTER {
             $msg = sprintf(
                 __('%1$s %2$s %3$s not match with the allowed sizes (%4$s).', 'themaster'),
                 (count($errorFiles) > 1 ? __('The images', 'themaster') : __('The image', 'themaster')),
-                THETOOLS::readableList($errorFiles, ' '.__('and', 'themaster').' '),
+                X\THETOOLS::readableList($errorFiles, ' '.__('and', 'themaster').' '),
                 (count($errorFiles) > 1 ? __('do', 'themaster') : __('does', 'themaster')),
-                THETOOLS::readableList(array_flip($valids), ' '.__('and', 'themaster').' ')
+                X\THETOOLS::readableList(array_flip($valids), ' '.__('and', 'themaster').' ')
             );
             return $msg;
         }
@@ -252,9 +253,9 @@ class FileSelect extends core\THEWPMASTER {
         return sprintf(
             __('The %1$s %2$s %3$s not match with the allowed mimetypes. Please use only %4$s.', 'themaster'),
             count($files) > 1 ? __('files', 'themaster') : __('file', 'themaster'),
-            THETOOLS::readableList($files, ' '.__('and', 'themaster').' '),
+            X\THETOOLS::readableList($files, ' '.__('and', 'themaster').' '),
             count($files) > 1 ? __('do', 'themaster') : __('does', 'themaster'),
-            THETOOLS::readableList(array_flip($valids))
+            X\THETOOLS::readableList(array_flip($valids))
         );
     }
 
@@ -381,7 +382,7 @@ class FileSelect extends core\THEWPMASTER {
             return sprintf(
                 __('Sorry your file %1$s does not match with the allowed Filetypes (%2$s).'),
                 esc_attr($name),
-                THETOOLS::readableList(esc_attr($_REQUEST['tm-fileselect_validation']))
+                X\THETOOLS::readableList(esc_attr($_REQUEST['tm-fileselect_validation']))
             );
         }
         return $translated_text;
@@ -405,7 +406,7 @@ class FileSelect extends core\THEWPMASTER {
             return false;
         }
         
-        $HTML = THEBASE::sget_HTML();
+        $HTML = core\THEBASE::sget_HTML();
         $r = $HTML->sr_li(array(
             'class' => 'tm-fileselect_wrap '.(wp_attachment_is_image($id) ? 'tm-fileselect_wrap_image' : 'tm-fileselect_wrap_file'),
             'id' => 'tm-fileselect_id_'.$id
@@ -443,7 +444,7 @@ class FileSelect extends core\THEWPMASTER {
 		$ft = wp_check_filetype($attachment_url);
 		$fts = explode('/', $ft['type']);
 
-		return THEBASE::sget_HTML()->r_a(
+		return core\THEBASE::sget_HTML()->r_a(
 			basename( $attachment_url ),
 			array(
 				'href' => wp_get_attachment_url($id),
