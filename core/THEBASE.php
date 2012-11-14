@@ -304,8 +304,15 @@ class THEBASE {
 
             self::$s_themastersInitArgs['projectFile']
                 = self::$sProjectFile = THEMASTER_PROJECTFILE;
+
+            $bp = dirname(self::$sProjectFile).DS;
+
+            if (X\THEMASTER\WP()) {
+                $bp = dirname(X\THEMASTER\get_wpInstallPath(self::$sProjectFile)).DS;
+            }
+
             self::$s_themastersInitArgs['basePath']
-                = self::$sBasePath = dirname(self::$sProjectFile).DS;
+                = self::$sBasePath = $bp;
             self::$s_themastersInitArgs['folderName']
                 = self::$sFolderName = basename(self::$sBasePath);
             self::$s_themastersInitArgs['textdomain']
