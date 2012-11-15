@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="Themaster : A Plugin to provide global access to the THEWPMASTER class. THEWPMASTER provides a lot of handy functions for plugins an themes. WP-stuff can be skipped for standalone usage." />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Themaster</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/Xiphe/THEMASTER">View on GitHub</a>
+
+          <h1 id="project_title">Themaster</h1>
+          <h2 id="project_tagline">A Plugin to provide global access to the THEWPMASTER class. THEWPMASTER provides a lot of handy functions for plugins an themes. WP-stuff can be skipped for standalone usage.</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/Xiphe/THEMASTER/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/Xiphe/THEMASTER/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h1>THE MASTER</h1>
+
+<p>A base for plugins and themes</p>
+
+<p>This plugin allocates THEWPMASTER Class which brings handy functionalety and presets
+for plugin and theme development in wordpress.</p>
+
+<p>See <a href="https://github.com/Xiphe/-THE-MASTER">Plugin Page</a> for details</p>
+
+<h2>Version</h2>
+
+<p>3.0.12</p>
+
+<h2>Installation</h2>
+
+<ol>
+<li>Upload the plugin directory to the <code>/wp-content/plugins/</code> directory</li>
+<li>Activate the plugin through the 'Plugins' menu in WordPress</li>
+<li>Does nothing now</li>
+<li>See <a href="https://github.com/Xiphe/-THE-MASTER/wiki">Plugin Page</a> for usage details</li>
+</ol><h2>Support</h2>
+
+<p>I've written this project for my own needs so i am not willing to give
+full support. Anyway, i am very interested in any bugs, hints, requests
+or whatever. Please use the <a href="https://github.com/Xiphe/-THE-MASTER/issues">github issue system</a>
+and i will try to answer.</p>
+
+<h2>Props</h2>
+
+<p>The update mechanics are inspired by:
+<strong><a href="https://github.com/jeremyclark13/automatic-theme-plugin-update">automatic-theme-plugin-update</a></strong><br>
+  by Kaspars Dambis (<a href="mailto:kaspars@konstruktors.com">kaspars@konstruktors.com</a>)<br>
+  Modified by <a href="http://clark-technet.com">Jeremy Clark</a><br><a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=73N8G8UPGDG2Q">Donate</a></p>
+
+<p>Inspired means that i have seen this <strong>brilliant project</strong>, started to use it
+and than started to write my own version with the intention to just have the
+functionality i really use.<br>
+I got the idea of how things are working by analyzing and using the code of
+it and i can't say where i used snippets from this project but they've
+influenced my code strongly.</p>
+
+<h2>3rd Party</h2>
+
+<p>This plugin uses and includes some scripts from other people.
+Here is a list:</p>
+
+<h3>PHP</h3>
+
+<ul>
+<li>
+<strong><a href="http://www.firephp.org/">FirePHP</a></strong><br>
+Used for debuging into Firebug console.<br>
+License: New BSD License<br>
+File: /_themaster/classes/FirePHPCore/LICENSE<br>
+Copyright (c) 2006-2009, Christoph Dorn<br>
+All rights reserved.</li>
+<li>
+<strong><a href="http://leafo.net/lessphp/">lessPHP</a></strong><br>
+Used for server-side compiling of .less files.<br>
+License: MIT LICENSE<br>
+File: /_themaster/classes/lessPHP/LICENSE<br>
+Copyright (c) 2010 Leaf Corcoran, <a href="http://leafo.net/lessphp">http://leafo.net/lessphp</a>
+</li>
+<li>
+<strong><a href="http://chrisschuld.com/projects/browser-php-detecting-a-users-browser-from-php/">Browser.php</a></strong><br>
+Used for Browser-detection.<br>
+License: GNU General Public License V2<br>
+File: <a href="http://www.gnu.org/copyleft/gpl.html">http://www.gnu.org/copyleft/gpl.html</a><br>
+Copyright (C) 2008-2010 Chris Schuld  (<a href="mailto:chris@chrisschuld.com">chris@chrisschuld.com</a>)</li>
+<li>
+<strong><a href="http://www.phpclasses.org/css-fix">CSSfix</a></strong><br>
+Used to apply vendor prefixes to specified CSS rules while parsing less to css.<br>
+License: BSD<br>
+File: <a href="http://opensource.org/licenses/bsd-license.html">http://opensource.org/licenses/bsd-license.html</a><br>
+Developed by Arturs Sosins aka ar2rsawseen, <a href="http://webcodingeasy.com">http://webcodingeasy.com</a>
+</li>
+<li>
+<strong><a href="http://code.google.com/p/phpquery/">phpQuery</a></strong><br>
+Not used by THE MASTER but some shorthands are served.<br>
+License: MIT License<br>
+File: <a href="http://www.opensource.org/licenses/mit-license.php">http://www.opensource.org/licenses/mit-license.php</a><br>
+Developed by Tobiasz Cudnik </li>
+<li>
+<strong>MIMEType-Array from <a href="http://www.phpclasses.org/phpmimetypeclass">MIME Types Class</a></strong><br>
+Used for suffix to mimetype.<br>
+License: GNU GPL.<br>
+File: <a href="http://www.gnu.org/copyleft/gpl.html">http://www.gnu.org/copyleft/gpl.html</a><br>
+Developed by Robert Widdick</li>
+<li>
+<strong>SLT File Select(<a href="http://sltaylor.co.uk/wordpress/plugins/slt-file-select/">http://sltaylor.co.uk/wordpress/plugins/slt-file-select/</a>)</strong>
+I implemented the idears of Steve Taylors File Select Plugin as Class FileSelect for usage in other Plugins
+and as a part of THEWPSETTINGS. I modifyed his code a bit to make it fit into my workflow.
+Donate Link: <a href="http://www.babyloniantimes.co.uk/index.php?page=donate">http://www.babyloniantimes.co.uk/index.php?page=donate</a>
+</li>
+</ul><h3>JS</h3>
+
+<ul>
+<li>
+<strong><a href="https://github.com/zachstronaut/jquery-animate-css-rotate-scale/blob/master/jquery-animate-css-rotate-scale.js">animaterotatescale</a></strong><br>
+Devloped by zachstronaut</li>
+<li>
+<strong><a href="http://p.sohei.org/jquery-plugins/columnmanager/">coloumnmanager</a></strong><br>
+</li>
+<li>
+<strong>combobox</strong><br>
+From jQueryUI-Examples - modifyed by Hannes Diercks.</li>
+<li>
+<strong><a href="http://www.jacklmoore.com/colorbox">colorbox</a></strong><br>
+(c) 2011 Jack Moore - jacklmoore.com<br>
+License: <a href="http://www.opensource.org/licenses/mit-license.php">http://www.opensource.org/licenses/mit-license.php</a>
+</li>
+<li>
+<strong>jsonencode</strong><br>
+Sorry, can't find the author :(</li>
+<li>
+<strong><a href="www.modernizr.com">modernizr</a></strong><br>
+License: <a href="http://modernizr.com/license/">http://modernizr.com/license/</a>
+</li>
+<li>
+<strong>notextselect</strong><br>
+By <a href="http://stackoverflow.com/users/34397/slaks">SLaks</a>
+</li>
+<li>
+<strong>resizeend</strong><br>
+By <a href="http://forum.jquery.com/user/zetce21">zetce21</a>
+</li>
+<li>
+<strong><a href="http://fgnass.github.com/spin.js#v1.2.5">spin</a></strong><br>
+</li>
+<li>
+<strong><a href="http://www.diveintojavascript.com/projects/javascript-sprintf">sprintf</a></strong>
+Copyright (c) Alexandru Marasteanu <br>
+All rights reserved.)<br>
+</li>
+<li>
+<strong><a href="http://tablesorter.com/docs/">Tablesorter</a></strong><br>
+License: <a href="http://opensource.org/licenses/mit-license.php">http://opensource.org/licenses/mit-license.php</a>
+Developed by <a href="https://twitter.com/lovepeacenukes">Christian Bach</a>
+</li>
+</ul><h2>Changelog</h2>
+
+<h3>3.0.12</h3>
+
+<ul>
+<li>Added option to disable CSSFix for a .less file. Just add "// NOFIX //" in the 5th or 6th line of your less file.</li>
+<li>Internal enhancement of the THETOOLS::is_browser() method.</li>
+<li>Added THETOOLS::get_browser(), THETOOLS::get_browserVersion() and THETOOLS::get_layoutEngine()</li>
+<li>Enhanced the slash methods in THETOOLS. They all now accept a boolean as second argument. When true the slashes in the passed string will be unified.</li>
+<li>Deprecated THETOOLS::get_cleanedPath() in favor of THETOOLS::unify_slashes(). Same logic -&gt; more semantic name.</li>
+<li>Nicer ID for registered sources in THEWPMASTER::twpm_enqueue()</li>
+<li>Added a &gt; img { border: 0; } to base.less</li>
+<li>Added and enhanced the gradient-mixins in elements.less</li>
+</ul><h3>3.0.11</h3>
+
+<ul>
+<li>multiple methods can be bind to wordpress hook by using an array as value in the actions_ class variable.</li>
+<li>Added .clear, hr.sep and hr.clear.sep as Buttons to TinyMCE</li>
+</ul><h3>3.0.10</h3>
+
+<ul>
+<li>Introducing TM\WP() Method as shorthand for class_exists('\WP')</li>
+<li>First standalone Bugfixes</li>
+</ul><h3>3.0.9</h3>
+
+<ul>
+<li>Updated the PHPQuery helper.</li>
+<li>Added settings_saved callback to THEWPSETTINGS.</li>
+<li>bugfixes</li>
+</ul><h3>3.0.8</h3>
+
+<ul>
+<li>FileSelect now tries to bind newly uploaded files to the parent post.</li>
+<li>You can now change title and description of attachment files via the fileselect dialog.</li>
+<li>Added THEWPTOOLS::get_nav_menu_parent()</li>
+<li>Bugfixes</li>
+</ul><h3>3.0.7</h3>
+
+<ul>
+<li>FileSelect Class supports height and width for dimension validation.</li>
+<li>Fixed bug with registered source destinations.</li>
+<li>Added .nowrap class to base.less and tm-admin.less</li>
+</ul><h3>3.0.6</h3>
+
+<ul>
+<li>Fixed some errors when project file is not found by THEWPBUILDER.</li>
+<li>Added FileSelect::get_sizeStr() for easy comparing sizes of multiple files.</li>
+<li>Fixed errors with deleted attachments in FileSelect.</li>
+<li>Added ResponsiveImages::get_imagefile() for getting the full image path.</li>
+<li>Added Percent values as possible width for ResponsiveImages</li>
+<li>Added THEWPTOOLS::relUrl() for removing the wp-baseUrl from given url.</li>
+<li>Fixed Bug in tm-fileselect.js where the selection of one field affected other siblings.</li>
+</ul><h3>3.0.5</h3>
+
+<ul>
+<li>Added THETOOLS::shorten() for cutting a text after x letters </li>
+<li>Added THEWPTOOLS::get_nav_menu_id()</li>
+<li>Added THEWPTOOLS::get_the_date()</li>
+<li>Bugfixes</li>
+</ul><h3>3.0.4</h3>
+
+<ul>
+<li>Added DS, preDS, unDS and unPreDS to THETOOLS</li>
+<li>Reactivated check_folder_structure_ in THEWPBUILDER used for gaining desired chmod on folders
+after project update.</li>
+</ul><h3>3.0.3</h3>
+
+<ul>
+<li>Added FileSelect Class for manipulating the wordpress media upload dialog.</li>
+<li>Added "attachment" as key for Setting type.</li>
+<li>Added ResponsiveImage Class for preloading mini images and then get the right image files
+for the current screen-size.</li>
+<li>Lots of bugfixes</li>
+</ul><h3>3.0.2</h3>
+
+<ul>
+<li>Added THEWPTOOLS::posted_on() from TwentyEleven</li>
+<li>LessPHP to 0.3.8 and fixed import of elements.less</li>
+<li>fixed import of textdomain</li>
+<li>Added edit_theme_options as capability for Theme Settings</li>
+<li>Added 'textarea' and 'tiny_mce' as keys for Setting type</li>
+<li>Improved tm-admin.js setting-save-logic to enable tinyMCE</li>
+<li>Improved def Theme template.</li>
+</ul><h3>3.0.1</h3>
+
+<ul>
+<li>Added THETOOLS::filter_urlQuery() and THETOOLS::create_sprite()</li>
+<li>Fixed Names of Masterclass in THEBASE::extr() and THEBASE::get_view() methods.</li>
+<li>Bigfixes.</li>
+</ul><h3>3.0.0</h3>
+
+<ul>
+<li>  Complete refactoring of the initiation process</li>
+<li>  Updates via own server now throu <a href="https://github.com/Xiphe/WP-Project-Update-API">WP Project Update API</a>
+</li>
+<li>  added shorthand-options</li>
+<li>  merged !themasteroptions</li>
+<li>deleted all deprecated methods.</li>
+<li>THEDEBUG is now standalone.</li>
+<li>Added THETOOLS for non-relating methods.</li>
+<li>Added THEWPBUILDER as a skeleton builder for wp-plugins and wp-themes</li>
+</ul><h3>pre 3.0</h3>
+
+<ul>
+<li>See changelog.md</li>
+</ul><h2>Upgrade Notice</h2>
+
+<h3>3.0.12</h3>
+
+<ul>
+<li>Deprecated THETOOLS::get_cleanedPath()</li>
+</ul><h3>3.0.0</h3>
+
+<ul>
+<li>incompatibility with old red thorn update api.</li>
+<li>previous deprecated methods are now unavailable.</li>
+</ul><h3>2.0.4</h3>
+
+<ul>
+<li>init on github<br>
+</li>
+</ul><h2>Known Bugs</h2>
+
+<ul>
+<li>  None ;)</li>
+</ul><h2>Todo</h2>
+
+<ul>
+<li>  build skeleton builder for standalones</li>
+<li>Better documentation</li>
+<li>Spell-check O_°</li>
+</ul><h2>License</h2>
+
+<p>Copyright (C) 2012 Hannes Diercks</p>
+
+<p>This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.</p>
+
+<p>This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.</p>
+
+<p>You should have received a copy of the GNU General Public License along
+with this program; if not, write to the Free Software Foundation, Inc.,
+51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.</p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Themaster maintained by <a href="https://github.com/Xiphe">Xiphe</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
