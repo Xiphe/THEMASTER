@@ -1181,28 +1181,54 @@ class THETOOLS {
      * array containing strings that are not accepted.
      * 
      * @access public
-     * @param  string $dir    the directory
-     * @param  mixed  $key    option for the array key of each file number or filename
-     *                        possible, default: the filename
-     * @param  array  $filter an array defining the. 
+     * @param  string  $dir         the directory.
+     * @param  mixed   $filenameKey set true to use the filename as array key.
+     * @param  array   $filter      an array with strings. Files starting with this string will be ignored.
+     * @param  boolean $positive    set true to invert the filter. Only files not starting
+     *                              with the filter string will be ignored
+     *
      * @return array
      */
-    public static function get_dirArray($dir, $key = 'filename', $filter = null)
+    public static function get_dirArray($dir, $filenameKey = false, $filter = null, $positive = false)
     {
-        if (!isset($filter)) {
-            $filter = array(1, array('.', '_'));
+        /*
+         * Normalize the Filter.
+         */
+        if (empty($filter)) {
+            $filter = array('.', '_');
+        } elseif(is_object($filter)) {
+            $filter = self::ar($filter, null, true);
+        } elseif(!is_array($filter)) {
+            $filter = array($filter);
         }
+
         if ($handle = opendir($dir)) {
             $r = array();
             $i = 0;
             while (false !== ($file = readdir($handle))) {
-                if (!in_array(substr($file, 0, $filter[0]), $filter[1])) {
-                    $k = $key == 'filename' ? $file : $i;
-                    $r[$k] = $file;
-                    $i++;
+                $ok = !$positive;
+                if (!empty($filter)) {
+                    foreach ($filter as $f) {
+                        if ($positive && strpos($file, $f) === 0) {
+                            $ok = true;
+                            break;
+                        } elseif(!$positive && strpos($file, $f) === 0) {
+                            $ok = false;
+                            break;
+                        }
+                    }
                 }
+                if (!$ok) {
+                    continue;
+                }
+
+                $k = $filenameKey ? $file : $i;
+                $r[$k] = $file;
+                $i++;
             }
             return $r;
+        } else {
+            return false;
         }
     }
 

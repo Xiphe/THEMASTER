@@ -55,9 +55,10 @@ class ResponsiveImages extends core\THEWPMASTER {
 	 * @return void
 	 */
 	public function init() {
+		$this->namespace = 'Xiphe\THEMASTER';
 		$this->reg_js('resizeend');
 		$this->reg_js('tm-responsiveimages');
-		$this->reg_jsVar('ajaxurl', admin_url('admin-ajax.php'));
+		core\THEBASE::reg_jsVar('ajaxurl', admin_url('admin-ajax.php'), true);
 	}
 
 

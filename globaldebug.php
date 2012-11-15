@@ -20,34 +20,34 @@ if (!function_exists('debug')) {
 }
 if (!function_exists('diebug')) {
 	function diebug() {
-		THEDEBUG::_set_btDeepth(7);
+		X\THEDEBUG::_set_btDeepth(7);
 		call_user_func_array(array('Xiphe\THEDEBUG', 'diebug'), func_get_args());
 	}
 }
 if (!function_exists('rebug')) {
 	function rebug() {
-		THEDEBUG::_set_btDeepth(7);
+		X\THEDEBUG::_set_btDeepth(7);
 		$r = call_user_func_array(array('Xiphe\THEDEBUG', 'rebug'), func_get_args());
-		THEDEBUG::_reset_btDeepth();
+		X\THEDEBUG::_reset_btDeepth();
 		return $r;
 	}
 }
 if (!function_exists('countbug')) {
 	function countbug() {
-		THEDEBUG::_set_btDeepth(7);
+		X\THEDEBUG::_set_btDeepth(7);
 		call_user_func_array(array('Xiphe\THEDEBUG', 'countbug'), func_get_args());
-		THEDEBUG::_reset_btDeepth();
+		X\THEDEBUG::_reset_btDeepth();
 	}
 }
 
 if (!function_exists('deprecated')) {
 	function deprecated($alternative, $contunue = true, $bto = 0) {
-		THEDEBUG::_set_btDeepth(7);
+		X\THEDEBUG::_set_btDeepth(7);
 		$bto = $bto+2;
 		return call_user_func_array(
 			array('Xiphe\THEDEBUG', 'deprecated'),
 			array($alternative, $contunue, $bto)
 		);
-		THEDEBUG::_reset_btDeepth();
+		X\THEDEBUG::_reset_btDeepth();
 	}
 }

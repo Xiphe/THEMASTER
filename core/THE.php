@@ -19,22 +19,22 @@ class THE {
      * @access public
      * @var    array
      */
-    public static $THECLASSES = array(
-        'THEBASE',
-        'THEMASTER',
-        'THEMODEL',
-        'THESETTINGS',
-        'THEWPBUILDER',
-        'THEWPMASTER',
-        'THEWPMODEL',
-        'THEWPSETTINGS',
-        'THEWPUPDATES'
+    public static $CLASSES = array(
+        'Xiphe\THEMASTER\core\THEBASE',
+        'Xiphe\THEMASTER\core\THEMASTER',
+        'Xiphe\THEMASTER\core\THEMODEL',
+        'Xiphe\THEMASTER\core\THESETTINGS',
+        'Xiphe\THEMASTER\core\THEWPBUILDER',
+        'Xiphe\THEMASTER\core\THEWPMASTER',
+        'Xiphe\THEMASTER\core\THEWPMODEL',
+        'Xiphe\THEMASTER\core\THEWPSETTINGS',
+        'Xiphe\THEMASTER\core\THEWPUPDATES'
     );
 
-    public static $THETOOLS = array(
-    	'THETOOLS',
-    	'THEWPTOOLS',
-    	'THEDEBUG'
+    public static $TOOLS = array(
+    	'Xiphe\THETOOLS',
+    	'Xiphe\THEWPTOOLS',
+    	'Xiphe\THEDEBUG'
     );
 
     const BASE = 'Xiphe\THEMASTER\core\THEBASE';

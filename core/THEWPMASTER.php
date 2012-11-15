@@ -519,19 +519,50 @@ class THEWPMASTER extends THEWPUPDATES {
      * @return void
      */
     final public static function twpm_print_jsVars($admin = false) {
-        $source = $admin ? THEBASE::sGet_registeredAdminJsVars() : THEBASE::sGet_registeredJsVars();
-        if (is_object($HTML = THEBASE::sget_HTML(true))) {
-            $HTML->s_script();
-            foreach ($source as $name => $var) {
-                $HTML->blank('var '.$name.' = '.json_encode($var).';');
-            }
-            $HTML->end();
+        if ($admin) {
+            $source = THEBASE::sGet_registeredAdminJsVars();
+            $regMethod = 'sReg_adminJs';
         } else {
-            echo '<script type="text/javascript">';
-            foreach ($source as $name => $var) {
-                echo 'var '.$name.' = '.json_encode($var).";\n";
+            $source = THEBASE::sGet_registeredJsVars();
+            $regMethod = 'sReg_js';
+        }
+        $r = '';
+        foreach ($source as $name => $var) {
+            $r[] = $name.'='.json_encode($var);
+        }
+        $r = 'var '.implode(',', $r).';';
+
+        $checksum = md5($r);
+        $time = time();
+        $fname = $checksum.'_'.$time.'.js';
+        $relPath = 'res'.DS.'js'.DS.'tmp'.DS;
+        $url = self::$sBaseUrl.X\THETOOLS::unify_slashes($relPath, '/');
+        $fpath = self::$sBasePath.$relPath;
+        $found = false;
+
+        foreach (X\THETOOLS::get_dirArray($fpath) as $file) {
+            if (strpos($file, $checksum) === 0) {
+                $fname = $file;
+                $found = true;
+                continue;
             }
-            echo '</script>';
+            $m;
+            preg_match('/_([0-9]+)\./', $file, $m);
+            $ftime = intval($m[1]);
+            $ftime += 60*60*24;
+            if ($ftime < $time) {
+                unlink($fpath.$file);
+            }
+        }
+
+        if (!$found) {
+            file_put_contents($fpath.$fname, $r);
+        }
+
+        if (is_object($HTML = THEBASE::sGet_HTML())) {
+            THEBASE::sGet_HTML()->script($url.$fname);
+        } else {
+            echo "<script src=\"$url.$fname\" type=\"text/javascript\"></script>";
         }
     }
     

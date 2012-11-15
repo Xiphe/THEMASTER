@@ -42,15 +42,10 @@ class THEBASE {
      * @access private
      * @var    array
      */
-    private static $s_registeredJsVars = array();
-
-    /**
-     * Holder for js-variables that will be echoed in the backend-header.
-     *
-     * @access private
-     * @var    array
-     */
-    private static $s_registeredAdminJsVars = array();
+    private static $s_registeredJsVars = array(
+        'admin' => array(),
+        'front' => array()
+    );
 
     /**
      * Holder for !THEMASTERs internal callbacks
@@ -319,7 +314,7 @@ class THEBASE {
                 = self::$sTextdomain = 'themaster';
             self::$s_themastersInitArgs['textID']
                 = self::$sTextID = self::$sFolderName.'/'.basename(self::$sProjectFile);
-                
+
             X\THEDEBUG::sInit();
 
             self::$s_themastersInitArgs['namespace'] = 'Xiphe\\THEMASTER';
@@ -571,7 +566,7 @@ class THEBASE {
      * @date Dez 14th 2011
      * @since 2.0.12
      */
-    public function get_HTML( $silence = false ) {
+    final public function get_HTML( $silence = false ) {
         if( !isset( $this ) || !isset( $this->HTML ) ) {
             return self::sget_HTML( $silence );
         } else {
@@ -579,7 +574,7 @@ class THEBASE {
         }
     }
         
-    public static function sget_HTML( $silence = false ) {
+    final public static function sget_HTML( $silence = false ) {
         if( isset( $GLOBALS['HTML'] ) )
             return $GLOBALS['HTML'];
         elseif( $silence !== true )
@@ -588,40 +583,78 @@ class THEBASE {
             return false;
     }
     
-    public function reg_jsVar( $name, $var ) {
-        if( !isset( self::$s_registeredJsVars[$name] ) )
-            self::$s_registeredJsVars[$name] = $var;
+    final public function reg_jsVar($name, $var, $global = false) {
+        self::s_reg_jsVar($name, $var, $global, $this->namespace, false);
+    }
+
+    final public function reg_adminJsVar( $name, $var ) {
+        self::s_reg_jsVar($name, $var, $global, $this->namespace, true);
     }
     
-    public function reg_adminJsVar( $name, $var ) {
-        if( !isset( self::$s_registeredAdminJsVars[$name] ) )
-            self::$s_registeredAdminJsVars[$name] = $var;
+    final public function reg_js($filename, $args = array()) {
+        self::_reg_source('js', $filename, $args);
     }
-    
-    public function reg_js($filename, $args = array()) {
+
+    final public static function sReg_js($filename, $args = array()) {
         self::_reg_source('js', $filename, $args);
     }
     
-    public function reg_less($filename, $args = array()) {
+    final public function reg_less($filename, $args = array()) {
         self::_reg_source('less', $filename, $args);
     }
     
-    public function reg_css($filename, $args = array()) {
+    final public function reg_css($filename, $args = array()) {
         self::_reg_source('css', $filename, $args);
     }
 
-    public function reg_adminJs($filename, $args = array()) {
+    final public function reg_adminJs($filename, $args = array()) {
+        self::_reg_source('js', $filename, $args, true);
+    }
+
+    final public static function sReg_adminJs($filename, $args = array()) {
         self::_reg_source('js', $filename, $args, true);
     }
     
-    public function reg_adminLess($filename, $args = array()) {
+    final public function reg_adminLess($filename, $args = array()) {
         self::_reg_source('less', $filename, $args, true);
     }
     
-    public function reg_adminCss($filename, $args = array()) {
+    final public function reg_adminCss($filename, $args = array()) {
         self::_reg_source('css', $filename, $args, true);
     }
     
+    final public static function sRegJsVar($name, $var, $global) {
+        self::s_reg_jsVar($name, $var, $global, self::$sNameSpace, false);
+    }
+
+    final public static function sRegAdminJsVar($name, $var, $global) {
+        self::s_reg_jsVar($name, $var, $global, self::$sNameSpace, true);
+    }
+
+    private static function s_reg_jsVar($name, $var, $global, $namespace, $admin = false) {
+        $r = array();
+
+        if ($admin) {
+            $r['admin'] = array();
+            $rl = &$r['admin'];
+        } else {
+            $r['front'] = array();
+            $rl = &$r['front'];
+        }
+
+        if (!$global) {
+            foreach (explode('\\', $namespace) as $k) {
+                $k = strtolower($k);
+                $rl[$k] = array();
+                $rl = &$rl[$k];
+            }
+            $rl[$name] = $var;
+        } else {
+            $rl[$name] = $var;
+        }
+        
+        self::$s_registeredJsVars = array_merge_recursive(self::$s_registeredJsVars, $r);
+    }
 
     /**
      * Registeres the source into THEBASE::$s_registeredSources.
@@ -918,7 +951,7 @@ class THEBASE {
      */
     public static function sGet_registeredJsVars()
     {
-        return self::$s_registeredJsVars;
+        return self::$s_registeredJsVars['front'];
     }
 
     /**
@@ -929,7 +962,7 @@ class THEBASE {
      */
     public static function sGet_registeredAdminJsVars()
     {
-        return self::$s_registeredAdminJsVars;
+        return self::$s_registeredAdminJsVars['admin'];
     }
     
     /**
@@ -938,8 +971,9 @@ class THEBASE {
      * @access public
      * @return void
      */
-    public function echo_jsVars()
+    public function echo_jsVars($admin = false)
     {
+        self::_echo_jsVars();
         $HTML = self::sGet_HTML();
         $HTML->sg_script();
         foreach (self::$s_registeredJsVars as $name => $var) {
@@ -957,11 +991,24 @@ class THEBASE {
      */
     public function echo_AdmimJsVars()
     {
+        self::_echo_jsVars(true);
         $HTML = $this->get_HTML();
         $HTML->sg_script();
         foreach (self::$s_registeredAdminJsVars as $name => $var) {
             $HTML->blank('var '.$name.' = '.json_encode($var));
             unset(self::$s_registeredAdminJsVars[$name]);
+        }
+        $HTML->end();
+    }
+
+    private static function _echo_jsVars($admin = false)
+    {
+        $HTML = self::sGet_HTML();
+        $HTML->sg_script();
+        $admin = ($admin ? 'admin' : 'front');
+        foreach (self::$s_registeredJsVars[$admin] as $name => $var) {
+            $HTML->blank('var '.$name.' = '.json_encode($var).';');
+            unset(self::$s_registeredJsVars[$admin][$name]);
         }
         $HTML->end();
     }
@@ -985,10 +1032,9 @@ class THEBASE {
 
         foreach ($paths as $path) {
             if (file_exists(($path = $path.'res'.DS.'includes'.DS.$source))) {
-                return $include ? include($path) : $path;
+                return $include ? include $path : $path;
             }
         }
-
         throw new \Exception('Tryed to include unexistent file "'.$source.'"', 1);
     }
     

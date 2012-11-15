@@ -4,5 +4,6 @@
 *.project
 *.settings
 *.DS_Store
+*.less.css
 /demo
-res/css/*.less.css
+/res/js/tmp/*
