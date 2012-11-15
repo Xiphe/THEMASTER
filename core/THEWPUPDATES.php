@@ -125,30 +125,6 @@ class THEWPUPDATES extends THEWPSETTINGS {
 		}
 	}
 
-	// public static function sSourceSelection( $source, $remote_source, $Upgrader ) {
-
-	// 	if( isset( $Upgrader->skin->plugin ) && $Upgrader->skin->plugin !== '' ) {
-	// 		$name = explode( '/', $Upgrader->skin->plugin );
-	// 		$name = $name[0];
-	// 	} elseif( isset( $Upgrader->skin->plugin_info['TextDomain'] )
-	// 	 && $Upgrader->skin->plugin_info['TextDomain'] !== ''
-	// 	) {
-	// 		$name = $Upgrader->skin->plugin_info['TextDomain'];
-	// 	}
-
-	// 	if( isset( $name ) && isset( self::$s_updatables[$name] ) ) {
-	// 		$newSource = explode( DS, str_replace( '/', DS, $source ) );
-	// 		$newSource[ count( $newSource ) -2 ] = $name;
-	// 		$newSource = implode( DS, $newSource );
-	// 		if( $newSource !== $source ) {
-	// 			rename( $source, $newSource );
-	// 			$source = $newSource;
-	// 		}
-	// 	}
-
-	// 	return $source;
-	// }
-	
 	private function _checkForcing() {
 		if ( THEWPSETTINGS::_get_Setting( 'forceUpdates', THEBASE::$sTextID ) ) {
 			set_site_transient( 'update_plugins', null );
@@ -225,7 +201,7 @@ class THEWPUPDATES extends THEWPSETTINGS {
 				$isTheme = true;
 			}
 
-			X\debug($textID, 'textID');
+			// debug($textID, 'textID');
 
 			if ( !isset( $checked_data->checked[$textID] ) ) {
 				continue;
@@ -234,7 +210,7 @@ class THEWPUPDATES extends THEWPSETTINGS {
 			$pData = THEWPBUILDER::get_initArgs( ABSPATH . 'wp-content' . DS
 				. ( $isTheme ? 'themes' : 'plugins' ) . DS . $fullTextID );
 
-			// X\debug($request_args, 'request_args');
+			// debug($request_args, 'request_args');
 
 			$request_args = array(
 				'slug' => $pData['textdomain'],
@@ -246,13 +222,13 @@ class THEWPUPDATES extends THEWPSETTINGS {
 			
 
 			$request_string = self::_prepare_request( 'basic_check', $request_args, $fullTextID );
-			// X\debug($request_string, 'request_string');
+			// debug($request_string, 'request_string');
 			
 			// Start checking for an update
 
 
 			$raw_response = wp_remote_post($server, $request_string);
-			// X\debug($raw_response, 'raw_response');
+			// debug($raw_response, 'raw_response');
 				
 
 			if ( !is_wp_error( $raw_response ) && ( $raw_response['response']['code'] == 200 ) ) {

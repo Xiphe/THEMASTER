@@ -60,7 +60,8 @@ namespace Xiphe\THEMASTER;
     // define($tmSettingsID.'_DEBUG', true);
     // define($tmSettingsID.'_DEBUGMODE', 'FirePHP');
 
-
+    include 'globaldebug.php';
+    
 /*
  * Define THEMASTER_HAS_WPRDPRESS for use in WP().
  */
