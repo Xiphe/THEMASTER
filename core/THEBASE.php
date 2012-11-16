@@ -587,7 +587,7 @@ class THEBASE {
         self::s_reg_jsVar($name, $var, $global, $this->namespace, false);
     }
 
-    final public function reg_adminJsVar( $name, $var ) {
+    final public function reg_adminJsVar($name, $var, $global = false) {
         self::s_reg_jsVar($name, $var, $global, $this->namespace, true);
     }
     
@@ -962,7 +962,7 @@ class THEBASE {
      */
     public static function sGet_registeredAdminJsVars()
     {
-        return self::$s_registeredAdminJsVars['admin'];
+        return self::$s_registeredJsVars['admin'];
     }
     
     /**
@@ -1048,49 +1048,28 @@ class THEBASE {
      */
     final public function reg_model($modelname, $staticInits = null)
     {
-        $paths = array();
+        $ns = array();
         if (isset($this)) {
-            $paths[] = array(
-                'namespace' => $this->namespace,
-                'basePath' => $this->basePath
-            );
+            $ns[] = $this->namespace;
         }
-        $paths[] = array(
-            'namespace' => self::$sNameSpace,
-            'basePath' => self::$sBasePath
-        );
-        $ePaths = array();
-
-
-        foreach ($paths as $k => $data) {
-            extract($data);
+        $ns[] = self::$sNameSpace;
+        
+        foreach ($ns as $namespace) {
             $mID = $namespace.'\models\\'.$modelname;
 
             if (class_exists($mID)) {
-                return $mID;
-            }
-
-            $inclPath = $basePath.'models'.DS.$modelname.'.php';
-            $ePaths[] = $inclPath;
-
-            if (file_exists($inclPath)) {
-                include_once($inclPath);
-                if (!class_exists($mID ) ) {
-                    throw new \Exception('Model not found: '.$mID.' | ' . $inclPath);
-                } else {
-                    if (is_array($staticInits)) {
-                        foreach ($staticInits as $key => $value) {
-                            $mID::$$key = $value;
-                        }
+                if (is_array($staticInits)) {
+                    foreach ($staticInits as $key => $value) {
+                        $mID::$$key = $value;
                     }
-                    return $mID;
                 }
+                return $mID;
             }
         }
 
-        $msg = sprintf(__( '**!THE MASTER ERROR:** Model File for %s not found.<br />Expected here: "%s".', 'themaster' ),
-            $modelname,
-            implode(__('" or here "', 'themaster'), $ePaths)
+        $msg = sprintf(
+            __('**!THE MASTER ERROR:** Model File for %s not found.', 'themaster'),
+            $modelname
         );
         throw new \Exception($msg,1);
     }
@@ -1106,43 +1085,21 @@ class THEBASE {
      */
     final public function new_model($modelname, $initArgs = null)
     {
-        $paths = array();
+        $ns = array();
         if (isset($this)) {
-            $paths[] = array(
-                'namespace' => $this->namespace,
-                'basePath' => $this->basePath
-            );
+            $ns[] = $this->namespace;
         }
-        $paths[] = array(
-            'namespace' => self::$sNameSpace,
-            'basePath' => self::$sBasePath
-        );
-        $ePaths = array();
-
+        $ns[] = self::$sNameSpace;
         
-        foreach ($paths as $k => $data) {
-            extract($data);
+        foreach ($ns as $namespace) {
             $mID = $namespace.'\models\\'.$modelname;
 
-            if (!class_exists($mID)) {
-                try {
-                    call_user_func(
-                        array(
-                            isset($this) ? $this : THE::BASE,
-                            'reg_model'
-                        ),
-                        $modelname
-                    );
-                } catch (\Exception $e) {
-                    continue;
-                }
-            }
             if (class_exists($mID)) {
                 return new $mID($initArgs);
             }
         }
 
-        throw $e;
+        return false;
     }
 
     /**

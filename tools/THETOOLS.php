@@ -95,8 +95,47 @@ class THETOOLS {
      *  STATIC METHODS  *
      * ---------------- */
 
+    /**
+     * Checks if the given Path is existent and generates missing folders.
+     *
+     * @param string  $path  the path
+     * @param integer $chmod chmod for new folders
+     *
+     * @return boolean  true if path is available false if not.
+     */
+    public function buildDir($path, $chmod = 0775) {
+        if (is_dir($path)) {
+            return true;
+        }
+        $dir = DS;
+        foreach(explode(DS, self::unify_slashes($path, DS, true)) as $f) {
+            if (empty($f)) {
+                continue;
+            }
+            $dir .= $f.DS;
+            if (is_dir($dir)) {
+                continue;
+            }
 
-    public function shorten($text, $maxlength = 140, $end = '[...]') {
+            if (is_writable(dirname($dir))) {
+                mkdir($dir, $chmod);
+            } else {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Builds an excerpt from a longer text.
+     *
+     * @param string  $text      the input text
+     * @param integer $maxlength maximal length of the text
+     * @param string  $end       a string that will be attached to the short version of $text
+     *
+     * @return string
+     */
+    public static function shorten($text, $maxlength = 140, $end = '[...]') {
         $maxlength++;
         if (mb_strlen($text) > $maxlength) {
             $subex = mb_substr($text, 0, $maxlength - 5);
@@ -115,14 +154,14 @@ class THETOOLS {
     /**
      * Parses a list-string from an array, an object or a testlist seperated by $inputSep.
      *
-     * @access  public
-     * @param   mixed  $input     array, object or string with list entrys.
-     * @param   string $lastSep   the text for the last seperator. Default = " or "
-     * @param   string $stdSep    the text for all other seperators. Default = ", "
-     * @param   string $inputSep  the string that explodes the $input if it is a string.
-     * @return  string            a nice readable list of things.
+     * @param mixed  $input     array, object or string with list entrys.
+     * @param string $lastSep   the text for the last seperator. Default = " or "
+     * @param string $stdSep    the text for all other seperators. Default = ", "
+     * @param string $inputSep  the string that explodes the $input if it is a string.
+     * 
+     * @return string  a nice readable list of things.
      */
-    public function readableList($input, $lastSep = null, $defSep = ', ', $inputSep = '|')
+    public static function readableList($input, $lastSep = null, $defSep = ', ', $inputSep = '|')
     {
         if ($lastSep === null) {
             $lastSep = ' '.__('or', 'themaster').' ';
@@ -206,6 +245,104 @@ class THETOOLS {
         imagedestroy($img);
 
         return $r;
+    }
+
+    public static function getResizedImgName($path, $p) {
+        if (is_array($p)) {
+            $width = $p[0];
+            $height = $p[1];
+        } else {
+            $size = getimagesize($path);
+            if (!is_float($p)) {
+                $p = intval($p)/100;
+            }
+            $width = round($size[0]*$p);
+            $height = round($size[1]*$p);
+        }
+
+        $r = dirname($path).DS;
+        $r .= preg_replace('/-[0-9]+x[0-9]+/', '', pathinfo($path, PATHINFO_FILENAME));
+        $r .= '-'.$width.'x'.$height.'.'.pathinfo($path, PATHINFO_EXTENSION);
+        return $r;
+    }
+
+    public static function resizeImg($type, $path, $p, $target = null)
+    {
+        switch ($type) {
+            case 'image/gif':
+            case 'gif':
+                $original = imagecreatefromgif($path);
+                break;
+            case 'image/png':
+            case 'png':
+                $original = imagecreatefrompng($path);
+                break;
+            default:
+                $original = imagecreatefromjpeg($path);
+                break;
+        }
+
+        if (is_array($p)) {
+            $width = $p[0];
+            $height = $p[1];
+        } else {
+            $size = getimagesize($path);
+            if (!is_float($p)) {
+                $p = intval($p)/100;
+            }
+            $width = round($size[0]*$p);
+            $height = round($size[1]*$p);
+        }
+
+        $new_image = imagecreatetruecolor($width, $height);
+        if (!isset($target)) {
+            $target = dirname($path).DS;
+            $target .= preg_replace('/-[0-9]+x[0-9]+/', '', pathinfo($path, PATHINFO_FILENAME));
+            $target .= '-'.$width.'x'.$height.'.'.pathinfo($path, PATHINFO_EXTENSION);
+            $r = $target;
+        }
+
+        if (in_array($type, array('image/gif', 'gif', 'image/png', 'png'))) {
+            imagealphablending($new_image, false);
+            imagesavealpha($new_image,true);
+            $transparent = imagecolorallocatealpha($new_image, 255, 255, 255, 127);
+            imagefilledrectangle($new_image, 0, 0, $width, $height, $transparent);
+        }
+
+        imagecopyresampled(
+            $new_image,
+            $original, 
+            0, 0, 0, 0,
+            $width,
+            $height,
+            imagesx($original),
+            imagesy($original)
+        );
+
+        switch ($type) {
+            case 'image/gif':
+            case 'gif':
+                $t = imagegif($new_image, $target);
+                break;
+            case 'image/png':
+            case 'png':
+                $t = imagepng($new_image, $target, 0, PNG_NO_FILTER);
+                break;
+            default:
+                $t = imagejpeg($new_image, $target, 100);
+                break;
+        }
+        if (!isset($r)) {
+            $r = $t;
+        }
+        imagedestroy($original);
+        imagedestroy($new_image);
+        return $r;
+    }
+
+    public static function resizePngImg($path, $p)
+    {
+
     }
 
     /**
