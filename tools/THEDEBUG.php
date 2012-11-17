@@ -32,7 +32,7 @@ class THEDEBUG {
 		'debugEmailFrom' => false,
 	);
 
-	private static $s_firePHPPath = './../classes/FirePHPCore/fb.php';
+	private static $s_firePHPPath = '../FirePHPCore/fb.php';
 
 
 	/* ------------------ *
@@ -105,7 +105,7 @@ class THEDEBUG {
 		if (isset(self::$s_singleton) && is_object(self::$s_singleton)) {
 			return self::$s_singleton;
 		} elseif (!self::$s_initiated) {
-			if (!class_exists(core\THE::BASE)) {
+			if (!class_exists('Xiphe\THEMASTER\core\THE') || !class_exists(core\THE::BASE)) {
 				self::sInit();
 			}
 		}
@@ -135,18 +135,18 @@ class THEDEBUG {
 				if (self::$s_mode === 'FirePHP') {
 					try {
 						if( !class_exists( '\FirePHP' ) ) {
-							if (class_exists(core\THE::BASE)) {
+							if (class_exists('Xiphe\THEMASTER\core\THE') && class_exists(core\THE::BASE)) {
 								$firePHP = core\THEBASE::$sBasePath.'classes'.DS.'FirePHPCore'.DS.'fb.php';
 							} else {
-								$firePHP = self::$s_firePHPPath;
+								$firePHP = dirname(__FILE__).DIRECTORY_SEPARATOR.self::$s_firePHPPath;
 							}
 
-							require_once($firePHP);
+							require_once $firePHP;
 							ob_start();
 							$FB = \FirePHP::getInstance( true );
 						}
 					} catch(\Exception $e) {
-						if (class_exists(core\THE::SETTINGS)) {
+						if (class_exists('Xiphe\THEMASTER\core\THE') && class_exists(core\THE::SETTINGS)) {
 							core\THESETTINGS::_set_setting('debugMode', 'themaster', 'inline');
 						}
 						self::$s_mode = 'inline';
@@ -212,7 +212,7 @@ class THEDEBUG {
 
 	private static function _get_setting($key)
 	{
-		if(class_exists(core\THE::SETTINGS)) {
+		if(class_exists('Xiphe\THEMASTER\core\THE') && class_exists(core\THE::SETTINGS)) {
 			return core\THESETTINGS::sGet_setting($key, core\THEBASE::$sTextID);
 		} else {
 			return self::$s_settings[$key];
@@ -606,54 +606,3 @@ class THEDEBUG {
 		return self::$s_mode;
 	}
 }
-
-define( 'THEDEBUGAVAILABLE', true );
-$GLOBALS['THEDEBUG'] = new THEDEBUG;
-
-if( !function_exists( 'debug' ) ) {
-	function debug() {
-		THEDEBUG::_set_btDeepth( 7 );
-		call_user_func_array( array('Xiphe\THEDEBUG', 'debug' ), func_get_args() );
-		THEDEBUG::_reset_btDeepth();
-	}
-}
-if( !function_exists( 'diebug' ) ) {
-	function diebug() {
-		THEDEBUG::_set_btDeepth( 7 );
-		call_user_func_array( array('Xiphe\THEDEBUG', 'diebug' ), func_get_args() );
-	}
-}
-if( !function_exists( 'rebug' ) ) {
-	function rebug() {
-		THEDEBUG::_set_btDeepth( 7 );
-		$r = call_user_func_array( array( 'Xiphe\THEDEBUG', 'rebug' ), func_get_args() );
-		THEDEBUG::_reset_btDeepth();
-		return $r;
-	}
-}
-if( !function_exists( 'countbug' ) ) {
-	function countbug() {
-		THEDEBUG::_set_btDeepth( 7 );
-		call_user_func_array(array('Xiphe\THEDEBUG', 'countbug'), func_get_args() );
-		THEDEBUG::_reset_btDeepth();
-	}
-}
-
-if( !function_exists( 'deprecated' ) ) {
-	function deprecated( $alternative, $contunue = true, $bto = 0 ) {
-		THEDEBUG::_set_btDeepth( 7 );
-		$bto = $bto+2;
-		return call_user_func_array(
-			array('Xiphe\THEDEBUG', 'deprecated'),
-			array( $alternative, $contunue, $bto )
-		);
-		THEDEBUG::_reset_btDeepth();
-	}
-}
-if( !class_exists('\WP') ) {
-	register_shutdown_function( array( 'Xiphe\THEDEBUG', 'print_debugcounts' ) );
-	if( THEDEBUG::get_mode() === 'summed' ) {
-		register_shutdown_function( array('Xiphe\THEDEBUG', 'print_debug' ) );
-	}
-}
-?>

@@ -340,11 +340,6 @@ class THETOOLS {
         return $r;
     }
 
-    public static function resizePngImg($path, $p)
-    {
-
-    }
-
     /**
      * Performs a post request to given url passing given parameters.
      *
@@ -557,7 +552,7 @@ class THETOOLS {
     private static function _is_browser($browser, $version = null, $strict = null)
     {
         self::_get_browser();
-        if (self::$s_browser == self::get_classConstant('Browser', 'BROWSER_'.$browser)) { 
+        if (class_exists('Browser') && self::$s_browser == self::get_classConstant('Browser', 'BROWSER_'.$browser)) { 
             if ($version === null)
                 return true;
             elseif ($strict === null && version_compare(self::$s_browserVersion, $version, '>=')) {
@@ -626,6 +621,10 @@ class THETOOLS {
      */
     private function _get_browser()
     {
+        if (!defined('THEMASTER_PROJECTFOLDER')) {
+            return false;
+        }
+
         if (self::$s_BrowserObj == null) {
             require_once(THEMASTER_PROJECTFOLDER.'classes'.DS.'Browser'.DS.'Browser.php');
             self::$s_BrowserObj = new \Browser;
