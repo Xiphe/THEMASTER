@@ -107,6 +107,9 @@ class THEWPMASTER extends THEWPUPDATES {
     private static $s_storeTheVersions = false;
 
 
+    public static $currentNavItem;
+
+
     /* -------------------- *
      *  INSTANCE VARIABLES  *
      * -------------------- */
@@ -245,6 +248,11 @@ class THEWPMASTER extends THEWPUPDATES {
          */
         add_action('wp_head', array(THE::WPMASTER, 'twpm_print_jsVars'), 999, 0);
         add_action('admin_head', array(THE::WPMASTER, 'twpm_print_adminJsVars'), 999, 0);
+
+        /*
+         * Save the current nav object.
+         */
+        add_filter('wp_nav_menu_objects', array(THE::WPMASTER, 'twpm_wp_nav_menu_objects'));
 
         /*
          * Spice the Login Screen 
@@ -477,6 +485,17 @@ class THEWPMASTER extends THEWPUPDATES {
     /*  PUBLIC INTERNAL METHODS  */
     /* ------------------------- */
     
+
+    final public static function twpm_wp_nav_menu_objects($sorted_menu_items)
+    {
+        foreach ($sorted_menu_items as $menu_item) {
+            if ($menu_item->current) {
+                self::$currentNavItem = $menu_item;
+            }
+        }
+        return $sorted_menu_items;
+    }
+
     /**
      * This method catches errors from THEMASTER::sTryTo() method
      * and prints them as admin messages.

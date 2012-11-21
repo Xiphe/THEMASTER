@@ -109,6 +109,31 @@ class THEWPTOOLS {
 		return $menu;
 	}
 
+	/**
+	 * Returns all child nav_menu_items under a specific parent
+	 *
+	 * http://wpsmith.net/2011/wp/how-to-get-all-the-children-of-a-specific-nav-menu-item/
+	 * 
+	 * @param   int       the parent nav_menu_item ID
+	 * @param   array     nav_menu_items
+	 * @param   bool      gives all children or direct children only
+	 * @return  array     returns filtered array of nav_menu_items
+	 */
+	function get_nav_menu_item_children( $parent_id, $nav_menu_items, $depth = true ) {
+		$nav_menu_item_list = array();
+		foreach ( (array) $nav_menu_items as $nav_menu_item ) {
+			if ( $nav_menu_item->menu_item_parent == $parent_id ) {
+				$nav_menu_item_list[] = $nav_menu_item;
+				if ( $depth ) {
+					if ( $children = self::get_nav_menu_item_children( $nav_menu_item->ID, $nav_menu_items ) )
+						$nav_menu_item_list = array_merge( $nav_menu_item_list, $children );
+					}
+				}
+		}
+		return $nav_menu_item_list;
+	}
+
+
 	public static function get_the_date($post_id, $format = null) {
 		global $post;
 		$save_post = $post;

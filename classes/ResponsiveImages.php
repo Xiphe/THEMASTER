@@ -223,6 +223,14 @@ class ResponsiveImages extends core\THEWPMASTER {
 			return false;
 		}
 
+		if (!is_numeric($origin) && defined('ABSPATH')) {
+			$origin = str_replace(
+				X\THETOOLS::unify_slashes(ABSPATH),
+				'',
+				X\THETOOLS::unify_slashes($origin)
+			);
+		}
+
 		$ratio;
 		$loadedHeight;
 		$loadWidth = $this->_get_loadWidh($image, $maxWidth, $loadedHeight, $ratio);
@@ -529,6 +537,20 @@ class ResponsiveImages extends core\THEWPMASTER {
 			imagefilledrectangle($new_image, 0, 0, $width, $height, $transparent);
 		}
 
+      	$sharpenMatrix = array(
+            array(-1.2, -1, -1.2),
+            array(-1, 20, -1),
+            array(-1.2, -1, -1.2)
+        );
+
+        // calculate the sharpen divisor
+        $divisor = array_sum(array_map('array_sum', $sharpenMatrix));           
+
+        $offset = 0;
+       
+        // apply the matrix
+        imageconvolution($original, $sharpenMatrix, $divisor, $offset); 
+
       	imagecopyresampled(
       		$new_image,
       		$original, 
@@ -542,6 +564,7 @@ class ResponsiveImages extends core\THEWPMASTER {
       	if (!is_dir(dirname($target))) {
       		mkdir(dirname($target), 0777);
       	}
+
       	switch ($type) {
 			case 'image/gif':
 				$r = imagegif($new_image, $target);

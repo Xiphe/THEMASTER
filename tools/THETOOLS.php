@@ -192,7 +192,27 @@ class THETOOLS {
      * @param  integer $spacing numbers of pixels between the images.
      * @return object           object containing the sprite dimensions and the offsets of each image.
      */
-    public static function create_sprite($imgs = array(), $dest = 'sprite.png', $spacing = 5) {
+    public static function create_sprite($imgs = array(), $dest = null, $spacing = 5, $type = 'png') {
+        switch ($type) {
+        case 'jpg':
+        case 'jpeg':
+            $save = 'imagejpeg';
+            $create = 'imagecreatefromjpeg';
+            if ($dest === null) {
+                $dest = 'sprite.jpg';
+            }
+            break;
+        case 'png':
+        default:
+            $save = 'imagepng';
+            $create = 'imagecreatefrompng';
+            if ($dest === null) {
+                $dest = 'sprite.png';
+            }
+            break;
+        }
+
+
         $spriteWidth = 0;
         $spriteHeight = 0;
 
@@ -227,7 +247,7 @@ class THETOOLS {
         $pos = 0;
         foreach ($imgs as $file) {
             $name = pathinfo($file, PATHINFO_FILENAME);
-            $tmp = imagecreatefrompng($file);
+            $tmp = call_user_func_array($create, array($file));
             list($w, $h) = getimagesize($file);
             $r->positions->$name = -$pos;
             $r->sizes->$name = self::sc(array('width' => $w, 'height' => $h));
@@ -241,7 +261,10 @@ class THETOOLS {
             imagedestroy($tmp);
         }
 
-        imagepng($img, $dest);
+        call_user_func_array(
+            $save,
+            array($img, $dest, ($save == 'imagejpeg' ? 100 : 0))
+        );
         imagedestroy($img);
 
         return $r;

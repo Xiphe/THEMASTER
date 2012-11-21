@@ -14,7 +14,9 @@ jQuery(document).ready(function($) {
 				innerresponsize.call(this);
 			});
 		}
+		return this;
 	},
+
 
 	innerresponsize = function() {
 		var rnd;
@@ -175,4 +177,9 @@ jQuery(document).ready(function($) {
 			$(window).resizeEnd(responsize);
 		}, 10);
 	})();
+
+	$.fn.responsize = function() {
+		responsize(this);
+		return this;
+	};
 });
