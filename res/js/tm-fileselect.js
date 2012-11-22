@@ -38,7 +38,7 @@ jQuery(document).ready(function($) {
                 parent.tm_checkedAttachments = [];
             }
             $('html').addClass( 'File' );
-            tb_show('', tm_fileselectbaseurl+
+            tb_show('', xiphe.themaster.fileselectbaseurl+
                 '&tm-fileselect_field='+$(this).siblings('input.tm-fileselect_value').attr('id')+
                 '&tm-fileselect_previewsize='+$(this).siblings('input.tm-fileselect_previewsize').val()+
                 '&tm-fileselect_validation='+$(this).siblings('input.tm-fileselect_validation').val()+
@@ -95,7 +95,7 @@ jQuery(document).ready(function($) {
                         
                         $(this).find('tr.url, tr.align, tr.image-size').css({'display' : 'none'});
                         $(this).find('tr.submit .savesend input.button[type="submit"]').css({'display' : 'none'});
-                        $(this).find('tr.submit .savesend .del-link').before('<button class="button tm-savechanges">'+tm_fileselecttext.save+'</button>');
+                        $(this).find('tr.submit .savesend .del-link').before('<button class="button tm-savechanges">'+xiphe.themaster.fileselecttext.save+'</button>');
 
                         $(this).prepend(select_button);
 
@@ -112,7 +112,7 @@ jQuery(document).ready(function($) {
 
             multiple = false;
 
-            var select_button = '<a href="#" class="tm-fileselect_insert button-secondary">'+tm_fileselecttext.select+'</a>';
+            var select_button = '<a href="#" class="tm-fileselect_insert button-secondary">'+xiphe.themaster.fileselecttext.select+'</a>';
             if (typeof parent_src_vars['tm-fileselect_multiple'] !== 'undefined' &&
                 parent_src_vars['tm-fileselect_multiple']
             ) {

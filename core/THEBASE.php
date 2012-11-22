@@ -521,24 +521,29 @@ class THEBASE {
                 }
             }
             
-            foreach( array( $this->basePath, self::$sBasePath ) as $basePath ) {
-                $file = $basePath . 'views' . DS . X\THETOOLS::get_directPath( $view ) . '.php';
+            foreach (array($this->basePath, self::$sBasePath ) as $basePath) {
+                $file = $basePath.'views'.DS.X\THETOOLS::get_directPath($view).'.php';
 
-                if( file_exists( $file ) ) {
-                    if (!is_array( $args )) $args = array($args);
+                if (file_exists($file)) {
+                    if (!is_array($args)) {
+                        $args = array($args);
+                    }
 
                     $class = explode('\\', get_class($this));
                     $class = $class[count($class)-1];
                     $ar = array($class => $this);
-                    if (( $HTML = $this->get_HTML() ) )
+                    if (($HTML = $this->get_HTML())) {
                         $ar['HTML'] = $HTML;
-                    
+                    }
+                    $ar['Master'] = call_user_func(array($this->namespace.'\classes\Master', 'inst'));
+
                     extract(array_merge(
                         $ar, 
                         $args
                     ));
+
                     ob_start();
-                        include( $file );
+                    include $file;
                     return ob_get_clean();
                 }
             }

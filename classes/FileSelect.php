@@ -298,17 +298,19 @@ class FileSelect extends core\THEWPMASTER {
             'width' => __('Width', 'themaster')
         );
         $this->reg_adminJs('tm-fileselect');
-        $this->reg_adminJsVar('tm_fileselecttext', array(
-            'select' => __('Select', 'themaster'),
-            'save' => __('Save', 'themaster')
-        ));
+        $this->reg_adminJsVar(
+            'fileselecttext',
+            array(
+                'select' => __('Select', 'themaster'),
+                'save' => __('Save', 'themaster')
+            )
+        );
     }
 
     public function admin_head()
     {
         $this->reg_adminJsVar(
-            'tm_fileselectbaseurl',
-            // 'media-upload.php?post_id=0'
+            'fileselectbaseurl',
             'media-upload.php?post_id='.(isset($GLOBALS['post']->ID) ? $GLOBALS['post']->ID : 0)
         );
     }
@@ -349,6 +351,7 @@ class FileSelect extends core\THEWPMASTER {
 
     public function upload_mimes($mimes)
     {
+        $mimes['svg|svgz'] = 'image/svg+xml';
         if (!empty($_REQUEST['tm-fileselect_validation'])
          && ($vals = $_REQUEST['tm-fileselect_validation']) != false
         ) {
