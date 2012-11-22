@@ -1,7 +1,7 @@
-(function($){var
+if(typeof __stlvendor__==='undefined'){var __stlvendor__={};}__stlvendor__=jQuery.extend(true,{},__stlvendor__,{__stlfoldername__:{master:(function($){var
 	
 	/* PRIVATE VARS */
-	thiz = this
+	$thiz = $(this)
 
 	/* PUBLIC VARS */ ;
 
@@ -20,4 +20,4 @@
 
 
 // INITIAION ETC.
-;(function(){_init();$(document).ready(_ready);})();})(jQuery);
+;return this;(function(){_init();$(document).ready(_ready);})();})(jQuery);

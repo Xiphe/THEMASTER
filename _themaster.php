@@ -4,7 +4,7 @@ Plugin Name: THE MASTER
 Plugin URI: https://github.com/Xiphe/-THE-MASTER
 Namespace: Xiphe\THEMASTER
 Description: A Plugin to provide global access to the THEWPMASTER class. THEWPMASTER provides a lot of handy functions for plugins an themes.
-Version: 3.1.0.6
+Version: 3.1.0.7
 Date: 2012-30-10 22:00:00 +02:00
 Author: Hannes Diercks aka Xiphe
 Author URI: https://github.com/Xiphe
@@ -145,6 +145,17 @@ spl_autoload_register(function($class) {
     } elseif(in_array($class, array('Xiphe\THETOOLS', 'Xiphe\THEWPTOOLS', 'Xiphe\THEDEBUG'))) {
         $file = str_replace('Xiphe\\', '', $class).'.php';
         include(THEMASTER_PROJECTFOLDER.'tools'.DS.$file);
+    } elseif(WP()) {
+        $path =  explode('\\', $class);
+        unset($path[0]);
+        $path = implode(DS, $path).'.php';
+        foreach(array('plugins', 'themes') as $t) {
+            $t = \Xiphe\THETOOLS::unify_slashes(ABSPATH).'wp-content'.DS.$t.DS.$path;
+            if (file_exists($t)) {
+                include $t;
+                break;
+            }
+        }
     }
 });
 

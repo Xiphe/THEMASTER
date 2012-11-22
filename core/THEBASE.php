@@ -63,13 +63,6 @@ class THEBASE {
      */
     private static $s_singletons = array();
 
-    /**
-     * Holds Namespaces of Projects that were registered for Autoloading.
-     *
-     * @var array
-     */
-    private static $s_registeredAutoLoads = array();
-
     private static $s_themastersInitArgs = array();
     /* PUBLIC */
 
@@ -652,7 +645,7 @@ class THEBASE {
         } else {
             $rl[$name] = $var;
         }
-        
+
         self::$s_registeredJsVars = array_merge_recursive(self::$s_registeredJsVars, $r);
     }
 
@@ -1119,27 +1112,6 @@ class THEBASE {
         }
     }
 
-    private static function s_registerAutoLoadFor($initArgs) {
-        if (in_array($initArgs['namespace'], self::$s_registeredAutoLoads)) {
-            return true;
-        }
-        spl_autoload_register(function ($class) use ($initArgs) {
-            if (strpos($class, $initArgs['namespace']) === 0) {
-                $path = explode('\\', $class);
-                $name = end($path);
-                $path = array_splice($path, 2, -1);
-                $path[] = $name.'.php';
-                $path = implode(DS, $path);
-
-                if (file_exists($initArgs['basePath'].$path)) {
-                    include $initArgs['basePath'].$path;
-                }
-            }
-        });
-        self::$s_registeredAutoLoads[] = $initArgs['namespace'];
-        return true;
-    }
-
     /**
      * Trys to get a class File named example.php from 
      * "classes"-Subfolder of defined basePath and return a 
@@ -1156,7 +1128,6 @@ class THEBASE {
         $paths = array();
         if ($name === 'Master') {
             if (isset($initArgs['basePath']) && $initArgs['namespace']) {
-                self::s_registerAutoLoadFor($initArgs);
                 $paths[]  = array(
                     'namespace' => $initArgs['namespace'],
                     'basePath' => $initArgs['basePath']

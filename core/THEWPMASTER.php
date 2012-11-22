@@ -547,9 +547,13 @@ class THEWPMASTER extends THEWPUPDATES {
         }
         $r = '';
         foreach ($source as $name => $var) {
-            $r[] = $name.'='.json_encode($var);
+            if (is_array($var) || is_object($var)) {
+                $r .= "if(typeof $name==='undefined'){var $name={};}$name=jQuery.extend(true,{},$name,";
+                $r .= json_encode($var).');';
+            } else {
+                $r .= "var $name=".json_encode($var).';';
+            }
         }
-        $r = 'var '.implode(',', $r).';';
 
         $checksum = md5($r);
         $time = time();
@@ -578,7 +582,7 @@ class THEWPMASTER extends THEWPUPDATES {
             file_put_contents($fpath.$fname, $r);
         }
 
-        if (is_object($HTML = THEBASE::sGet_HTML())) {
+        if (is_object($HTML = THEBASE::sGet_HTML(true))) {
             THEBASE::sGet_HTML()->script($url.$fname);
         } else {
             echo "<script src=\"$url.$fname\" type=\"text/javascript\"></script>";

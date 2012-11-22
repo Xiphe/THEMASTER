@@ -4,9 +4,9 @@
  *
  * @category: Wordpress Plugin
  * @package: __namespace__
- * @author: __author__
- * @license: __license__
- * @link: __themeuri__
+ * @author: __currentUser__
+ * @license: 
+ * @link:
  */
 
 /*

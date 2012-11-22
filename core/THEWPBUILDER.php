@@ -556,10 +556,16 @@ class THEWPBUILDER extends THEMASTER {
 
 	private static function s_additionalArg( $key, $args, $extended, $baseTemplateName ) {
 		// THEDEBUG::diebug( get_option('gmt_offset') );
-		if( !isset( $args['ClassName'] ) ) {
+		if(!isset($args['ClassName'])) {
 			$args['ClassName'] = 'Foo';
 		}
+
 		switch( $key ) {
+			case 'stlfoldername':
+				return strtolower($args['folderName']);
+			case 'stlvendor':
+				$ns = explode('\\', $args['namespace']);
+				return $ns[0];
 			case 'classname':
 				return strtolower( $args['ClassName'] );
 			case 'ClassName':
@@ -582,7 +588,7 @@ class THEWPBUILDER extends THEMASTER {
 				return THEWPMASTER::get_user( 'data|display_name' );
 			case 'namespace':
 				return preg_replace('/[^A-Za-z]/', '', THEWPMASTER::get_user('data|display_name'))
-					.DS.preg_replace('/[^A-Za-z]/', '', $args['projectName']);
+					.'\\'.$args['folderName'];
 			case 'mdh1projectName':
 				return str_repeat('=', strlen($args['projectName']));
 			case 'FILE':
@@ -604,7 +610,7 @@ class THEWPBUILDER extends THEMASTER {
 		if( file_exists( ( $dir = self::s_getBaseTemplatePath() . $path ) ) 
 		 && is_dir( $dir )
 		) {
-			foreach( X\THETOOLS::get_dirArray( $dir, null, array( 9, array( '.', '..', '.DS_Store' ) ) ) as $file ) {
+			foreach( X\THETOOLS::get_dirArray($dir, null, array('.', '..', '.DS_Store')) as $file ) {
 				$target = $file;
 				if( substr( $file, 0, 4 ) === '-n- ' ) {
 					if( $n == false ) { continue; }
