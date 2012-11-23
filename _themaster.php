@@ -40,7 +40,7 @@ namespace Xiphe\THEMASTER;
      * In development i use one central symlinked version of this plugin.
      * Whenever something seems to be wrong i always uncomment this line
      * to check if i use the latest version or if the link was broken
-     * throu a sync process.
+     * through a sync process.
      */
     // die('THEMASTER SYMLINKED');
 
