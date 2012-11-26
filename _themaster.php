@@ -137,16 +137,17 @@ spl_autoload_register(function($class) {
             || file_exists(THEMASTER_PROJECTFOLDER.$path)
         ) {
             if (!file_exists(THEMASTER_PROJECTFOLDER.$path)) {
-                var_dump(THEMASTER_PROJECTFOLDER.$path);
-                die();
+                debug(sprintf('Invalid include path "%s".', THEMASTER_PROJECTFOLDER.$path), 4);
+                diebug('callstack');
+            } else {
+                require(THEMASTER_PROJECTFOLDER.$path);
             }
-            require(THEMASTER_PROJECTFOLDER.$path);
         }
     } elseif(in_array($class, array('Xiphe\THETOOLS', 'Xiphe\THEWPTOOLS', 'Xiphe\THEDEBUG'))) {
         $file = str_replace('Xiphe\\', '', $class).'.php';
         include(THEMASTER_PROJECTFOLDER.'tools'.DS.$file);
     } elseif(WP()) {
-        $path =  explode('\\', $class);
+        $path = explode('\\', $class);
         unset($path[0]);
         $path = implode(DS, $path).'.php';
         foreach(array('plugins', 'themes') as $t) {
