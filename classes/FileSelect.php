@@ -414,9 +414,23 @@ class FileSelect extends core\THEWPMASTER {
             'class' => 'tm-fileselect_wrap '.(wp_attachment_is_image($id) ? 'tm-fileselect_wrap_image' : 'tm-fileselect_wrap_file'),
             'id' => 'tm-fileselect_id_'.$id
         ));
-        $r .= $HTML->sr_div('.tm-fileselect_removewrap');
-        $r .= $HTML->r_button(__('Remove', 'themaster'), '.button-secondary tm-fileselect_remove');
-        $r .= $HTML->r_end();
+        $r .= $HTML->sr_div('.tm-fileselect_buttons_wrap');
+        $r .= $HTML->sr_div('.tm-fileselect_buttons');
+        $b = $HTML->sr_div('.tm-fileselect_removewrap');
+        $b .= $HTML->r_button(__('Remove', 'themaster'), '.button-secondary tm-fileselect_remove');
+        $b .= $HTML->r_end();
+        $b .= $HTML->sr_div('.tm-fileselect_detailswrap');
+        $b .= $HTML->r_a(__('Details', 'themaster'), array(
+            'class' => '.button-secondary tm-fileselect_details',
+            'href' => sprintf('\./media.php?attachment_id=%s&action=edit', $id),
+            'target' => '_blank'
+        ));
+        $b .= $HTML->r_end(1);
+        $b = apply_filters('Xiphe\THEMASTER\FileSelect_buttons', $b, $id);
+        if (is_string($b)) {
+            $r .= $b;
+        }
+        $r .= $HTML->r_end(2);
         if (wp_attachment_is_image($id)) {
             $r .= $HTML->rs_a(array(
                 'href' => admin_url('admin-ajax.php?').http_build_query(array(
@@ -435,7 +449,10 @@ class FileSelect extends core\THEWPMASTER {
             $r .= $HTML->r_end();
         }
         $r .= $HTML->r_end('.tm-fileselect_wrap');
-        return $r;
+        $r = apply_filters('Xiphe\THEMASTER\FileSelect_preview', $r, $id);
+        if (is_string($r)) {
+            return $r;
+        }
     }
 
     private function _get_link($id)

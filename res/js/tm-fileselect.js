@@ -297,6 +297,8 @@ function tm_fileselect_select_item(item_id, field_id) {
         size:   preview_size,
         action: 'tm_fileselect_getfile',
         nonce: nonce
+    }, function() {
+        $preview_div.trigger('received_items');
     });
 
     /* convert list to string if its an array */
