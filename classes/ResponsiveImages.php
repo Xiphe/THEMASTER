@@ -242,7 +242,7 @@ class ResponsiveImages extends core\THEWPMASTER {
 
 		return array(
 			'style' => "background-image: url('$url');",
-			'class' => 'tm-responsiveimage tm-responsivebgimage',
+			'class' => 'tm-responsiveimage tm-responsivebgimage tm-loading',
 			'data-ratio' => $ratio,
 			'data-origin' => $origin,
 			'data-loaded' => $loadWidth,
@@ -308,7 +308,7 @@ class ResponsiveImages extends core\THEWPMASTER {
 
 		$args = array(
 			'src' => $url,
-			'class' => trim('tm-responsiveimage'.(!empty($addClass) ? ' '.str_replace('tm-responsiveimage', '', $addClass) : '')),
+			'class' => trim('tm-loading tm-responsiveimage'.(!empty($addClass) ? ' '.str_replace('tm-responsiveimage', '', $addClass) : '')),
 			'data-ratio' => $ratio,
 			'data-origin' => $origin,
 			'data-loaded' => $loadWidth,

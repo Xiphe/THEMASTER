@@ -91,6 +91,7 @@ jQuery(document).ready(function($) {
 			$(this).attr('src', url);
 		}
 		$(this).attr('data-loaded', size);
+		$(this).removeClass('tm-loading').addClass('tm-done').trigger('tm-responsiveimage_loaded');
 	},
 
 	slideshow = function() {
