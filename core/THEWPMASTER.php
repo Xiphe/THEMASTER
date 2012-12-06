@@ -277,6 +277,17 @@ class THEWPMASTER extends THEWPUPDATES {
         }
 
         /*
+         * Js Var Cache
+         */
+        add_action('wp_ajax_twpm_jsVars', array(THE::WPMASTER, 'twpm_ajax_jsVars'));
+        add_action('wp_ajax_nopriv_twpm_jsVars', array(THE::WPMASTER, 'twpm_ajax_jsVars'));
+        
+
+        add_action('Xiphe\THEMASTER\checkJsVarCache', array(THE::WPMASTER, 'twpm_checkJsVarCache'));
+        wp_schedule_event(time(), 'daily', 'Xiphe\THEMASTER\checkJsVarCache');
+        
+
+        /*
          * Register callback for plugin dependency check.
          */
         add_action('after_setup_theme', array(THE::WPMASTER, 'twpm_check_initiated'));
@@ -545,50 +556,70 @@ class THEWPMASTER extends THEWPUPDATES {
             $source = THEBASE::sGet_registeredJsVars();
             $regMethod = 'sReg_js';
         }
-        $r = '';
+        $js = '';
         foreach ($source as $name => $var) {
             if (is_array($var) || is_object($var)) {
-                $r .= "if(typeof $name==='undefined'){var $name={};}$name=jQuery.extend(true,{},$name,";
-                $r .= json_encode($var).');';
+                $js .= "if(typeof $name==='undefined'){var $name={};}$name=jQuery.extend(true,{},$name,";
+                $js .= json_encode($var).');';
             } else {
-                $r .= "var $name=".json_encode($var).';';
+                $js .= "var $name=".json_encode($var).';';
             }
         }
 
-        $checksum = md5($r);
-        $time = time();
-        $fname = $checksum.'_'.$time.'.js';
-        $relPath = 'res'.DS.'js'.DS.'tmp'.DS;
-        $url = self::$sBaseUrl.X\THETOOLS::unify_slashes($relPath, '/');
-        $fpath = self::$sBasePath.$relPath;
-        $found = false;
+        $checksum = md5($js);
 
-        foreach (X\THETOOLS::get_dirArray($fpath) as $file) {
-            if (strpos($file, $checksum) === 0) {
-                $fname = $file;
-                $found = true;
-                continue;
-            }
-            $m;
-            preg_match('/_([0-9]+)\./', $file, $m);
-            $ftime = intval($m[1]);
-            $ftime += 60*60*24;
-            if ($ftime < $time) {
-                unlink($fpath.$file);
-            }
-        }
+        update_option(
+            "Xiphe\THEMASTER\jsVarCache\\$checksum",
+            X\THETOOLS::sc(
+                array(
+                    'admin' => $admin,
+                    'creation' => time(),
+                    'content' => $js
+                )
+            )
+        );
 
-        if (!$found) {
-            file_put_contents($fpath.$fname, $r);
-        }
+
+        $url = add_query_arg(array(
+            'action' => 'twpm_jsVars',
+            'id' => $checksum
+        ), admin_url('admin-ajax.php'));
 
         if (is_object($HTML = THEBASE::sGet_HTML(true))) {
-            THEBASE::sGet_HTML()->script($url.$fname);
+            THEBASE::sGet_HTML()->script(array('src' => $url));
         } else {
-            echo "<script src=\"$url.$fname\" type=\"text/javascript\"></script>";
+            echo "<script src=\"$url\" type=\"text/javascript\"></script>";
         }
     }
+
+    final public static function twpm_ajax_jsVars()
+    {
+        $vars = get_option('Xiphe\THEMASTER\jsVarCache\\'.esc_attr($_GET['id']));
+
+        if (!empty($vars) && (!$vars->admin || (is_admin() && is_user_logged_in()))) {
+            header("Content-type: text/javascript");
+            echo $vars->content;
+        }
+        exit;
+    }
     
+    final public static function twpm_checkJsVarCache()
+    {
+        global $wpdb;
+
+        $query = "
+            SELECT *
+            FROM wp_options
+            WHERE option_name LIKE 'Xiphe\\\\\\\\THEMASTER\\\\\\\\jsVarCache\\\\\\\\%'
+        ";
+        foreach ($wpdb->get_results($query) as $jsCache) {
+            $data = unserialize($jsCache->option_value);
+            if (time()-60*60*48 > intval($data->creation)) {
+                delete_option($jsCache->option_name);
+            }
+        }
+    }
+
     /**
      * Registeres 
      * @return [type] [description]

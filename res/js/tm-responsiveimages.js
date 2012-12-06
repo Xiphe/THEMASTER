@@ -1,4 +1,4 @@
-jQuery(document).ready(function($) {
+if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{themaster:{responsiveimages:(function($){
 	if ($('body').hasClass('wp-admin')) {
 		return false;
 	}
@@ -7,8 +7,14 @@ jQuery(document).ready(function($) {
 		sTime = 5000;
 
 	var responsize = function(elm) {
-		if ($(elm).hasClass('tm-responsiveimage')) {
-			innerresponsize.call(elm);
+		if (typeof elm !== 'undefined') {
+			if ($(elm).hasClass('tm-responsiveimage')) {
+				innerresponsize.call(elm);
+			} else {
+				$(elm).find('.tm-responsiveimage').each(function() {
+					innerresponsize.call(this);
+				});
+			}
 		} else {
 			$.each($('.tm-responsiveimage'), function() {
 				innerresponsize.call(this);
@@ -165,9 +171,12 @@ jQuery(document).ready(function($) {
 		$.each($('.tm-responsiveimage'), function() {
 			$(this).attr('height', Math.round($(this).width()/$(this).attr('data-ratio')));
 		});
-	};
-	
-	(function() {
+	},
+
+	_init = function() {
+	},
+
+	_ready = function() {
 		if(typeof tm_slideshowTime !== 'undefined') {
 			sTime = parseInt(tm_slideshowTime);
 		}
@@ -177,10 +186,10 @@ jQuery(document).ready(function($) {
 			$(window).resize(resize);
 			$(window).resizeEnd(responsize);
 		}, 10);
-	})();
+	};
 
 	$.fn.responsize = function() {
 		responsize(this);
 		return this;
 	};
-});
+;(function(){_init();$(document).ready(_ready);})();return this;})(jQuery)}});
