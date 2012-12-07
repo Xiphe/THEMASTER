@@ -34,6 +34,7 @@ class ResponsiveImages extends core\THEWPMASTER {
 	 * @var array
 	 */
 	protected $actions_ = array(
+		'wp_head',
 		'wp_ajax_tm_responsiveimageget' => array(
 			'wp_ajax_nopriv_tm_responsiveimageget',
 			'wp_ajax_tm_responsiveimageget'
@@ -54,13 +55,31 @@ class ResponsiveImages extends core\THEWPMASTER {
 	 * 
 	 * @return void
 	 */
-	public function init() {
+	public function init()
+	{
+		if (isset($_GET['tmri_nojsfallback']) && $_GET['tmri_nojsfallback'] === 'now') {
+			setcookie('tmri_nojsfallback', 'active', time()+60*60*24*7);
+			$_COOKIE['tmri_nojsfallback'] = 'active';
+		} 
+
 		$this->namespace = 'Xiphe\THEMASTER';
 		$this->reg_js('resizeend');
+		$this->reg_js('jquery.cookie.min');
 		$this->reg_js('tm-responsiveimages');
 		core\THEBASE::reg_jsVar('ajaxurl', admin_url('admin-ajax.php'), true);
 	}
 
+	public function wp_head()
+	{
+		if (!isset($_COOKIE['tmri_nojsfallback']) || $_COOKIE['tmri_nojsfallback'] !== 'active') {
+			$noJsLink = add_query_arg('tmri_nojsfallback', 'now', X\THETOOLS::get_currentUrl());
+			core\THEBASE::sget_HTML()->s_noscript()
+				->rederect(array(
+					'content' => '0; URL='.$noJsLink
+				))
+			->end();
+		}
+	}
 
     /* -------------- *
      *  AJAX METHODS  *
@@ -72,7 +91,8 @@ class ResponsiveImages extends core\THEWPMASTER {
 	 * @access public
 	 * @return void
 	 */
-	public function wp_ajax_tm_responsiveimageget() {
+	public function wp_ajax_tm_responsiveimageget()
+	{
 		/*
 		 * Cleanup the path.
 		 */
@@ -301,6 +321,9 @@ class ResponsiveImages extends core\THEWPMASTER {
 		$ratio;
 		$loadWidth = $this->_get_loadWidh($image, $maxWidth, $loadHeight, $ratio);
 
+		if (isset($_COOKIE['tmri_nojsfallback']) && $_COOKIE['tmri_nojsfallback'] === 'active') {
+			$loadWidth = $maxWidth;
+		}
 		$url = $this->get_url(
 			$image, 
 			$loadWidth

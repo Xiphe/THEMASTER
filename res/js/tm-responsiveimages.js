@@ -177,6 +177,9 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
 	},
 
 	_ready = function() {
+		if ($.cookie('tmri_nojsfallback') === 'active') {
+			$.removeCookie('tmri_nojsfallback');
+		}
 		if(typeof tm_slideshowTime !== 'undefined') {
 			sTime = parseInt(tm_slideshowTime);
 		}
