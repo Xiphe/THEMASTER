@@ -791,23 +791,36 @@ class THETOOLS {
      * curPageURL returns the current url
      * 
      * by http://www.webcheatsheet.com/PHP/get_current_page_url.php
+     * modified by xiphe
      *
-     * @access public
+     * @param  string|array $filter part or parts of the url structure that should be ignored.
+     * 
      * @return string the current URL
      */
-    public static function get_currentUrl()
+    public static function get_currentUrl($filter = array())
     {
-         $pageURL = 'http';
-         if (isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == "on") {
-            $pageURL .= "s";
-         }
-         $pageURL .= "://";
-         if (isset($_SERVER["SERVER_PORT"]) && $_SERVER["SERVER_PORT"] != "80") {
-            $pageURL .= $_SERVER["SERVER_NAME"].":".$_SERVER["SERVER_PORT"].$_SERVER["REQUEST_URI"];
-         } else {
-            $pageURL .= $_SERVER["SERVER_NAME"].$_SERVER["REQUEST_URI"];
-         }
-         return $pageURL;
+        if (!is_array($filter)) {
+            $filter = array($filter);
+        }
+
+        $pageUrl = '';
+        if (!in_array('http', $filter)) {
+            $pageURL = 'http';
+            if (isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == "on") {
+                $pageURL .= "s";
+            }
+            $pageURL .= "://";
+        }
+        if (!in_array('name', $filter)) {
+            $pageURL .= $_SERVER["SERVER_NAME"];
+        }
+        if (!in_array('port', $filter) && isset($_SERVER["SERVER_PORT"]) && $_SERVER["SERVER_PORT"] != "80") {
+            $pageURL .= ":".$_SERVER["SERVER_PORT"];
+        }
+        if (!in_array('request', $filter)) {
+            $pageURL .= $_SERVER["REQUEST_URI"];
+        }
+        return $pageURL;
     }
 
     /**
