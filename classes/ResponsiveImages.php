@@ -29,6 +29,11 @@ class ResponsiveImages extends core\THEWPMASTER {
      */
 	public $singleton = true;
 
+	public $cacheLivetime = 0;
+
+	private $tmpDir = false;
+
+
 	/**
 	 * Action Hooks into Wordpress.
 	 * @var array
@@ -42,7 +47,12 @@ class ResponsiveImages extends core\THEWPMASTER {
 		'wp_ajax_tm_responsiveslideshowget' => array(
 			'wp_ajax_nopriv_tm_responsiveslideshowget',
 			'wp_ajax_tm_responsiveslideshowget'
-		)
+		),
+		'wp_ajax_tm_responsiveimagetouched' => array(
+			'wp_ajax_nopriv_tm_responsiveimagetouched',
+			'wp_ajax_tm_responsiveimagetouched'
+		),
+		'shutdown'
 	);
 
 
@@ -56,13 +66,20 @@ class ResponsiveImages extends core\THEWPMASTER {
 	 * @return void
 	 */
 	public function init()
-	{
+	{	
+		$this->cacheLivetime = 60*60*24*7*30;
+		$this->touchedImages = get_option('Xiphe\THEMASTER\ResponsiveImages');
+
 		if (isset($_GET['tmri_nojsfallback']) && $_GET['tmri_nojsfallback'] === 'now') {
 			setcookie('tmri_nojsfallback', 'active', time()+60*60*24*7);
 			$_COOKIE['tmri_nojsfallback'] = 'active';
-		} 
+		}
 
 		$this->namespace = 'Xiphe\THEMASTER';
+		$this->uploadDir = wp_upload_dir();
+		$this->uploadDir = realpath($this->uploadDir['path']).DS;
+		$this->tmpDir = dirname($this->uploadDir).DS.'tmp'.DS;
+
 		$this->reg_js('resizeend');
 		$this->reg_js('jquery.cookie.min');
 		$this->reg_js('tm-responsiveimages');
@@ -84,6 +101,69 @@ class ResponsiveImages extends core\THEWPMASTER {
     /* -------------- *
      *  AJAX METHODS  *
      * -------------- */
+
+    /**
+     * When the full-size image was directly found by javascript this ajax method
+     * will be called to prevent the requested images from being deleted from cache.
+     *
+     * @return void
+     */
+    public function wp_ajax_tm_responsiveimagetouched()
+    {
+    	$i = 0;
+
+    	foreach ($_REQUEST['data'] as $image => $data) {
+    		/*
+			 * Verify Nonce.
+			 */
+			if (!X\THEWPTOOLS::verify_noprivnonce(
+				esc_attr($data[key($data)]),
+				'tm-responsive',
+				$image
+			)) {
+				/*
+				 * Nonce failed - continue with next image.
+				 */
+				continue;
+			}
+
+			$i++;
+
+			/*
+			 * Cleanup the path.
+			 */
+			$image = X\THETOOLS::get_directPath(esc_attr($image));
+
+			/*
+			 * If image is not an ID - Add the ABSPATH const.
+			 */
+			if (!is_numeric($image) && defined('ABSPATH')) {
+				$image = ABSPATH.$image;
+			}
+
+			/*
+			 * Get the real image file.
+			 */
+			$origin = $this->_get_baseImageFile($image);
+
+			/*
+			 * Register touches - touchedImages will be saved on shutdown.
+			 */
+			foreach ($data as $width => $nonce) {
+				$image = $this->get_imagefile($origin, esc_attr($width));
+				$this->touch($origin, $image);
+			}
+    	}
+
+    	/*
+    	 * Exit the script.
+    	 */
+    	if ($i > 0) {
+			$this->_exit('ok', 'Touches registered.', 0);
+    	} else {
+			$this->_exit('error', 'Nothing touched.', 0);
+    	}
+    }
 
 	/**
 	 * Ajax getter for the full image url.
@@ -199,11 +279,16 @@ class ResponsiveImages extends core\THEWPMASTER {
      */
 	public function get_url($image, $width = 'auto')
 	{
+		$origin = $image;
 		if (!($image = $this->_get_baseImageFile($image))) {
 			return false;
 		}
 
 		$height = $this->_get_dims($image, $width);
+		if ($height === false) {
+			return false;
+		}
+
 		return $this->_get_imageUrl($image, $width, $height);
 	}
 
@@ -222,6 +307,9 @@ class ResponsiveImages extends core\THEWPMASTER {
 			return false;
 		}
 		$height = $this->_get_dims($image, $width, $round);
+		if ($height === false) {
+			return false;
+		}
 		return $this->_get_imageFile($image, $width, $height);
 	}
 
@@ -254,11 +342,17 @@ class ResponsiveImages extends core\THEWPMASTER {
 		$ratio;
 		$loadedHeight;
 		$loadWidth = $this->_get_loadWidh($image, $maxWidth, $loadedHeight, $ratio);
+		if ($loadWidth === false) {
+			return array();
+		}
 
 		$url = $this->get_url(
 			$image, 
 			$loadWidth
 		);
+		if ($url === false) {
+			return array();
+		}
 
 		return array(
 			'style' => "background-image: url('$url');",
@@ -293,11 +387,11 @@ class ResponsiveImages extends core\THEWPMASTER {
 		/*
 		 * Check if alt-text is provided or image meta-alt is provided.
 		 */
-		if ($alt === null && $image == intval($image)) {
+		if ($alt === null && is_numeric($image)) {
 			$alt = get_post_meta($image, '_wp_attachment_image_alt', true);
 		}
 
-		if ($title === null && $image == intval($image)) {
+		if ($title === null && is_numeric($image)) {
 			$title = get_the_title($image);
 		}
 
@@ -317,9 +411,13 @@ class ResponsiveImages extends core\THEWPMASTER {
 			);
 		}
 
+		
 		$loadHeight;
 		$ratio;
 		$loadWidth = $this->_get_loadWidh($image, $maxWidth, $loadHeight, $ratio);
+		if ($loadWidth === false) {
+			return '';
+		}
 
 		if (isset($_COOKIE['tmri_nojsfallback']) && $_COOKIE['tmri_nojsfallback'] === 'active') {
 			$loadWidth = $maxWidth;
@@ -328,6 +426,10 @@ class ResponsiveImages extends core\THEWPMASTER {
 			$image, 
 			$loadWidth
 		);
+
+		if ($url === false) {
+			return '';
+		}
 
 		$args = array(
 			'src' => $url,
@@ -376,10 +478,95 @@ class ResponsiveImages extends core\THEWPMASTER {
 		echo $this->get_image($image, $width, $addClass, $addId, $alt, $title);
 	}
 
+	public function touch($original, $image)
+	{
+		$match = X\THETOOLS::getPathsBase($image, $original, true);
+
+		$image = $this->compressPath($image, $original);
+
+		$this->touchedImages[$match][$original][$image] = time();
+	}
+
+	public function compressPath($slave, $master)
+	{
+		$masterSub = dirname($master).DS.pathinfo($master, PATHINFO_FILENAME);
+		$slave = str_replace('"', '&quot;', $slave);
+		$slave = str_replace($masterSub, '"_"', $slave);
+
+		return $slave;
+	}
+
+	public function extractPath($slave, $master)
+	{
+		$masterSub = dirname($master).DS.pathinfo($master, PATHINFO_FILENAME);
+		$slave = str_replace('"_"', $masterSub, $slave);
+		$slave = str_replace('&quot;', '"', $slave);
+
+		return $slave;
+	}
+
 
     /* ------------------ *
      *  INTERNAL METHODS  *
      * ------------------ */
+
+    /**
+     * Checks if any images were not touched in the last (cacheLivetime)
+     * And tries to delete those.
+     *
+     * @return void
+     */
+    public static function checkCache()
+    {	
+    	if ((!defined('DOING_CRON') || !DOING_CRON)
+    		&& (!defined('Xiphe_THEDEBUG_ResponsiveImages_deleteall') || !Xiphe_THEDEBUG_ResponsiveImages_deleteall)
+    	) {
+    		return;
+    	}
+
+
+    	$obj = self::inst();
+
+    	if (defined('Xiphe_THEDEBUG_ResponsiveImages_deleteall') && Xiphe_THEDEBUG_ResponsiveImages_deleteall) {
+    		$obj->cacheLivetime = -1;
+    	}
+
+    	foreach ($obj->touchedImages as $basePath => $images) {
+    		foreach ($images as $original => $data) {
+    			$delete = !file_exists($basePath.$original);
+    			foreach ($data as $image => $touched) {
+    				if ($delete || (intval($touched) + $obj->cacheLivetime) < time()) {
+    					$key = $image;
+    					$image = $obj->extractPath($image, $original);
+    					$file = $basePath.$image;
+	    				if (file_exists($file) && is_writable($file)) {
+	    					unlink($file);
+
+	    					$empty = function ($dir) {
+	    						$files = scandir($dir);
+	    						$files = array_flip($files);
+	    						unset($files['.']);
+	    						unset($files['..']);
+	    						return !count($files);
+	    					};
+	    					$parent = dirname($file);
+	    					while($empty($parent) && is_writable($parent)) {
+	    						rmdir($parent);
+	    						$parent = dirname($parent);
+	    					}
+	    				}
+	    				unset($obj->touchedImages[$basePath][$original][$key]);
+	    				if (empty($obj->touchedImages[$basePath][$original])) {
+	    					unset($obj->touchedImages[$basePath][$original]);
+	    					if (empty($obj->touchedImages[$basePath])) {
+	    						unset($obj->touchedImages[$basePath]);
+	    					}
+	    				}
+    				}
+    			}
+    		}
+    	}
+    }
 
     /**
      * Gets the dimensions in wich the image should be loaded.
@@ -408,7 +595,9 @@ class ResponsiveImages extends core\THEWPMASTER {
 		 * Get the potential dimensions.
 		 */		
 		$height = $this->_get_dims($image, $width, false, $ratio, $maxWidth);
-
+		if ($height === false) {
+			return false;
+		}
 		/*
 		 * Get the url of mini-thumb or direct full image if drct prefix was set.
 		 */
@@ -434,7 +623,10 @@ class ResponsiveImages extends core\THEWPMASTER {
 		$slideshow = false;
 		if (is_string($image)) {
 			$image = explode(',', $image);
+		} else {
+			return false;
 		}
+
 		if (count($image) > 1) {
 			$slideshow = array();
 			foreach ($image as $k => $img) {
@@ -485,8 +677,15 @@ class ResponsiveImages extends core\THEWPMASTER {
 		$file = X\THETOOLS::unify_slashes($file);
 		$abspath = X\THETOOLS::unify_slashes(ABSPATH);
 		$url = X\THETOOLS::slash(get_bloginfo('wpurl'));
+
 		$path = str_replace($abspath, '', $file);
-		$url .= X\THETOOLS::unify_slashes($path, '/', true);
+		if ($path === $file) {
+			$url = dirname($url);
+			$path = str_replace(dirname($abspath), '', $file);
+		}
+		$url = X\THETOOLS::slash($url);
+
+		$url .= X\THETOOLS::unPreSlash($path, true);
 
 		return $url;
 	}
@@ -521,8 +720,18 @@ class ResponsiveImages extends core\THEWPMASTER {
 	 * @return string         the target image path
 	 */
 	private function _build_imageFileName($image, $width, $height) {
-		return dirname($image).DS.'tm-responsive'.DS.pathinfo($image, PATHINFO_FILENAME)
-			.'-'.$width.'x'.$height.'.'.pathinfo($image, PATHINFO_EXTENSION);
+		$origin = $image;
+
+		$path = str_replace(dirname($this->uploadDir), '', $image);
+		if ($path === $image) {
+			$path = str_replace(X\THETOOLS::unDS(ABSPATH, true), '', $image);
+		}
+		$path = dirname($path).DS;
+		$file = pathinfo($image, PATHINFO_FILENAME).'-'.$width.'x'.$height.'.'.pathinfo($image, PATHINFO_EXTENSION);
+		$image = X\THETOOLS::unDS($this->tmpDir).$path.$file;
+
+		$this->touch($origin, $image);
+		return $image;
 	}
 
 	/**
@@ -537,6 +746,9 @@ class ResponsiveImages extends core\THEWPMASTER {
 	 */
 	private function _gen_image($original, $target, $width, $height)
 	{
+		$tmp = ini_get('memory_limit');
+		ini_set('memory_limit', '1024M');
+
 		$type = wp_check_filetype($original);
 		$type = $type['type'];
 
@@ -585,7 +797,7 @@ class ResponsiveImages extends core\THEWPMASTER {
       	);
 
       	if (!is_dir(dirname($target))) {
-      		mkdir(dirname($target), 0777);
+      		mkdir(dirname($target), 0777, true);
       	}
 
       	switch ($type) {
@@ -601,6 +813,8 @@ class ResponsiveImages extends core\THEWPMASTER {
 		}
 		imagedestroy($original);
 		imagedestroy($new_image);
+
+		ini_set('memory_limit', $tmp);
 		return $r;
 	}
 
@@ -614,7 +828,16 @@ class ResponsiveImages extends core\THEWPMASTER {
 	 */
 	private function _get_dims($image, &$width, $round = true, &$ratio = null, &$fullWidth = null)
 	{
-		$dims = getimagesize($image);
+		$tmp = ini_get('memory_limit');
+		ini_set('memory_limit', '1024M');
+		$dims = @getimagesize($image);
+		ini_set('memory_limit', $tmp);
+
+		if (!is_array($dims)) {
+			debug('Failed to receive image size from image: '.$image, 3);
+			debug(@fileperms($image), 'fileperms');
+			return false;
+		}
 		$height = $dims[1];
 		$ratio = round($dims[0]/$dims[1], 4);
 
@@ -672,7 +895,12 @@ class ResponsiveImages extends core\THEWPMASTER {
 		if ($fts[0] != 'image') {
 			return false;
 		} 
-		return WP_CONTENT_DIR.DS.'uploads'.DS.$image['file'];
+		$dirs = wp_upload_dir();
+		return X\THETOOLS::DS(realpath($dirs['path'])).$image['file'];
+	}
+
+	public function shutdown() {
+		update_option('Xiphe\THEMASTER\ResponsiveImages', $this->touchedImages);
 	}
 }
 ?>

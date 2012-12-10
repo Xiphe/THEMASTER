@@ -4,7 +4,10 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
 	}
 
 	var slideimgs = {},
-		sTime = 5000;
+		sTime = 5000,
+		waitForTouches = false,
+		touchIntervall = 10000,
+		touched = {};
 
 	var responsize = function(elm) {
 		if (typeof elm !== 'undefined') {
@@ -25,16 +28,21 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
 
 
 	innerresponsize = function() {
-		var rnd;
-		if ($(this).width() < 200) {
+		var rnd,
+			iWidth = $(this).width();
+		if (typeof window.devicePixelRatio !== 'undefined') {
+			iWidth = iWidth*window.devicePixelRatio;
+		}
+
+		if (iWidth < 200) {
 			rnd = 50;
-		} else if ($(this).width() < 1000) {
+		} else if (iWidth < 1000) {
 			rnd = 100;
 		} else {
 			rnd = 200;
 		}
 		var thiz = this,
-			nW = Math.ceil($(this).width()/rnd)*rnd,
+			nW = Math.ceil(iWidth/rnd)*rnd,
 			maxWidth = parseInt($(this).attr('data-maxwidth'));
 
 		if (nW > maxWidth) {
@@ -44,6 +52,7 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
 		if(parseInt($(this).attr('data-loaded'), 10) !== nW) {
 			var	nH = Math.round(nW/$(this).attr('data-ratio')),
 				url,
+				originUrl,
 				$img = $('<img />'),
 				n;
 
@@ -57,6 +66,7 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
 				url = $(this).attr('src')
 			}
 
+			originUrl = url;
 			url = url.split('.');
 			n = url[url.length-2].split('-');
 			n[n.length-1] = nW+'x'+nH;
@@ -65,10 +75,19 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
 
 			$img.load(function() {
 				setImg.call(thiz, url, nW);
+				if (typeof touched[$(thiz).attr('data-origin')] === 'undefined'
+					|| typeof touched[$(thiz).attr('data-origin')][nW] === 'undefined'
+				) {
+					if (typeof touched[$(thiz).attr('data-origin')] === 'undefined') {
+						touched[$(thiz).attr('data-origin')] = {};
+					}
+					touched[$(thiz).attr('data-origin')][nW] = $(thiz).attr('data-nonce');
+					waitForTouches = 2;
+				}
 			}).error(function() {
 				$.get(ajaxurl, {
 					action: 'tm_responsiveimageget',
-					width: $(thiz).width(),
+					width: iWidth,
 					image: $(thiz).attr('data-origin'),
 					nonce: $(thiz).attr('data-nonce')
 				}, function(r) {
@@ -167,6 +186,19 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
 		});
 	},
 
+	_saveTouches = function() {
+		if (waitForTouches === 1) {
+			waitForTouches = false;
+			$.post(ajaxurl, {
+				action: 'tm_responsiveimagetouched',
+				data: touched
+			});
+			touched = {};
+		} else if (waitForTouches !== false) {
+			waitForTouches = 1;
+		}
+	},
+
 	resize = function() {
 		$.each($('.tm-responsiveimage'), function() {
 			$(this).attr('height', Math.round($(this).width()/$(this).attr('data-ratio')));
@@ -177,6 +209,8 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
 	},
 
 	_ready = function() {
+		window.setInterval(_saveTouches, touchIntervall/2);
+
 		if ($.cookie('tmri_nojsfallback') === 'active') {
 			$.removeCookie('tmri_nojsfallback');
 		}

@@ -95,6 +95,32 @@ class THETOOLS {
      *  STATIC METHODS  *
      * ---------------- */
 
+    public function getPathsBase(&$a, &$b, $modify = false, $DS = DS) {
+        if ($modify) {
+            $str1 = &$a;
+            $str2 = &$b;
+        } else {
+            $str1 = $a;
+            $str2 = $b;
+        }
+
+        $str1 = explode($DS, self::unify_slashes($str1, $DS));
+        $str2 = explode($DS, self::unify_slashes($str2, $DS));
+        $match = array();
+        for ($i=0; $i < count($str1); $i++) { 
+            if ($str1[$i] === $str2[$i]) {
+                $match[] = $str1[$i];
+            } else {
+                break;
+            }
+        }
+        $match = implode($DS, $match);
+        $str1 = substr(implode($DS, $str1), strlen($match));
+        $str2 = substr(implode($DS, $str2), strlen($match));
+
+        return $match;
+    }
+
     /**
      * Checks if the given Path is existent and generates missing folders.
      *
@@ -104,6 +130,7 @@ class THETOOLS {
      * @return boolean  true if path is available false if not.
      */
     public function buildDir($path, $chmod = 0775) {
+        deprecated('mkdir($dir, null, true);');
         if (is_dir($path)) {
             return true;
         }

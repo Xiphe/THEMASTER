@@ -236,6 +236,19 @@ class THEWPMASTER extends THEWPUPDATES {
             return;
         }
 
+        add_filter('cron_schedules', function ($schedules) {
+            $schedules['weekly'] = array(
+                'interval' => 604800,
+                'display' => __('Once Weekly')
+            );
+            $schedules['now'] = array(
+                'interval' => 1,
+                'display' => __('Every Time (for debugging)')
+            );
+            return $schedules;
+        });
+ 
+
         /*
          * Register verry own one time init when wp is available.
          */
@@ -281,12 +294,13 @@ class THEWPMASTER extends THEWPUPDATES {
          */
         add_action('wp_ajax_twpm_jsVars', array(THE::WPMASTER, 'twpm_ajax_jsVars'));
         add_action('wp_ajax_nopriv_twpm_jsVars', array(THE::WPMASTER, 'twpm_ajax_jsVars'));
-        
 
-        add_action('Xiphe\THEMASTER\checkJsVarCache', array(THE::WPMASTER, 'twpm_checkJsVarCache'));
-        wp_schedule_event(time(), 'daily', 'Xiphe\THEMASTER\checkJsVarCache');
+        /*
+         * Cronjobs
+         */
+        add_action('xiphe_themaster_checkjsvarcache', array(THE::WPMASTER, 'twpm_checkJsVarCache'));
+        add_action('xiphe_themaster_responsiveimagecache', array('Xiphe\THEMASTER\classes\ResponsiveImages', 'checkCache'));
         
-
         /*
          * Register callback for plugin dependency check.
          */
@@ -467,6 +481,8 @@ class THEWPMASTER extends THEWPUPDATES {
      * @return void
      */
     public static function _masterActivate() {
+        wp_schedule_event(time(), 'daily', 'xiphe_themaster_checkjsvarcache');
+        wp_schedule_event(time(), 'weekly', 'xiphe_themaster_responsiveimagecache');
         return parent::_masterActivate();
     }
 
@@ -498,7 +514,7 @@ class THEWPMASTER extends THEWPUPDATES {
     
 
     final public static function twpm_wp_nav_menu_objects($sorted_menu_items)
-    {
+    {   
         foreach ($sorted_menu_items as $menu_item) {
             if ($menu_item->current) {
                 self::$currentNavItem = $menu_item;

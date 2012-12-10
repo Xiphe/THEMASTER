@@ -4,7 +4,7 @@ Plugin Name: THE MASTER
 Plugin URI: https://github.com/Xiphe/-THE-MASTER
 Namespace: Xiphe\THEMASTER
 Description: A Plugin to provide global access to the THEWPMASTER class. THEWPMASTER provides a lot of handy functions for plugins an themes.
-Version: 3.1.0.11
+Version: 3.1.0.12
 Date: 2012-30-10 22:00:00 +02:00
 Author: Hannes Diercks aka Xiphe
 Author URI: https://github.com/Xiphe
@@ -52,13 +52,13 @@ namespace Xiphe\THEMASTER;
     /*
      * Some settings for development (if anything inside the master is broken).
      */
-    // $tmTextID = basename(dirname(__FILE__)).'/'.basename(__FILE__);
-    // $tmSettingsID = 'THEMASTER_' . strtoupper($tmTextID);
-    // error_reporting(E_ALL);
-    // ini_set('display_errors', 1);
-    // define($tmSettingsID.'_ERRORREPORTING', true);
-    // define($tmSettingsID.'_DEBUG', true);
-    // define($tmSettingsID.'_DEBUGMODE', 'FirePHP');
+    $tmTextID = basename(dirname(__FILE__)).'/'.basename(__FILE__);
+    $tmSettingsID = 'THEMASTER_' . strtoupper($tmTextID);
+    error_reporting(E_ALL);
+    ini_set('display_errors', 1);
+    define($tmSettingsID.'_ERRORREPORTING', true);
+    define($tmSettingsID.'_DEBUG', true);
+    define($tmSettingsID.'_DEBUGMODE', 'FirePHP');
 
     include 'globaldebug.php';
     
