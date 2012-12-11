@@ -402,6 +402,10 @@ class THEWPSETTINGS extends THEWPBUILDER
 
     private static function s_validateAttachments($regOpts, $inpID, $v, $obj)
     {
+        if (empty($v)) {
+            return;
+        }
+
         /*
          * Check if multiple attachements are set and not allowed
          */
@@ -416,7 +420,6 @@ class THEWPSETTINGS extends THEWPBUILDER
             $obj->_r['id'] = $inpID;
             $obj->_exit('validationError', __('Invalid attachment count.', 'themaster'), 2);
         }
-
         if (isset($regOpts['validation']) && !empty($v)) {
             if (!THEBASE::get_instance('FileSelect')->validateTypeFor(
                 $v,

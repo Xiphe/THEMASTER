@@ -500,23 +500,47 @@ class THEBASE {
     public function get_view($view, $args = array(), $temp = null)
     {
         try {
-            /** sth. for compability with Wordpress functions TODO: get more specific **/
-            if(is_object($view)) {
+            /*
+             * If called through Wordpress, the first param is the post object
+             * not the view path.
+             *
+             * Example.
+             * add_meta_box(
+             *   'id',
+             *   'Title',
+             *   array($this, 'view'),
+             *   'posttype',
+             *   'advanced',
+             *   'core',
+             *   array('viewfile', 'foo' => 'bar', 'mooh' => 'something')
+             * );
+             */
+            if (is_object($view)) {
                 $page = $view;
                 $view = $args;
             }
-            if(is_array($view)) {
+            /*
+             * The view then might be the compact wp call
+             */
+            if (is_array($view)) {
                 $temp = $view;
-                if( is_array( $temp['args'] ) ) {
+                /*
+                 * check if arguments are array (additionals passed)
+                 * and extract the first entry (the view file path)
+                 */
+                if (is_array($temp['args'])) {
                     $view = $temp['args'][0];
                     unset($temp['args'][0]);
-                    $args = isset($temp['args']) ? $temp['args'] : array();
+                    $args = !empty($temp['args']) ? $temp['args'] : array();
                 } else {
+                    /*
+                     * No additional arguments passed, args = viewfile.
+                     */
                     $view = $temp['args'];
-                    unset( $temp['args'] );
+                    unset($temp['args']);
                     $args = $temp;
                 }
-                if( isset( $page ) ) {
+                if (isset($page)) {
                     $args['Page'] = $page;
                 }
             }
