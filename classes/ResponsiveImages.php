@@ -55,6 +55,9 @@ class ResponsiveImages extends core\THEWPMASTER {
 		'shutdown'
 	);
 
+	protected $filters_ = array(
+		'the_content'
+	);
 
     /* -------------------- *
      *  INITIATION METHODS  *
@@ -509,6 +512,30 @@ class ResponsiveImages extends core\THEWPMASTER {
     /* ------------------ *
      *  INTERNAL METHODS  *
      * ------------------ */
+
+    public static function the_content($content)
+    {	
+    	$PQ = X\THETOOLS::pq($content);
+    	$HTML = core\THEBASE::sget_HTML();
+    	foreach ($PQ->find('img') as $Img) {
+			$cls = pq($Img)->attr('class');
+			$m;
+			if (preg_match('/wp-image-([0-9]+)/', $cls, $m)) {
+				$w = pq($Img)->attr('width');
+				$r = $HTML->ris_span(array(
+					'class' => 'tm-responsiveimage_wrap',
+					'style' => "display: inline-block; width: 100%; max-width: {$w}px;",
+						
+				));
+				$r .= self::inst()->get_image(intval($m[1]), $w);
+				$r .= $HTML->r_close();
+
+				pq($Img)->replaceWith($r);
+			}
+    	}
+    	$content = $PQ->htmlOuter();
+    	return $content;
+    }
 
     /**
      * Checks if any images were not touched in the last (cacheLivetime)
