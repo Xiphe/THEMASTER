@@ -52,13 +52,13 @@ namespace Xiphe\THEMASTER;
     /*
      * Some settings for development (if anything inside the master is broken).
      */
-    $tmTextID = basename(dirname(__FILE__)).'/'.basename(__FILE__);
-    $tmSettingsID = 'THEMASTER_' . strtoupper($tmTextID);
-    error_reporting(E_ALL);
-    ini_set('display_errors', 1);
-    define($tmSettingsID.'_ERRORREPORTING', true);
-    define($tmSettingsID.'_DEBUG', true);
-    define($tmSettingsID.'_DEBUGMODE', 'FirePHP');
+    // $tmTextID = basename(dirname(__FILE__)).'/'.basename(__FILE__);
+    // $tmSettingsID = 'THEMASTER_' . strtoupper($tmTextID);
+    // error_reporting(E_ALL);
+    // ini_set('display_errors', 1);
+    // define($tmSettingsID.'_ERRORREPORTING', true);
+    // define($tmSettingsID.'_DEBUG', true);
+    // define($tmSettingsID.'_DEBUGMODE', 'FirePHP');
 
     include 'globaldebug.php';
     

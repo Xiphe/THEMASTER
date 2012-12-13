@@ -33,6 +33,7 @@ class ResponsiveImages extends core\THEWPMASTER {
 
 	private $tmpDir = false;
 
+	private $_active = false;
 
 	/**
 	 * Action Hooks into Wordpress.
@@ -80,6 +81,11 @@ class ResponsiveImages extends core\THEWPMASTER {
 
 		$this->namespace = 'Xiphe\THEMASTER';
 		$this->uploadDir = wp_upload_dir();
+		if (isset($this->uploadDir['error']) && $this->uploadDir['error']) {
+			diebug($this->uploadDir['error'], 'WP upload-dir error', 4);
+			$this->_active = false;
+			return false;
+		}
 		$this->uploadDir = realpath($this->uploadDir['path']).DS;
 		$this->tmpDir = dirname($this->uploadDir).DS.'tmp'.DS;
 
@@ -87,10 +93,15 @@ class ResponsiveImages extends core\THEWPMASTER {
 		$this->reg_js('jquery.cookie.min');
 		$this->reg_js('tm-responsiveimages');
 		core\THEBASE::reg_jsVar('ajaxurl', admin_url('admin-ajax.php'), true);
+		$this->_active = true;
 	}
 
 	public function wp_head()
 	{
+		if (!$this->_active) {
+			return false;
+		}
+
 		if (!isset($_COOKIE['tmri_nojsfallback']) || $_COOKIE['tmri_nojsfallback'] !== 'active') {
 			$noJsLink = add_query_arg('tmri_nojsfallback', 'now', X\THETOOLS::get_currentUrl());
 			core\THEBASE::sget_HTML()->s_noscript()
@@ -113,6 +124,10 @@ class ResponsiveImages extends core\THEWPMASTER {
      */
     public function wp_ajax_tm_responsiveimagetouched()
     {
+    	if (!$this->_active) {
+			return false;
+		}
+
     	$i = 0;
 
     	foreach ($_REQUEST['data'] as $image => $data) {
@@ -176,6 +191,10 @@ class ResponsiveImages extends core\THEWPMASTER {
 	 */
 	public function wp_ajax_tm_responsiveimageget()
 	{
+		if (!$this->_active) {
+			return false;
+		}
+
 		/*
 		 * Cleanup the path.
 		 */
@@ -229,6 +248,10 @@ class ResponsiveImages extends core\THEWPMASTER {
 	 * @return void
 	 */
 	public function wp_ajax_tm_responsiveslideshowget() {
+		if (!$this->_active) {
+			return false;
+		}
+
 		/*
 		 * Verify nonce.
 		 */
@@ -282,6 +305,10 @@ class ResponsiveImages extends core\THEWPMASTER {
      */
 	public function get_url($image, $width = 'auto')
 	{
+		if (!$this->_active) {
+			return false;
+		}
+
 		$origin = $image;
 		if (!($image = $this->_get_baseImageFile($image))) {
 			return false;
@@ -306,6 +333,10 @@ class ResponsiveImages extends core\THEWPMASTER {
 	 */
 	public function get_imagefile($image, $width = 'auto', $round = true)
 	{
+		if (!$this->_active) {
+			return false;
+		}
+
 		if (!($image = $this->_get_baseImageFile($image))) {
 			return false;
 		}
@@ -327,6 +358,10 @@ class ResponsiveImages extends core\THEWPMASTER {
 	 */
 	public function get_bg_imageAttrs($image, $maxWidth = 'auto')
 	{
+		if (!$this->_active) {
+			return false;
+		}
+
 		$slideshow = $this->_is_slideshow($image);
 
 		$origin = $image;
@@ -382,6 +417,10 @@ class ResponsiveImages extends core\THEWPMASTER {
 	 */
 	public function get_image($image, $maxWidth = 'auto', $addClass = false, $addId = null, $alt = null, $title = null)
 	{
+		if (!$this->_active) {
+			return false;
+		}
+
 		/*
 		 * Check if $image is array or object initiate slideshow and use first entry as startimage.
 		 */
@@ -478,11 +517,19 @@ class ResponsiveImages extends core\THEWPMASTER {
 	 * @return void
 	 */
 	public function image($image, $width = 'auto', $addClass = false, $addId = null, $alt = null, $title = null) {
+		if (!$this->_active) {
+			return false;
+		}
+
 		echo $this->get_image($image, $width, $addClass, $addId, $alt, $title);
 	}
 
 	public function touch($original, $image)
 	{
+		if (!$this->_active) {
+			return false;
+		}
+
 		$match = X\THETOOLS::getPathsBase($image, $original, true);
 
 		$image = $this->compressPath($image, $original);
@@ -492,6 +539,10 @@ class ResponsiveImages extends core\THEWPMASTER {
 
 	public function compressPath($slave, $master)
 	{
+		if (!$this->_active) {
+			return false;
+		}
+
 		$masterSub = dirname($master).DS.pathinfo($master, PATHINFO_FILENAME);
 		$slave = str_replace('"', '&quot;', $slave);
 		$slave = str_replace($masterSub, '"_"', $slave);
@@ -501,6 +552,10 @@ class ResponsiveImages extends core\THEWPMASTER {
 
 	public function extractPath($slave, $master)
 	{
+		if (!$this->_active) {
+			return false;
+		}
+
 		$masterSub = dirname($master).DS.pathinfo($master, PATHINFO_FILENAME);
 		$slave = str_replace('"_"', $masterSub, $slave);
 		$slave = str_replace('&quot;', '"', $slave);
@@ -515,6 +570,10 @@ class ResponsiveImages extends core\THEWPMASTER {
 
     public static function the_content($content)
     {	
+    	if (!self::inst()->_active) {
+			return false;
+		}
+
     	$PQ = X\THETOOLS::pq($content);
     	$HTML = core\THEBASE::sget_HTML();
     	foreach ($PQ->find('img') as $Img) {
@@ -545,6 +604,10 @@ class ResponsiveImages extends core\THEWPMASTER {
      */
     public static function checkCache()
     {	
+    	if (!$this->_active) {
+			return false;
+		}
+
     	if ((!defined('DOING_CRON') || !DOING_CRON)
     		&& (!defined('Xiphe_THEDEBUG_ResponsiveImages_deleteall') || !Xiphe_THEDEBUG_ResponsiveImages_deleteall)
     	) {

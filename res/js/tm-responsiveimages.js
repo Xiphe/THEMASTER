@@ -34,6 +34,7 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
 			iWidth = iWidth*window.devicePixelRatio;
 		}
 
+
 		if (iWidth < 200) {
 			rnd = 50;
 		} else if (iWidth < 1000) {
@@ -57,11 +58,24 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
 				n;
 
 			if ($(this).hasClass('tm-responsivebgimage')) {
-				url = $(this).attr('style').match(/url\((["|']+)([^\1]+)\1\)/);
-				if (!url || url.length <= 2) {
+				url = $(this).attr('style').match(/url\(([^)]+)\)/);
+
+				if (!url || url.length < 2) {
 					return false;
 				}
-				url = url[2];
+				url = url[1];
+				
+				/*
+				 * Remove potential quotes from url.
+				 */
+				var str = url.substring(0,1);
+				if (str === '"' || str === '"') {
+					url = url.substring(1);
+				}
+				var end = url.substring(url.length-1);
+				if (end === '"' || end === '"') {
+					url = url.substring(0, url.length-1);
+				}
 			} else {
 				url = $(this).attr('src')
 			}
@@ -226,7 +240,9 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
 	};
 
 	$.fn.responsize = function() {
-		responsize(this);
+		$.each(this, function() {
+			responsize(this);
+		});
 		return this;
 	};
 ;(function(){_init();$(document).ready(_ready);})();return this;})(jQuery)}});
