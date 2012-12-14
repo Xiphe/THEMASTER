@@ -337,7 +337,7 @@ class THEWPMASTER extends THEWPUPDATES {
                 if ($this->projectType == 'plugin') {
                     load_plugin_textdomain($this->textdomain, false, $this->foldername.'/languages/');
                 } elseif ($this->projectType == 'theme') {
-                    $path = dirname(get_wpInstallPath($this->projectFile, true)).DS.'languages'.DS;
+                    $path = dirname(X\THEMASTER\get_wpInstallPath($this->projectFile, true)).DS.'languages'.DS;
                     load_theme_textdomain($this->textdomain, $path);
                 }
             }

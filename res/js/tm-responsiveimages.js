@@ -3,7 +3,8 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
 		return false;
 	}
 
-	var slideimgs = {},
+	var self = this,
+		slideimgs = {},
 		sTime = 5000,
 		waitForTouches = false,
 		touchIntervall = 10000,
@@ -25,7 +26,6 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
 		}
 		return this;
 	},
-
 
 	innerresponsize = function() {
 		var rnd,
@@ -63,21 +63,9 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
 				if (!url || url.length < 2) {
 					return false;
 				}
-				url = url[1];
-				
-				/*
-				 * Remove potential quotes from url.
-				 */
-				var str = url.substring(0,1);
-				if (str === '"' || str === '"') {
-					url = url.substring(1);
-				}
-				var end = url.substring(url.length-1);
-				if (end === '"' || end === '"') {
-					url = url.substring(0, url.length-1);
-				}
+				url = self.trimQuotes(url[1]);
 			} else {
-				url = $(this).attr('src')
+				url = $(this).attr('src');
 			}
 
 			originUrl = url;
@@ -89,8 +77,8 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
 
 			$img.load(function() {
 				setImg.call(thiz, url, nW);
-				if (typeof touched[$(thiz).attr('data-origin')] === 'undefined'
-					|| typeof touched[$(thiz).attr('data-origin')][nW] === 'undefined'
+				if (typeof touched[$(thiz).attr('data-origin')] === 'undefined' ||
+					typeof touched[$(thiz).attr('data-origin')][nW] === 'undefined'
 				) {
 					if (typeof touched[$(thiz).attr('data-origin')] === 'undefined') {
 						touched[$(thiz).attr('data-origin')] = {};
@@ -229,7 +217,7 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
 			$.removeCookie('tmri_nojsfallback');
 		}
 		if(typeof tm_slideshowTime !== 'undefined') {
-			sTime = parseInt(tm_slideshowTime);
+			sTime = parseInt(tm_slideshowTime, 10);
 		}
 		resize();
 		window.setTimeout(function() {
@@ -237,6 +225,18 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
 			$(window).resize(resize);
 			$(window).resizeEnd(responsize);
 		}, 10);
+	};
+
+	self.trimQuotes = function(str) {
+		var t = str.substring(0,1);
+		if (t === '\'' || t === '"') {
+			str = str.substring(1);
+		}
+		t = str.substring(str.length-1);
+		if (t === '\'' || t === '"') {
+			str = str.substring(0, str.length-1);
+		}
+		return str;
 	};
 
 	$.fn.responsize = function() {
