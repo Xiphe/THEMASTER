@@ -95,7 +95,53 @@ class THETOOLS {
      *  STATIC METHODS  *
      * ---------------- */
 
-    public function getPathsBase(&$a, &$b, $modify = false, $DS = DS) {
+    /**
+     * Basic encryption method.
+     *
+     * http://www.tfonfara.de/php-encryptdecrypt-funktion-mit-base64-und-schlussel.xhtml
+     *
+     * @param string $string the string that needs encryption.
+     * @param string $key    a key string for the encryption.
+     *
+     * @return string the encrypted string.
+     */
+    public static function encrypt($string, $key) {
+        $result = '';
+        for ($i=0; $i<strlen ($string); $i++) {
+            $char = substr($string, $i, 1);
+            $keychar = substr($key, ($i % strlen($key))-1, 1);
+            $char = chr(ord($char)+ord($keychar));
+            $result .= $char;
+        }
+
+        return base64_encode($result);
+    }
+
+    /**
+     * Basic decryption method.
+     *
+     * http://www.tfonfara.de/php-encryptdecrypt-funktion-mit-base64-und-schlussel.xhtml
+     *
+     * @param string $string a string encrypted by THETOOLS::encrypt().
+     * @param string $key    a key string for the decryption.
+     *
+     * @return string the decrypted string.
+     */
+    public static function decrypt($string, $key) {
+        $result = '';
+        $string = base64_decode($string);
+
+        for ($i=0; $i<strlen($string); $i++) {
+            $char = substr($string, $i, 1);
+            $keychar = substr($key, ($i % strlen($key))-1, 1);
+            $char = chr(ord($char)-ord($keychar));
+            $result .= $char;
+        }
+
+        return $result;
+    }
+
+    public static function getPathsBase(&$a, &$b, $modify = false, $DS = DS) {
         if ($modify) {
             $str1 = &$a;
             $str2 = &$b;
@@ -129,7 +175,7 @@ class THETOOLS {
      *
      * @return boolean  true if path is available false if not.
      */
-    public function buildDir($path, $chmod = 0775) {
+    public static function buildDir($path, $chmod = 0775) {
         deprecated('mkdir($dir, null, true);');
         if (is_dir($path)) {
             return true;
@@ -188,7 +234,7 @@ class THETOOLS {
      * 
      * @return string  a nice readable list of things.
      */
-    public static function readableList($input, $lastSep = null, $defSep = ', ', $inputSep = '|')
+    public static function readableList($input, $lastSep = null, $defSep = ', ', $inputSep = '|', $itemWrap = '')
     {
         if ($lastSep === null) {
             $lastSep = ' '.__('or', 'themaster').' ';
@@ -198,6 +244,11 @@ class THETOOLS {
             $input = explode($inputSep, $input);
         }
         $l = count($input)-1;
+
+        if (!empty($itemWrap)) {
+            $input = self::arrayWrap($input, $itemWrap);
+        }
+
         foreach ($input as $k => $v) {
             if ($k == 0) {
                 $r .= $v;
@@ -208,6 +259,31 @@ class THETOOLS {
             }
         }
         return $r;
+    }
+
+    public static function arrayWrap($input, $wrap)
+    {
+        $w1 = '';
+        $w2 = '';
+        if (is_array($wrap)) {
+            $w1 = $wrap[0];
+            if (isset($wrap[1])) {
+                $w2 = $wrap[1];
+            }
+        } elseif (!is_string($wrap)) {
+            throw new \Exception(sprintf('Invalid Type %s for $wrap', gettype($wrap)), 1);
+            return false;
+        } else {
+            $w1 = $wrap;
+            $w2 = $wrap;
+        }
+
+        return array_map(
+           function ($el) use ($w1, $w2) {
+              return $w1.$el.$w2;
+           },
+           $input
+        );
     }
     
     /**
@@ -599,25 +675,57 @@ class THETOOLS {
      *                        'soft' allows 2 == 2.0.0
      * @return bool
      */
-    private static function _is_browser($browser, $version = null, $strict = null)
+    private static function _is_browser($browser, $version = 'x', $operator = '>=')
     {
         self::_get_browser();
-        if (class_exists('Browser') && self::$s_browser == self::get_classConstant('Browser', 'BROWSER_'.$browser)) { 
-            if ($version === null)
-                return true;
-            elseif ($strict === null && version_compare(self::$s_browserVersion, $version, '>=')) {
-                return true;
-            } elseif ($strict === 'soft') {
-                $s1 = preg_replace('/0\./', '', self::$s_browserVersion);
-                $s2 = preg_replace('/0\./', '', $version);
-                if (substr($s1, 0, strlen($s2)) === $s2) {
+        if (class_exists('Browser') && self::$s_browser == self::get_classConstant('Browser', 'BROWSER_'.$browser)) {
+            if ($version === 'x' || $version === '.x') {
+                if ($operator === '!=') {
+                    return false;
+                } else {
                     return true;
                 }
-            } elseif ($strict === true && self::$s_browserVersion == $version) {
-                return true;
             }
+
+            if (strpos($version, '.x') !== -1 && $operator === '==') {
+                return (
+                    self::softerVersionCompare(
+                        self::$s_browserVersion,
+                        str_replace('.x', '.0', $version),
+                        '>='
+                    ) && self::softerVersionCompare(
+                        self::$s_browserVersion,
+                        str_replace('.x', '.99999999', $version),
+                        '<='
+                    )
+                );
+            } elseif (strpos($version, '.x') !== -1 && strpos($operator, '>') !== -1) {
+                $version = str_replace('.x', '.0', $version);
+            } elseif (strpos($version, '.x') !== -1 && strpos($operator, '<') !== -1) {
+                $version = str_replace('.x', '.99999999', $version);
+            }
+
+            return self::softerVersionCompare(self::$s_browserVersion, $version, $operator);
         }
         return false;
+    }
+
+    /**
+     * By Sina Salek - http://php.net/manual/de/function.version-compare.php#92935
+     * 
+     * @param  string $version1
+     * @param  string $version2
+     * @param  string $operand
+     * @return boolean
+     */
+    public static function softerVersionCompare($version1, $version2, $operand) {
+        $v1Parts = explode('.', $version1);
+        $version1 .= str_repeat('.0', 3-count($v1Parts));
+        $v2Parts = explode('.', $version2);
+        $version2 .= str_repeat('.0', 3-count($v2Parts));
+        $version1 = str_replace('.x', '.1000', $version1);
+        $version2 = str_replace('.x', '.1000', $version2);       
+        return version_compare($version1, $version2, $operand);
     }
 
     /**
@@ -642,21 +750,58 @@ class THETOOLS {
         }
 
         foreach (explode('||', $sBrowsers) as $browser) {
-            $b = preg_split('/([\d\.]+)/', $browser, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
-            if (!isset(self::$s_browserArray[$b[0]])) {
-                $msg = sprintf(
-                    __('Unknown Browserkey **%s** in THETOOLS::ins_browser()', 'themaster'),
-                    $b[0]
+            // $browser = 'ie';
+            $m;
+            preg_match('/([a-z]+)([<>!=]+)?([0-9.\*x]+)?/', $browser, $m);
+            
+            if (count($m) >= 2) {
+                $browserKey = $m[1];
+            }
+
+            switch (count($m)) {
+            case 4:
+                $operator = $m[2];
+                $version = $m[3];
+                break;
+            case 3:
+                if (is_numeric($m[2])) {
+                    $operator = '>=';
+                    $version = $m[2];
+                } else {
+                    $error = sprintf(__('Missing operator in browserstring "%s" in THETOOLS::is_browser()', 'themaster'), $browser);
+                }
+                break;
+            case 2:
+                $operator = '==';
+                $version = 'x';
+                break;
+            default:
+                $error = sprintf(__('Invalid format of browserstring "%s" in THETOOLS::is_browser()', 'themaster'), $browser);
+                break;
+            }
+
+            if (empty($error) && !isset(self::$s_browserArray[$browserKey])) {
+                $error = sprintf(
+                    __('Unknown Browserkey "%s" in THETOOLS::is_browser()', 'themaster'),
+                     $browserKey
                 );
-                throw new Exception($msg, 1);
-                
             }
-            $version = isset($b[1]) ? $b[1] : null;
-            $strict = null;
-            if (isset($b[2])) {
-                $strict = $b[2] == 's' ? true : 'soft';
+
+            if (!empty($error)) {
+                throw new \Exception($error, 1);
             }
-            if (self::_is_browser(self::$s_browserArray[$b[0]], $version, $strict) === true) {
+
+            if (empty($operator)) {
+                $operator = '>=';
+            }
+
+            if (empty($version)) {
+                $version = 'x';
+            } else {
+                $version = str_replace('*', 'x', $version);
+            }
+
+            if (self::_is_browser(self::$s_browserArray[$browserKey], $version, $operator) === true) {
                 return true;
             }
         }
@@ -1455,18 +1600,18 @@ class THETOOLS {
      * @param  array $requiredArgs the required keys.
      * @return string|false        Error string or false if no Error found.
      */
-    public static function get_requiredArgsError($args, $requiredArgs)
+    public static function getRequiredArgsError($args, $requiredArgs)
     {
-        if (!is_array($args)) {
-            return __('$args is not an array', 'themaster');
+        if (!is_array($args) && !is_object($args)) {
+            return sprintf(__('invalid type "%s" for $args', 'themaster'), gettype($args));
         }
-        if (!is_array($requiredArgs)) {
-            return __('$required is not an array', 'themaster');
+        if (!is_array($requiredArgs) && !is_object($args)) {
+            return sprintf(__('invalid type "%s" for $requiredArgs', 'themaster'), gettype($requiredArgs));
         }
 
         $missing = array();
         foreach ($requiredArgs as $req) {
-            if (!isset($args[$req])) {
+            if (!@isset($args[$req]) && !@isset($args->$req)) {
                 $missing[] = $req;
             }
         }
@@ -1474,14 +1619,17 @@ class THETOOLS {
         if (count($missing) == 0) {
             return false;
         } else {
-            if (count($missing) == 1) {
-                return sprintf(__('Missing "%s" as a key.', 'themaster'), $missing[0]);
-            } else {
-                $and = $missing[count($missing)-1];
-                unset($missing[count($missing)-1]);
-                $missing = implode(', ', $missing).' '.__('and', 'themaster').' '.$and;
-                return sprintf(__('Missing "%s" as keys.', 'themaster'), $missing);
-            }
+            return sprintf(
+                __('Missing %s as %s.', 'themaster'),
+                self::readableList(
+                    $missing,
+                    ' '.__('and').' ',
+                    ', ',
+                    null,
+                    '"'
+                ),
+                (count($missing) === 1 ? 'a key' : 'keys')
+            );
         }
     }
 
