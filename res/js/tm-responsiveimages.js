@@ -55,6 +55,7 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
 				url,
 				originUrl,
 				$img = $('<img />'),
+				$img2 = $('<img />'),
 				n;
 
 			if ($(this).hasClass('tm-responsivebgimage')) {
@@ -75,32 +76,38 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
 			url[url.length-2] = n.join('-');
 			url = url.join('.');
 
-			$img.load(function() {
-				setImg.call(thiz, url, nW);
-				if (typeof touched[$(thiz).attr('data-origin')] === 'undefined' ||
-					typeof touched[$(thiz).attr('data-origin')][nW] === 'undefined'
-				) {
-					if (typeof touched[$(thiz).attr('data-origin')] === 'undefined') {
-						touched[$(thiz).attr('data-origin')] = {};
+			$img.css({visibility: 'hidden', opacity: 0})
+				.appendTo('body')
+				.load(function() {
+					setImg.call(thiz, url, nW);
+					if (typeof touched[$(thiz).attr('data-origin')] === 'undefined' ||
+						typeof touched[$(thiz).attr('data-origin')][nW] === 'undefined'
+					) {
+						if (typeof touched[$(thiz).attr('data-origin')] === 'undefined') {
+							touched[$(thiz).attr('data-origin')] = {};
+						}
+						touched[$(thiz).attr('data-origin')][nW] = $(thiz).attr('data-nonce');
+						waitForTouches = 2;
 					}
-					touched[$(thiz).attr('data-origin')][nW] = $(thiz).attr('data-nonce');
-					waitForTouches = 2;
-				}
-			}).error(function() {
-				$.get(ajaxurl, {
-					action: 'tm_responsiveimageget',
-					width: iWidth,
-					image: $(thiz).attr('data-origin'),
-					nonce: $(thiz).attr('data-nonce')
-				}, function(r) {
-					r = eval('('+r+')');
-					if (r && r.status === 'ok') {
-						$img.load(function() {
-							setImg.call(thiz, r.uri, nW);
-						})[0].src = r.uri;
-					}
-				});
-			})[0].src = url;
+					$img.remove();
+				}).error(function() {
+					$.get(ajaxurl, {
+						action: 'tm_responsiveimageget',
+						width: iWidth,
+						image: $(thiz).attr('data-origin'),
+						nonce: $(thiz).attr('data-nonce')
+					}, function(r) {
+						r = eval('('+r+')');
+						if (r && r.status === 'ok') {
+							$img2.css({visibility: 'hidden', opacity: 0})
+								.appendTo('body')
+								.load(function() {
+									setImg.call(thiz, r.uri, nW);
+									$img.remove();
+								})[0].src = r.uri;
+						}
+					});
+				})[0].src = url;
 		}
 
 		var sldshw = $(this).attr('data-slideshow');
