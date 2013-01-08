@@ -238,7 +238,7 @@ class THEBASE {
             $this->_requiredInitArgs,
             $this->requiredInitArgs
         );
-        $err = X\THETOOLS::get_requiredArgsError( $initArgs, $reqInitArgs );
+        $err = X\THETOOLS::getRequiredArgsError( $initArgs, $reqInitArgs );
         
 
         if ($err === false) {
