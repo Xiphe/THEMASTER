@@ -12,16 +12,16 @@ See [Plugin Page](https://github.com/Xiphe/-THE-MASTER) for details
 Version
 -------
 
-3.0.12
+3.1.0
 
 
 Installation
 ------------
 
-1. Upload the plugin directory to the `/wp-content/plugins/` directory
-2. Activate the plugin through the 'Plugins' menu in WordPress
-3. Does nothing now
-4. See [Plugin Page](https://github.com/Xiphe/-THE-MASTER/wiki) for usage details
+1. Download the [latest alldeps version](https://github.com/Xiphe/THEMASTER/archive/alldeps.zip).
+2. Extract the archive and upload plugin to the `/wp-content/plugins/` directory of your wordpress installation.
+3. Activate the plugin through the 'Plugins' menu in WordPress
+4. You can now use Plugins and Themes that require THEMASTER.
 
 
 Support
@@ -42,7 +42,7 @@ The update mechanics are inspired by:
   Modified by [Jeremy Clark](http://clark-technet.com)  
   [Donate](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=73N8G8UPGDG2Q)
 
-Inspired means that i have seen this **brilliant project**, started to use it
+Inspired means that i have seen this **brilliant project**, started to use them
 and than started to write my own version with the intention to just have the
 functionality i really use.  
 I got the idea of how things are working by analyzing and using the code of

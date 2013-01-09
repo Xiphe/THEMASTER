@@ -91,9 +91,9 @@ class THEMASTER extends THESETTINGS {
      * One time initiaton.
      */
     public static function sinit() {
-        if( !self::$s_initiated ) {
+        if (!self::$s_initiated) {
 
-            if( defined( 'HTMLCLASSAVAILABLE' ) && HTMLCLASSAVAILABLE === true ) {
+            if (defined('XIPHE_HTML_AVAILABLE') && XIPHE_HTML_AVAILABLE === true) {
                 // Register !html as available plugin
                 self::$s_initiatedProjects[] = 'html';
                 self::$s_initiatedProjects[] = '!html';

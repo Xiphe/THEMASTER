@@ -1223,7 +1223,7 @@ class THEBASE {
                         }
 
                         if (isset($obj->HTML) && $obj->HTML === true) {
-                            if (defined('HTMLCLASSAVAILABLE') && HTMLCLASSAVAILABLE === true) {
+                            if (defined('XIPHE_HTML_AVAILABLE') && XIPHE_HTML_AVAILABLE === true) {
                                 $obj->HTML = new X\HTML($obj->baseUrl);
                             } else {
                                 throw new \Exception( '<strong>!THE MASTER ERROR:</strong> Class "'

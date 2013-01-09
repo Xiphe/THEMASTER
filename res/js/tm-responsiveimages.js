@@ -50,6 +50,7 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
 			nW = maxWidth;
 		}
 
+		
 		if(parseInt($(this).attr('data-loaded'), 10) !== nW) {
 			var	nH = Math.round(nW/$(this).attr('data-ratio')),
 				url,
@@ -68,6 +69,7 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
 			} else {
 				url = $(this).attr('src');
 			}
+
 
 			originUrl = url;
 			url = url.split('.');
@@ -89,7 +91,7 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
 						touched[$(thiz).attr('data-origin')][nW] = $(thiz).attr('data-nonce');
 						waitForTouches = 2;
 					}
-					$img.remove();
+					$img.detach();
 				}).error(function() {
 					$.get(ajaxurl, {
 						action: 'tm_responsiveimageget',
@@ -103,7 +105,7 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
 								.appendTo('body')
 								.load(function() {
 									setImg.call(thiz, r.uri, nW);
-									$img.remove();
+									$img.detach();
 								})[0].src = r.uri;
 						}
 					});
