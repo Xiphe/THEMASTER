@@ -8,7 +8,15 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
 		sTime = 5000,
 		waitForTouches = false,
 		touchIntervall = 10000,
-		touched = {};
+		touched = {},
+		$loader = $('<div />').css({
+			'height' : '1px',
+			'width' : '1px',
+			'position' : 'fixed',
+			'top' : '-1px',
+			'left' : '-1px',
+			'overflow' : 'hidden'
+		}).data('attached', false);
 
 	var responsize = function(elm) {
 		if (typeof elm !== 'undefined') {
@@ -55,8 +63,6 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
 			var	nH = Math.round(nW/$(this).attr('data-ratio')),
 				url,
 				originUrl,
-				$img = $('<img />'),
-				$img2 = $('<img />'),
 				n;
 
 			if ($(this).hasClass('tm-responsivebgimage')) {
@@ -70,46 +76,72 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
 				url = $(this).attr('src');
 			}
 
-
+			/*
+			 * save the original url.
+			 */
 			originUrl = url;
+
+			/*
+			 * Remove the extension.
+			 */
 			url = url.split('.');
+
+			/*
+			 * Get the size (& Quality)
+			 */
 			n = url[url.length-2].split('-');
-			n[n.length-1] = nW+'x'+nH;
+
+			/*
+			 * keep quality if set
+			 */
+			var q = '';
+			var quality = 2;
+			if (n[n.length-1].indexOf('q') !== -1) {
+				quality = n[n.length-1].split('q')[1];
+				q = 'q'+quality;
+			}
+
+			/*
+			 * Build the new size.
+			 */
+			n[n.length-1] = nW+'x'+nH+q;
+
+			/*
+			 * inject it to the url.
+			 */
 			url[url.length-2] = n.join('-');
+
+			/*
+			 * rebuild the url.
+			 */
 			url = url.join('.');
 
-			$img.css({visibility: 'hidden', opacity: 0})
-				.appendTo('body')
-				.load(function() {
-					setImg.call(thiz, url, nW);
-					if (typeof touched[$(thiz).attr('data-origin')] === 'undefined' ||
-						typeof touched[$(thiz).attr('data-origin')][nW] === 'undefined'
-					) {
-						if (typeof touched[$(thiz).attr('data-origin')] === 'undefined') {
-							touched[$(thiz).attr('data-origin')] = {};
-						}
-						touched[$(thiz).attr('data-origin')][nW] = $(thiz).attr('data-nonce');
-						waitForTouches = 2;
-					}
-					$img.detach();
-				}).error(function() {
+			self.loadImg(
+				url,
+				function() {
+					setImg.call(thiz, url, nW, nH);
+					self.touch($(thiz).attr('data-origin'), nW, quality, $(thiz).attr('data-nonce'));
+				},
+				function() {
 					$.get(ajaxurl, {
 						action: 'tm_responsiveimageget',
 						width: iWidth,
 						image: $(thiz).attr('data-origin'),
-						nonce: $(thiz).attr('data-nonce')
+						nonce: $(thiz).attr('data-nonce'),
+						quality: quality
 					}, function(r) {
 						r = eval('('+r+')');
 						if (r && r.status === 'ok') {
-							$img2.css({visibility: 'hidden', opacity: 0})
-								.appendTo('body')
-								.load(function() {
-									setImg.call(thiz, r.uri, nW);
-									$img.detach();
-								})[0].src = r.uri;
+							self.loadImg(
+								r.uri,
+								function() {
+									setImg.call(thiz, r.uri, nW, nH);
+								}
+							);
 						}
 					});
-				})[0].src = url;
+				}
+			);
 		}
 
 		var sldshw = $(this).attr('data-slideshow');
@@ -120,13 +152,17 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
 		}
 	},
 
-	setImg = function(url, size) {
+	setImg = function(url, w, h) {
 		if ($(this).hasClass('tm-responsivebgimage')) {
-			$(this).css({'background-image' : 'url('+url+')'});
+			// var r = window.devicePixelRatio;
+			$(this).css('backgroundImage', 'url(\''+url+'\')');
+			// if (r > 1) {
+			// 	$(this).css('backgroundSize', w/r+'px '+h/r+'px');
+			// }
 		} else {
-			$(this).attr('src', url);
+			this.src = url;
 		}
-		$(this).attr('data-loaded', size);
+		$(this).attr('data-loaded', w);
 		$(this).removeClass('tm-loading').addClass('tm-done').trigger('tm-responsiveimage_loaded');
 	},
 
@@ -235,6 +271,50 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
 			$(window).resizeEnd(responsize);
 		}, 10);
 	};
+
+	self.loadImg = function(src, loadCb, errorCb) {
+		if ($loader.data('attached') === false) {
+			$('body').append($loader).data('attached', true);
+		}
+
+		var finished = function() {
+			$i.detach();
+			if (!$loader.children().length) {
+				$loader.detach().data('attached', false);
+			}
+		},
+		$i = $('<img />');
+
+		$i.load(function() {
+				window.setTimeout(function() {
+					finished();
+					if (typeof loadCb === 'function') {
+						loadCb.call($i);
+					}
+				}, 1000);
+			})
+			.error(function() {
+				finished();
+				if (typeof errorCb === 'function') {
+					errorCb.call($i);
+				}
+			})[0].src = src;
+
+		$i.appendTo($loader);
+	};
+
+	self.touch = function(img, width, quality, nonce) {
+		if (typeof touched[img] === 'undefined') {
+			touched[img] = {};
+		}
+		if (typeof touched[img][width] === 'undefined') {
+			touched[img][width] = {};
+		}
+		if (typeof touched[img][width][quality] === 'undefined') {
+			touched[img][width][quality] = nonce;
+			waitForTouches = 2;
+		}
+	}
 
 	self.trimQuotes = function(str) {
 		var t = str.substring(0,1);

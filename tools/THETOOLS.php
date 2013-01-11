@@ -741,9 +741,14 @@ class THETOOLS {
      */
     public static function is_browser($sBrowsers)
     {
-        $mobile = 'iph||ipo||ga||bb';
-        
-        if ($sBrowsers == 'mobile') {
+        $phones = 'iph||ipo||ga||bb';
+        $mobile =  $phones.'||ipa';
+
+        if ($sBrowsers == 'phone') {
+            return self::is_browser($phones);
+        } elseif ($sBrowsers == 'no-phone') {
+            return !self::is_browser($phones);
+        } else if ($sBrowsers == 'mobile') {
             return self::is_browser($mobile);
         } elseif ($sBrowsers == 'desktop') {
             return !self::is_browser($mobile);
@@ -1679,30 +1684,48 @@ class THETOOLS {
     /**
      * Parses an url adds and removes get-query arguments and rebuilds the url.
      *
-     * @access public
-     * @param  string $url       the url string
-     * @param  array  $filterArr Array of query keys that should be removed or keeped.
-     * @param  string $method    'remove' deletes all $filterArr keys from query, 
-     *                           'keep' deletes all args that are not in $filterArr
-     * @param  array  $add       optional array of values to be added to the query
+     * @param string $url       the url string
+     * @param array  $filterArr Array of query keys that should be removed or kept.
+     * @param string $method    'remove' deletes all $filterArr keys from query,
+     *                          'keep' deletes all args that are not in $filterArr
+     * @param array  $add       optional array of values to be added to the query
      * @return void
      */
-    public static function filter_urlQuery(&$url, $filterArr, $method = 'remove', array $add = array()) {
+    public static function filter_urlQuery(&$url, $filterArr, $method = null, array $add = array()) {
+        if ($method === null) {
+            $method = 'remove';
+        }
+
         $pUrl = parse_url($url);
         $qry;
-        parse_str($pUrl['query'], $qry);
-
-       
-
-        if (!empty($add)) {
-            $qry = array_merge($qry, $add);
+        if (isset($pUrl['query'])) {
+            parse_str($pUrl['query'], $qry);
+        } else {
+            $qry = array();
         }
+        
+        self::filter_data($qry, $filterArr, $method, $add);
+
         $pUrl['query'] = http_build_query($qry);
         $url = self::unparse_url($pUrl);
     }
 
-    public static function filter_data($data, $filterArr, $method = 'keep', $add = false)
+    /**
+     * Filters entries of an array.
+     *
+     * @param string $data      the source
+     * @param array  $filterArr Array of keys keys that should be removed or kept.
+     * @param string $method    'remove' deletes all $filterArr keys from $data,
+     *                          'keep' deletes all keys that are not in $filterArr
+     * @param array $add        optional array of values to be added to $data
+     * @return array|object
+     */
+    public static function filter_data(&$data, $filterArr, $method = null, $add = false)
     {
+        if ($method === null) {
+            $method = 'keep';
+        }
+
         foreach ($data as $k => $v) {
             if (($method == 'remove' && in_array($k, $filterArr))
              || ($method == 'keep' && !in_array($k, $filterArr))

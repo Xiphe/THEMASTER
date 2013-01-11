@@ -705,10 +705,15 @@ class THEBASE {
         /*
          * Handle allowed arguments.
          */
-        foreach (array('vars', 'folder') as $arg) {
+        foreach (array('vars', 'folder', 'setTime') as $arg) {
             $$arg = isset($args[$arg]) ? $args[$arg] : false;
         }
         unset($args);
+
+        $isRes = false;
+        if (substr($filename, 0, 3) === '../') {
+            $isRes = true;
+        }
 
         /*
          * Disable ../ in filenames.
@@ -748,7 +753,11 @@ class THEBASE {
         /*
          * Generate the relative path from base-path to file..
          */
-        $relpath = 'res'.DS.$source.DS.$subfolder;
+        $relpath = 'res';
+        if (!$isRes) {
+            $relpath .= DS.$source;
+        }
+        $relpath .= DS.$subfolder;
 
         $suffix = $source;
         if (is_array($vars) && $folder == false && $source !== 'less') {
@@ -764,7 +773,7 @@ class THEBASE {
              */
             $file = $path.$relpath.$filename.($folder == false ? '.'.$suffix : DS);
 
-            $ePaths[] = $path.$relpath;
+            $ePaths[] = dirname($file);
             /*
              * Check if file or folder exist.
              */
@@ -789,7 +798,8 @@ class THEBASE {
                             $filename.DS.pathinfo($subFile, PATHINFO_FILENAME),
                             array(
                                 'vars' => $vars,
-                                'folder' => false
+                                'folder' => false,
+                                'setTime' => $setTime
                             ),
                             $admin
                         );
@@ -809,7 +819,18 @@ class THEBASE {
                 }
 
                 $url = X\THETOOLS::slash($url).str_replace(DS, '/', $relpath).$filename.'.'.$suffix;
-                $url .= is_array($vars) ? '?'.http_build_query($vars) : '';
+
+                if (!is_array($vars)) {
+                    $vars = array();
+                }
+                if ($setTime) {
+                    $vars = array_merge($vars, array('t' => filemtime($file)));
+                }
+
+                if (!empty($vars)) {
+                    X\THETOOLS::filter_urlQuery($url, null, null, $vars);
+                }
+
 
                 self::$s_registeredSources[$foa][$source][$file] = $url;
 

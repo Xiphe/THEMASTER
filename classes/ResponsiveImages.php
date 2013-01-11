@@ -131,45 +131,52 @@ class ResponsiveImages extends core\THEWPMASTER {
     	$i = 0;
 
     	foreach ($_REQUEST['data'] as $image => $data) {
-    		/*
-			 * Verify Nonce.
-			 */
-			if (!X\THEWPTOOLS::verify_noprivnonce(
-				esc_attr($data[key($data)]),
-				'tm-responsive',
-				$image
-			)) {
-				/*
-				 * Nonce failed - continue with next image.
-				 */
-				continue;
-			}
+    		$image = esc_attr($image);
+    		$validNonce = false;
+    		foreach ($data as $width => $data) {
+    			$width = esc_attr($width);
+    			foreach($data as $quality => $nonce) {
+    				$quality = esc_attr($quality);
+    				$nonce = esc_attr($nonce);
 
-			$i++;
+		    		/*
+					 * Verify Nonce.
+					 */
+					if ($validNonce === false && X\THEWPTOOLS::verify_noprivnonce(
+						$nonce,
+						'tm-responsive',
+						$image
+					)) {
+						$validNonce = $nonce;
+					} elseif (!$validNonce || $validNonce !== $nonce) {
+						continue;
+					}
 
-			/*
-			 * Cleanup the path.
-			 */
-			$image = X\THETOOLS::get_directPath(esc_attr($image));
+					$i++;
 
-			/*
-			 * If image is not an ID - Add the ABSPATH const.
-			 */
-			if (!is_numeric($image) && defined('ABSPATH')) {
-				$image = ABSPATH.$image;
-			}
+					/*
+					 * Cleanup the path.
+					 */
+					$image = X\THETOOLS::get_directPath(esc_attr($image));
 
-			/*
-			 * Get the real image file.
-			 */
-			$origin = $this->_get_baseImageFile($image);
+					/*
+					 * If image is not an ID - Add the ABSPATH const.
+					 */
+					if (!is_numeric($image) && defined('ABSPATH')) {
+						$image = ABSPATH.$image;
+					}
 
-			/*
-			 * Register touches - touchedImages will be saved on shutdown.
-			 */
-			foreach ($data as $width => $nonce) {
-				$image = $this->get_imagefile($origin, esc_attr($width));
-				$this->touch($origin, $image);
+					/*
+					 * Get the real image file.
+					 */
+					$origin = $this->_get_baseImageFile($image);
+
+					/*
+					 * Register touches - touchedImages will be saved on shutdown.
+					 */
+					$image = $this->get_imagefile($origin, $width, true, $quality);
+					$this->touch($origin, $image);
+				}
 			}
     	}
 
@@ -225,7 +232,8 @@ class ResponsiveImages extends core\THEWPMASTER {
 		 */
 		$this->_r['uri'] = $this->get_url(
 			$img,
-			esc_attr($_REQUEST['width'])
+			esc_attr($_REQUEST['width']),
+			esc_attr($_REQUEST['quality'])
 		);
 
 		/*
@@ -303,7 +311,7 @@ class ResponsiveImages extends core\THEWPMASTER {
      * @param  mixed  $width the targeted image width.
      * @return mixed         the image url or false if image not available.
      */
-	public function get_url($image, $width = 'auto')
+	public function get_url($image, $width = 'auto', $quality = 2)
 	{
 		if (!$this->_active) {
 			return false;
@@ -319,7 +327,7 @@ class ResponsiveImages extends core\THEWPMASTER {
 			return false;
 		}
 
-		return $this->_get_imageUrl($image, $width, $height);
+		return $this->_get_imageUrl($image, $width, $height, $quality);
 	}
 
 	/**
@@ -331,7 +339,7 @@ class ResponsiveImages extends core\THEWPMASTER {
 	 * @param  boolean $round whether or not the end site should be rounded.
 	 * @return bookean        the image file path or false if image is not available.
 	 */
-	public function get_imagefile($image, $width = 'auto', $round = true)
+	public function get_imagefile($image, $width = 'auto', $round = true, $quality = 2)
 	{
 		if (!$this->_active) {
 			return false;
@@ -344,7 +352,7 @@ class ResponsiveImages extends core\THEWPMASTER {
 		if ($height === false) {
 			return false;
 		}
-		return $this->_get_imageFile($image, $width, $height);
+		return $this->_get_imageFile($image, $width, $height, $quality);
 	}
 
 	/**
@@ -356,7 +364,7 @@ class ResponsiveImages extends core\THEWPMASTER {
 	 * @param  mixed  $maxWidth the targeted image width
 	 * @return mixed            the attr array or false if image is not available.
 	 */
-	public function get_bg_imageAttrs($image, $maxWidth = 'auto')
+	public function get_bg_imageAttrs($image, $maxWidth = 'auto', $quality = 2)
 	{
 		if (!$this->_active) {
 			return false;
@@ -386,7 +394,8 @@ class ResponsiveImages extends core\THEWPMASTER {
 
 		$url = $this->get_url(
 			$image, 
-			$loadWidth
+			$loadWidth,
+			$quality
 		);
 		if ($url === false) {
 			return array();
@@ -397,6 +406,7 @@ class ResponsiveImages extends core\THEWPMASTER {
 			'class' => 'tm-responsiveimage tm-responsivebgimage tm-loading',
 			'data-ratio' => $ratio,
 			'data-origin' => $origin,
+			'data-quality' => $quality,
 			'data-loaded' => $loadWidth,
 			'data-maxwidth' => $maxWidth,
 			'data-nonce' => X\THEWPTOOLS::create_noprivnonce('tm-responsive', $origin),
@@ -415,7 +425,7 @@ class ResponsiveImages extends core\THEWPMASTER {
 	 * @param  string  $title    optional title attr for the tag. Set to false to disable the title.
 	 * @return mixed             the image tag or false on error.
 	 */
-	public function get_image($image, $maxWidth = 'auto', $addClass = false, $addId = null, $alt = null, $title = null)
+	public function get_image($image, $maxWidth = 'auto', $addClass = false, $addId = null, $alt = null, $title = null, $quality = 2)
 	{
 		if (!$this->_active) {
 			return false;
@@ -466,7 +476,8 @@ class ResponsiveImages extends core\THEWPMASTER {
 		}
 		$url = $this->get_url(
 			$image, 
-			$loadWidth
+			$loadWidth,
+			$quality
 		);
 
 		if ($url === false) {
@@ -516,12 +527,12 @@ class ResponsiveImages extends core\THEWPMASTER {
 	 * @param  string  $title    optional title attr for the tag. Set to false to disable the title.
 	 * @return void
 	 */
-	public function image($image, $width = 'auto', $addClass = false, $addId = null, $alt = null, $title = null) {
+	public function image($image, $width = 'auto', $addClass = false, $addId = null, $alt = null, $title = null, $quality = 2) {
 		if (!$this->_active) {
 			return false;
 		}
 
-		echo $this->get_image($image, $width, $addClass, $addId, $alt, $title);
+		echo $this->get_image($image, $width, $addClass, $addId, $alt, $title, $quality);
 	}
 
 	public function touch($original, $image)
@@ -747,10 +758,10 @@ class ResponsiveImages extends core\THEWPMASTER {
      * @param  mixed   $height  the targeted image height
 	 * @return string           the url
 	 */
-	private function _get_imageUrl($image, $width, $height)
+	private function _get_imageUrl($image, $width, $height, $quality)
 	{
 		return $this->_gen_imageUrlFrom(
-			$this->_get_imageFile($image, $width, $height)
+			$this->_get_imageFile($image, $width, $height, $quality)
 		);
 	}
 
@@ -791,11 +802,11 @@ class ResponsiveImages extends core\THEWPMASTER {
 	 * @param  mixed  $height the targeted height
 	 * @return string         the image filepath
 	 */
-	private function _get_imageFile($image, $width, $height)
+	private function _get_imageFile($image, $width, $height, $quality)
 	{
-		$file = $this->_build_imageFileName($image, $width, $height);
+		$file = $this->_build_imageFileName($image, $width, $height, $quality);
 		if (!file_exists($file)) {
-			$this->_gen_image($image, $file, $width, $height);
+			$this->_gen_image($image, $file, $width, $height, $quality);
 		}
 		return $file;
 	}
@@ -809,15 +820,29 @@ class ResponsiveImages extends core\THEWPMASTER {
 	 * @param  mixed  $height the targeted height
 	 * @return string         the target image path
 	 */
-	private function _build_imageFileName($image, $width, $height) {
+	private function _build_imageFileName($image, $width, $height, $quality) {
 		$origin = $image;
 
 		$path = str_replace(dirname($this->uploadDir), '', $image);
 		if ($path === $image) {
 			$path = str_replace(X\THETOOLS::unDS(ABSPATH, true), '', $image);
 		}
+
+		if (in_array(pathinfo($image, PATHINFO_EXTENSION), array('jpg', 'jpeg'))) {
+			$quality = 'q'.$quality;
+		} else {
+			$quality = '';
+		}
+
 		$path = dirname($path).DS;
-		$file = pathinfo($image, PATHINFO_FILENAME).'-'.$width.'x'.$height.'.'.pathinfo($image, PATHINFO_EXTENSION);
+		$file = sprintf(
+			'%s-%sx%s%s.%s',
+			pathinfo($image, PATHINFO_FILENAME),
+			$width,
+			$height,
+			$quality,
+			pathinfo($image, PATHINFO_EXTENSION)
+		);
 		$image = X\THETOOLS::unDS($this->tmpDir).$path.$file;
 
 		$this->touch($origin, $image);
@@ -834,7 +859,7 @@ class ResponsiveImages extends core\THEWPMASTER {
 	 * @param  intager $height   the resize height
 	 * @return boolean           true if the image creation was successfull
 	 */
-	private function _gen_image($original, $target, $width, $height)
+	private function _gen_image($original, $target, $width, $height, $quality)
 	{
 		$tmp = ini_get('memory_limit');
 		ini_set('memory_limit', '1024M');
@@ -890,6 +915,8 @@ class ResponsiveImages extends core\THEWPMASTER {
       		mkdir(dirname($target), 0777, true);
       	}
 
+      	$q = ($quality+1)*25;
+
       	switch ($type) {
 			case 'image/gif':
 				$r = imagegif($new_image, $target);
@@ -898,7 +925,7 @@ class ResponsiveImages extends core\THEWPMASTER {
 				$r = imagepng($new_image, $target, 0, PNG_NO_FILTER);
 				break;
 			default:
-				$r = imagejpeg($new_image, $target, 100);
+				$r = imagejpeg($new_image, $target, $q);
 				break;
 		}
 		imagedestroy($original);
