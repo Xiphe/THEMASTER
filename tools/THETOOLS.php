@@ -1707,6 +1707,9 @@ class THETOOLS {
         self::filter_data($qry, $filterArr, $method, $add);
 
         $pUrl['query'] = http_build_query($qry);
+        if (empty($pUrl['query'])) {
+            unset($pUrl['query']);
+        }
         $url = self::unparse_url($pUrl);
     }
 
