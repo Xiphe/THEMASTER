@@ -4,8 +4,8 @@ Plugin Name: THE MASTER
 Plugin URI: https://github.com/Xiphe/-THE-MASTER
 Namespace: Xiphe\THEMASTER
 Description: A Plugin to provide global access to the THEWPMASTER class. THEWPMASTER provides a lot of handy functions for plugins an themes.
-Version: 3.1.0-alpha14
-Date: 2012-30-10 22:00:00 +02:00
+Version: 3.1.0-alpha15
+Date: 2013-01-17 18:10:28 +01.00
 Author: Hannes Diercks aka Xiphe
 Author URI: https://github.com/Xiphe
 Update Server: http://plugins.red-thorn.de/v2/api/
@@ -52,13 +52,13 @@ namespace Xiphe\THEMASTER;
     /*
      * Some settings for development (if anything inside the master is broken).
      */
-    $tmTextID = basename(dirname(__FILE__)).'/'.basename(__FILE__);
-    $tmSettingsID = 'THEMASTER_' . strtoupper($tmTextID);
-    error_reporting(E_ALL);
-    ini_set('display_errors', 1);
-    define($tmSettingsID.'_ERRORREPORTING', true);
-    define($tmSettingsID.'_DEBUG', true);
-    define($tmSettingsID.'_DEBUGMODE', 'FirePHP');
+    // $tmTextID = basename(dirname(__FILE__)).'/'.basename(__FILE__);
+    // $tmSettingsID = 'THEMASTER_' . strtoupper($tmTextID);
+    // error_reporting(E_ALL);
+    // ini_set('display_errors', 1);
+    // define($tmSettingsID.'_ERRORREPORTING', true);
+    // define($tmSettingsID.'_DEBUG', true);
+    // define($tmSettingsID.'_DEBUGMODE', 'FirePHP');
 
     include 'globaldebug.php';
     
@@ -137,8 +137,8 @@ spl_autoload_register(function($class) {
             || file_exists(THEMASTER_PROJECTFOLDER.$path)
         ) {
             if (!file_exists(THEMASTER_PROJECTFOLDER.$path)) {
-                debug(sprintf('Invalid include path "%s".', THEMASTER_PROJECTFOLDER.$path), 4);
-                diebug('callstack');
+                debug(sprintf('Invalid include path "%s".', THEMASTER_PROJECTFOLDER.$path), 4, null, 2);
+                diebug('callstack', 5);
             } else {
                 require(THEMASTER_PROJECTFOLDER.$path);
             }

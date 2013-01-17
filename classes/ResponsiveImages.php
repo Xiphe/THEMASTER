@@ -724,7 +724,7 @@ class ResponsiveImages extends core\THEWPMASTER {
 		$slideshow = false;
 		if (is_string($image)) {
 			$image = explode(',', $image);
-		} else {
+		} elseif (!is_array($image)) {
 			return false;
 		}
 
