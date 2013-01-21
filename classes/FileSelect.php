@@ -92,7 +92,8 @@ class FileSelect extends core\THEWPMASTER {
                     echo $this->_get_preview($value, esc_attr($previewSize));
                 }
             }
-        $HTML->end('.tm-fileselect_fullwrap');
+        $HTML->end('#'.esc_attr($name).'_preview')->clear()
+        ->end('.tm-fileselect_fullwrap');
     }
 
     public function get_sizeStr($attachmentIDs) {
@@ -302,7 +303,8 @@ class FileSelect extends core\THEWPMASTER {
             'fileselecttext',
             array(
                 'select' => __('Select', 'themaster'),
-                'save' => __('Save', 'themaster')
+                'save' => __('Save', 'themaster'),
+                'selectAll' => __('Select All', 'themaster')
             )
         );
     }
