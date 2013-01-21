@@ -2,6 +2,16 @@
 var tm_checkedAttachments = [];
 jQuery(document).ready(function($) {
     
+    /*
+     * Add activate classes to buttons when pressed.
+     */
+    $(document).mousedown(function(e) {
+        $('.tm-fileselect_buttons_wrap').find('a, button').removeClass('active');
+        if ($(e.target).hasClass('button') && $(e.target).closest('.tm-fileselect_buttons').length) {
+            $(e.target).addClass('active');
+        }
+    });
+
     // Parse URL variables
     // See: http://papermashup.com/read-url-get-variables-withjavascript/
     function get_url_vars(s) {

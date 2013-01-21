@@ -417,11 +417,11 @@ class FileSelect extends core\THEWPMASTER {
         $r .= $HTML->sr_div('.tm-fileselect_buttons_wrap');
         $r .= $HTML->sr_div('.tm-fileselect_buttons');
         $b = $HTML->sr_div('.tm-fileselect_removewrap');
-        $b .= $HTML->r_button(__('Remove', 'themaster'), '.button-secondary tm-fileselect_remove');
+        $b .= $HTML->r_button(__('Remove', 'themaster'), '.button button-secondary tm-fileselect_remove');
         $b .= $HTML->r_end();
         $b .= $HTML->sr_div('.tm-fileselect_detailswrap');
         $b .= $HTML->r_a(__('Details', 'themaster'), array(
-            'class' => '.button-secondary tm-fileselect_details',
+            'class' => 'button button-secondary tm-fileselect_details',
             'href' => sprintf('\./media.php?attachment_id=%s&action=edit', $id),
             'target' => '_blank'
         ));
@@ -431,8 +431,10 @@ class FileSelect extends core\THEWPMASTER {
             $r .= $b;
         }
         $r .= $HTML->r_end(2);
+
+        $attachment_r = '';
         if (wp_attachment_is_image($id)) {
-            $r .= $HTML->rs_a(array(
+            $attachment_r .= $HTML->rs_a(array(
                 'href' => admin_url('admin-ajax.php?').http_build_query(array(
                     'action' => 'tm_fileselect_getfullsize',
                     'id' => $id,
@@ -441,13 +443,19 @@ class FileSelect extends core\THEWPMASTER {
                 'class' => 'thickbox tm-fileselect_attachmentwrap',
                 'data-id' => $id
             ));
-            $r .= wp_get_attachment_image($id, $size);
-            $r .= $HTML->r_end('.thickbox');
+            $attachment_r .= wp_get_attachment_image($id, $size);
+            $attachment_r .= $HTML->r_end('.thickbox');
         } else {
-            $r .= $HTML->rs_span('.tm-fileselect_attachmentwrap|data-id='.$id);
-            $r .= $this->_get_link($id);
-            $r .= $HTML->r_end();
+            $attachment_r .= $HTML->rs_span('.tm-fileselect_attachmentwrap|data-id='.$id);
+            $attachment_r .= $this->_get_link($id);
+            $attachment_r .= $HTML->r_end();
         }
+        $attachment_r = apply_filters('Xiphe\THEMASTER\FileSelect_attachement', $attachment_r);
+        if (empty($attachment_r)) {
+            return false;
+        }
+        $r .= $attachment_r;
+
         $r .= $HTML->r_end('.tm-fileselect_wrap');
         $r = apply_filters('Xiphe\THEMASTER\FileSelect_preview', $r, $id);
         if (is_string($r)) {
@@ -457,6 +465,7 @@ class FileSelect extends core\THEWPMASTER {
 
     private function _get_link($id)
     {
+        $post = get_post($id);
 		$attachment_url = wp_get_attachment_url($id);
         if ($attachment_url == false) {
             return false;
@@ -464,14 +473,19 @@ class FileSelect extends core\THEWPMASTER {
 		$ft = wp_check_filetype($attachment_url);
 		$fts = explode('/', $ft['type']);
 
-		return core\THEBASE::sget_HTML()->r_a(
-			basename( $attachment_url ),
-			array(
-				'href' => wp_get_attachment_url($id),
-				'class' => 'tm-fileselect_attachment tm-fileselect_attachment-'.$fts[0]
-                    .' tm-fileselect_attachment-'.$fts[1]
-			)
-		);
-	}
+        $HTML = core\THEBASE::sget_HTML();
+        $r = $HTML->sr_a(array(
+            'href' => wp_get_attachment_url($id),
+            'class' => 'tm-fileselect_attachment tm-fileselect_attachment-'.$fts[0]
+                .' tm-fileselect_attachment-'.$fts[1]
+        ));
+
+        $r .= $HTML->r_span($post->post_title, '.tm-fileselect_attachement-title');
+        $r .= $HTML->r_end();
+
+        $r .= $HTML->r_br();
+        $r .= $HTML->r_span(basename($attachment_url), '.hidden tm-fileselect_attachement-file');
+
+		return $r;
+    }
 }
-?>
