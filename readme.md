@@ -9,11 +9,6 @@ for plugin and theme development in wordpress.
 See [Plugin Page](https://github.com/Xiphe/-THE-MASTER) for details
 
 
-Version
--------
-
-3.1.0
-
 
 Installation
 ------------

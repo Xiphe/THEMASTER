@@ -8,7 +8,7 @@ Version: 3.1.0
 Date: 2013-01-22 17:54:27 +01.00
 Author: Hannes Diercks aka Xiphe
 Author URI: https://github.com/Xiphe
-Update Server: http://plugins.red-thorn.de/v2/api/
+Update Server: http://wpupdates.xiphe.net/v1/
 */
 
 /*
