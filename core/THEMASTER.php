@@ -7,7 +7,7 @@ use Xiphe as X;
  * THEMASTER is last class in !THE MASTERS that does not make intense use of 
  * Wordpress functionality. It can be extended by non-WP projects.
  *
- * @copyright Copyright (c) 2012, Hannes Diercks
+ * @copyright Copyright (c) 2013, Hannes Diercks
  * @author    Hannes Diercks <xiphe@gmx.de>
  * @version   3.0.0
  * @link      https://github.com/Xiphe/-THE-MASTER/

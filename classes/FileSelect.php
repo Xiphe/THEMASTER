@@ -7,10 +7,26 @@ use Xiphe as X;
 /**
  * Provides themes and plugins with a form interface to select a file from the Media Library.
  * [Original Plugin](http://sltaylor.co.uk/wordpress/plugins/slt-file-select/)
+ *
  * 
- * @author   Logic: [Steve Taylor](http://sltaylor.co.uk)
- *           Adjustments and Conversion into TM-Class: [Hannes Diercks](xiphe@gmx.de)
+ * This program is free software; you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by 
+ * the Free Software Foundation; version 2 of the License.
+ * 
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * GNU General Public License for more details. 
+ * 
+ * You should have received a copy of the GNU General Public License 
+ * along with this program; if not, write to the Free Software 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA 
+ *
+ * 
+ * @author   Idea & Original Plugin: [Steve Taylor](http://sltaylor.co.uk)
+ *           Heavy Adjustments and Conversion into TM-Class: [Hannes Diercks](info@xiphe.net)
  * @version  0.2.1
+ * @license  GPLv2
  */
 class FileSelect extends core\THEWPMASTER {
 	public $singleton = true;
@@ -75,9 +91,15 @@ class FileSelect extends core\THEWPMASTER {
         }
     	$HTML->s_div('.tm-fileselect_buttonwrap')
     		->button(__('Upload/Choose', 'themaster'), '.button-secondary tm-fileselect_button')
-            ->hidden('.tm-fileselect_value|name='.esc_attr($name).'|value='.esc_attr($value))
-            ->hidden('.tm-fileselect_previewsize|name=tm-fileselect_previewsize|value='.$HTML->esc($previewSize))
+            ->hidden('.tm-fileselect_value|name='.esc_attr($name).'|value='.esc_attr($value));
+
+            if (is_object($GLOBALS['post'])) {
+                $HTML->hidden('.tm-fileselect_parent_id|name=tm-fileselect_parent_id|value='.$HTML->esc($GLOBALS['post']->ID));
+            }
+
+            $HTML->hidden('.tm-fileselect_previewsize|name=tm-fileselect_previewsize|value='.$HTML->esc($previewSize))
             ->hidden('.tm-fileselect_validation|name=tm-fileselect_validation|value='.$HTML->esc($validation))
+            ->hidden('.tm-fileselect_validation_nonce|name=tm-fileselect_validation_nonce|value='.wp_create_nonce('tm-fileselect-allow:'.$validation))
             ->hidden('.tm-fileselect_multiple|name=tm-fileselect_multiple|value='.$HTML->esc($multiple))
             ->hidden('.tm-fileselect_nonce|name=tm-fileselect_nonce|value='.wp_create_nonce('tm-fileselect_getfile'))
         ->end()
@@ -304,7 +326,8 @@ class FileSelect extends core\THEWPMASTER {
             array(
                 'select' => __('Select', 'themaster'),
                 'save' => __('Save', 'themaster'),
-                'selectAll' => __('Select All', 'themaster')
+                'selectAll' => __('Select all', 'themaster'),
+                'unselectAll' => __('Remove selection', 'themaster')
             )
         );
     }
@@ -339,43 +362,60 @@ class FileSelect extends core\THEWPMASTER {
     {
         if (!is_admin()
          || !wp_verify_nonce(esc_attr($_REQUEST['nonce']), 'tm-fileselect_getfile')
+         || empty($_REQUEST['id'])
         ) {
             exit;
         }
+
+        if (!is_object($GLOBALS['post']) && isset($_REQUEST['parent_id'])) {
+            $GLOBALS['post'] = get_post(intval($_REQUEST['parent_id']));
+        }
+
         if (!is_array($_REQUEST['id'])) {
             $_REQUEST['id'] = array($_REQUEST['id']);
         }
+
         foreach ($_REQUEST['id'] as $id) {
             echo $this->_get_preview(esc_attr($id), esc_attr($_REQUEST['size']));
         }
+
         exit;
     }
 
     public function upload_mimes($mimes)
     {
         $mimes['svg|svgz'] = 'image/svg+xml';
-        if (!empty($_REQUEST['tm-fileselect_validation'])
-         && ($vals = $_REQUEST['tm-fileselect_validation']) != false
-        ) {
-            $newMimes = array();
-            $vals = explode('|', $vals);
-            foreach ($vals as $val) {
-                if (!strstr($val, '/')) {
-                    $val .= '/';
-                } elseif (strstr($val, '/*')) {
-                    $val = str_replace('/*', '/', $val);
-                }
 
-                foreach ($mimes as $k => $v) {
-                    if(strpos($v, $val) === 0) {
-                        $newMimes[$k] = $v;
-                    }
+        if (empty($_REQUEST['tm-fileselect_validation'])) {
+            return $mimes;
+        }
+
+        $allowed = $_REQUEST['tm-fileselect_validation'];
+
+        if (!wp_verify_nonce($_REQUEST['tm-fileselect_validation_nonce'], 'tm-fileselect-allow:'.$allowed)) {
+            return array();
+        }
+
+        $newMimes = array();
+        $allowed = explode('|', $allowed);
+        foreach ($allowed as $allow) {
+            if (!strstr($allow, '/')) {
+                $allow .= '/';
+            } elseif (strstr($allow, '/*')) {
+                $allow = str_replace('/*', '/', $allow);
+            }
+
+            foreach ($mimes as $k => $v) {
+                if(strpos($v, $allow) === 0) {
+                    $newMimes[$k] = $v;
                 }
             }
-            $mimes = $newMimes;
         }
+        $mimes = $newMimes;
+
         return $mimes;
     }
+
     public function gettext($translated_text, $text, $domain)
     {
         if ($text == 'Sorry, this file type is not permitted for security reasons.'

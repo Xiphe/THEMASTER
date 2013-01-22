@@ -1,14 +1,48 @@
+/**
+ * FileSelect plugin for the Wordpress media uploader.
+ * Meant to be used aside with the Xiphe\THEMASTER\classes\FileSelect PHP class
+ *
+ * [Original Plugin](http://sltaylor.co.uk/wordpress/plugins/slt-file-select/)
+ *
+ * This program is free software; you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by 
+ * the Free Software Foundation; version 2 of the License.
+ *
+ * 
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * GNU General Public License for more details. 
+ * 
+ * You should have received a copy of the GNU General Public License 
+ * along with this program; if not, write to the Free Software 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA 
+ *
+ *
+ * @author  Hannes Diercks <info@xiphe.net>
+ *          Original Plugin by Steve Taylor (http://sltaylor.co.uk)
+ * @license GPLv2
+ */
 if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{themaster:{fileselect:(function($){var
 
     /* PRIVATE VARS */
     self = this,
     $select_button,
-    $single_select,
-    parent_src_vars
+    $single_select_wrap,
+    $single_select_btn,
+    $allButton,
+    parentFS,
+    selectAllClicked = false
 
 
     /* PUBLIC VARS */;
     this.checkedAttachments = [];
+    this.$selection = $('');
+    this.previewsize = false;
+    this.validation = false;
+    this.validation_nonce = false;
+    this.multiple = false;
+    this.parent_id = false;
 
     /* PRIVATE METHODS */ var
 
@@ -18,7 +52,7 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
      * @return {void}
      */
     _init = function() {
-
+        parentFS = parent.xiphe.themaster.fileselect;
     },
 
     /**
@@ -43,29 +77,58 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
      * @param  {object} $target the target list
      * @return {void}
      */
-    _manipulateColumns = function($target) {
+    _manipulateColumns = function($target, cb) {
+        var thiz = this;
+
+        /*
+         * Wait for other tasks to finish
+         */
         window.setTimeout(function() {
+            /*
+             * Default target to .media-item
+             */
             if (typeof $target === 'undefined') {
                 $target = $('.media-item');
             }
+
+            /*
+             * Loop through targets
+             */
             $target.each(function() {
-                if ($(this).hasClass('tm-changed')) {
+                /*
+                 * Ignore previously changed items.
+                 */
+                if ($(this).hasClass('tm-fileselect_changed')) {
                     return;
                 }
                 
+                /*
+                 * Hide unnecessarily stuff
+                 */
                 $(this).find('tr.url, tr.align, tr.image-size').css({'display' : 'none'});
                 $(this).find('tr.submit .savesend input.button[type="submit"]').css({'display' : 'none'});
-                $(this).find('tr.submit .savesend .del-link').before('<button class="button tm-savechanges" style="margin-right: 5px;">'+xiphe.themaster.fileselecttext.save+'</button>');
 
+                /*
+                 * Add a save button to the detail view
+                 */
+                $(this).find('tr.submit .savesend .del-link').before('<button class="button tm-savechanges" style="margin-right: 5px;">'+xiphe.themaster.fileselecttext.save+'</button>');
+                
+                /*
+                 * Add the select button / check-box
+                 */
                 $(this).prepend($select_button.clone());
 
-                $(this).find('a.tm-fileselect_insert').css({
-                    'display': 'block',
-                    'float':   'right',
-                    'margin':  '7px 20px 0 0'
-                });
-                $(this).addClass('tm-changed');
+                /*
+                 * Add Class to prevent double changing.
+                 */
+                $(this).addClass('tm-fileselect_changed');
             });
+
+            if (typeof cb === 'function') {
+                window.setTimeout(function() {
+                    cb.call(thiz);
+                }, 0);
+            }
         }, 0);
     },
 
@@ -75,40 +138,82 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
      * @return {void}
      */
     _manipulateUploadTab = function() {
-        var val = parent_src_vars['tm-fileselect_validation'],
-            accept = [];
+        /*
+         * initiate variables
+         */
+        var accept = [],
+            saveAppended = false;
 
-        $.each(val.split('|'), function(k, v) {
+        /*
+         * populate the accept var
+         */
+        $.each(parentFS.validation.split('|'), function(k, v) {
             if(v.indexOf('/') <= -1) {
                 accept.push(v+'/*');
             } else {
                 accept.push(v);
             }
         });
+
+        /*
+         * Set accept attribute to the file uploader.
+         */
         $('input[type="file"]').attr('accept', accept.join(','));
 
-        $.each(['field', 'previewsize', 'validation'], function(k, v) {
-                $('input#async-upload').after($('<input />')
-                    .attr('type', 'hidden')
-                    .attr('name', 'tm-fileselect'+v)
-                    .attr('value', parent_src_vars['tm-fileselect'+v])
-                );
-                uploader.settings.multipart_params['tm-fileselect'+v] = parent_src_vars['tm-fileselect'+v];
+        /*
+         * Set validation and validation nonce to be passed to php aside the file
+         */
+        $.each(['validation', 'validation_nonce', 'parent_id'], function(i, v) {
+            $('input#async-upload').after($('<input />')
+                .attr('type', 'hidden')
+                .attr('name', 'tm-fileselect_'+v)
+                .attr('value', parentFS[v])
+            );
+            uploader.settings.multipart_params['tm-fileselect_'+v] =parentFS[v];
+            
         });
 
-        // File upload
-        $( 'table.describe tbody tr:not(.submit)' ).remove();
-        //$( 'table.describe tr.submit td.savesend input' ).replaceWith( select_button );
-        $( 'table.describe tr.submit td.savesend input' ).remove();
+        /*
+         * Remove unnecessary stuff
+         */
+        $('table.describe tbody tr:not(.submit)').remove();
+        $('table.describe tr.submit td.savesend input').remove();
 
-        $('table.describe tr.submit td.savesend').prepend($select_button.clone());
+        /*
+         * Manipulate media-items if some are present (Browser-Uploader)
+         */
+        $('#media-items .media-item').each(function() {
+            _manipulateColumns.call(this, $(this), function() {
+                $(this).click();
+            });
+            if (!saveAppended) {
+                $('#media-items').after($single_select_wrap);
+                saveAppended = true;
+            }
+        });
 
-        /* Remove Additional inputs */
+        /*
+         * Manipulate added nodes (Multidata Uploader).
+         */
         $('#media-items').on('DOMNodeInserted', function(e) {
             if ($(e.target).hasClass('pinkynail') &&
                 $(e.relatedNode).hasClass('media-item')
             ) {
-                _manipulateColumns($(e.target).closest('.media-item'));
+                /*
+                 * Manipulate the newly added row
+                 */
+                _manipulateColumns.call(e.target, $(e.target).closest('.media-item'), function() {
+                    /*
+                     * New uploads are checked by default
+                     */
+                    $(this).closest('.media-item').click();
+                });
+
+
+                if (!saveAppended) {
+                    $('#media-items').after($single_select_wrap);
+                    saveAppended = true;
+                }
             }
         });
     },
@@ -116,33 +221,44 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
     /**
      * Sets/Resets the basic buttons that will be appended to the uploader.
      * 
-     * @param  {boolean} multiple
      * @return {void}
      */
-    _prepareButtons = function(multiple) {
+    _prepareButtons = function() {
         $select_button = $('<a/>')
                 .attr('href', '#')
                 .addClass('tm-fileselect_insert button-secondary')
                 .html(xiphe.themaster.fileselecttext.select);
 
-        if (multiple) {
-            multiple = true;
+        if (parentFS.multiple) {
 
-            $select_button.removeClass('button-secondary').addClass('button-primary')
+            /*
+             * Emphasize the select Button
+             */
+            $single_select_btn = $select_button.removeClass('button-secondary').addClass('button-primary');
 
-            $single_select = $('<div/>')
+            /*
+             * Generate the Select All Button.
+             */
+            $allButton = $('<a/>').addClass('button-secondary tm-fileselect_all')
+                .html(xiphe.themaster.fileselecttext.selectAll)
+                .css('margin-left', '10px')
+                .click(_selectAllCB);
+
+            /*
+             * Put the single select div together.
+             */
+            $single_select_wrap = $('<div/>')
                 .addClass('tm-fileselect_allandsavewrap')
                 .css({
                     'margin' : '10px 21px 10px 10px',
                     'text-align' : 'right'
                 })
-                .append($select_button)
-                .append(
-                    $('<a/>').addClass('button-secondary tm-fileselect_all')
-                        .html(xiphe.themaster.fileselecttext.selectAll)
-                        .css('margin-left', '10px')
-                );
+                .append($single_select_btn)
+                .append($allButton);
 
+            /*
+             * Original Select button now is a checkbox
+             */
             $select_button = $('<input/>')
                 .attr({
                     'type': 'checkbox',
@@ -153,12 +269,50 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
                     'margin': '0.9em 1.2em 0 0'
                 });
         } else {
-            $single_select = $('');
+            $single_select_wrap = $('');
+            $select_button.css({
+                'display': 'block',
+                'float':   'right',
+                'margin':  '7px 20px 0 0'
+            });
         }
     },
 
-    _addAllSave = function() {
-        $('#media-items').after($single_select);
+    /**
+     * If all rows are selected, change the Select all button to
+     * the Remove Selection button
+     * 
+     * @return {void}
+     */
+    _checkSelectAllButton = function() {
+        window.setTimeout(function() {
+            if (!$('.tm-fileselect_checkbox:not(:checked)').length) {
+                $allButton.addClass('tm-fileselect_unselect')
+                    .html(xiphe.themaster.fileselecttext.unselectAll);
+            }
+        });
+    },
+
+    /**
+     * Callback function for when the Select all/Remove selection button
+     * is pressed
+     * 
+     * @param  {event}  e
+     * @return {void}
+     */
+    _selectAllCB = function(e) {
+        e.preventDefault();
+        selectAllClicked = true;
+        if ($(this).hasClass('tm-fileselect_unselect')) {
+            $('.tm-fileselect_checkbox:checked').click();
+            $(this).removeClass('tm-fileselect_unselect')
+                .html(xiphe.themaster.fileselecttext.selectAll);
+        } else {
+            $('.tm-fileselect_checkbox:not(:checked)').click();
+            $(this).addClass('tm-fileselect_unselect')
+                .html(xiphe.themaster.fileselecttext.unselectAll);
+        }
+        selectAllClicked = false;
     }
 
     /**
@@ -168,36 +322,21 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
      */
     _manipulateMediaUpload = function() {
         /*
-         * Initiate Vars.
+         * Validate the parent
          */
-        var parent_doc, parent_src, current_tab, multiple;
-
-        parent_doc = parent.document;
-        parent_src = parent_doc.getElementById('TB_iframeContent').src;
-        parent_src_vars = _getUrlVars(parent_src);
-
-        /*
-         * Stop when this is not called by a fileselect button.
-         */
-        if (!('tm-fileselect_field' in parent_src_vars)) {
+        if (!parent.document.getElementsByClassName('tm-fileSelect_active').length) {
             return false;
         }
 
         /*
-         * Determine if multiple uploads are allowed
+         * Initiate Vars.
          */
-        if (typeof parent_src_vars['tm-fileselect_multiple'] !== 'undefined' &&
-            parent_src_vars['tm-fileselect_multiple']
-        ) {
-            multiple = true;
-        } else {
-            multiple = false;
-        }
+        var current_tab;
 
         /*
          * reset Button sources.
          */
-        _prepareButtons(multiple);
+        _prepareButtons();
 
         /*
          * Set the current tab title
@@ -219,112 +358,165 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
             case 'tab-library':
             case 'tab-gallery':
                 _manipulateColumns();
-                if (multiple) {
-                    _addAllSave();
+                if (parentFS.multiple) {
+                    $('#media-items').after($single_select_wrap);
                 }
                 break;
             default:
                 break;
         }
 
-        if (multiple) {
+        /*
+         * Delete id's from list if attachment got deleted.
+         */
+        $('.del-attachment a[id^="del"]').live('click', function(e) {
+            var id = parseInt($(this).attr('id').match(/del\[([0-9]+)\]/)[1], 10);
+            if (parentFS.checkedAttachments.indexOf(id) >= 0) {
+                parentFS.checkedAttachments.splice(
+                    parentFS.checkedAttachments.indexOf(id),
+                    1
+                );
+            }
+        });
 
-
+        if (parentFS.multiple) {
+            /*
+             * Check active boxes
+             */
             window.setTimeout(function() {
-                $.each(parent.tm_checkedAttachments, function(k, v) {
+                $.each(parentFS.checkedAttachments, function(k, v) {
                     $('#media-item-'+v).find('.tm-fileselect_checkbox').attr('checked', 'checked');
                 });
             }, 0);
 
-            $('.tm-fileselect_checkbox, .media-item').live('click', function(e) {
+            /*
+             * Change Select all button to Remove selection button if all boxes are checked.
+             */
+            _checkSelectAllButton();
 
-                if ($(e.target).closest('table.slidetoggle').length
-                 || $(e.target).hasClass('toggle')
-                ) {
-                    return true;
-                }
+            /*
+             * The selection process.
+             * Live because element may be reloaded through detail adjustments (new name etc.)
+             */
+            $('.tm-fileselect_checkbox, .media-item').live('click', _checkboxClicked);
 
-                var $wrp = $(this).closest('.media-item'),
-                    $cbx = $wrp.find('.tm-fileselect_checkbox'),
-                    id = $wrp.attr('id');
+            $single_select_btn.click(parentFS.selectItems);
+        } else {
+            /*
+             * Single.
+             */
+            $('a.tm-fileselect_insert').live('click', _selectSingleClicked);
+        }
+    },
 
-                id = id.match( /media\-item\-([0-9]+)/ );
-                id = id[1];
+    /**
+     * Callback for select buttons in single selections.
+     * 
+     * @param  {Event} e
+     * @return {boolean}
+     */
+    _selectSingleClicked = function(e) {
+        e.preventDefault();
+
+        /*
+         * Extract the id from the current row.
+         */
+        var id;
+        if ($(this).parent().attr('class') == 'savesend') {
+            id = $(this).siblings('.del-attachment').attr('id');
+        } else {
+            id = $(this).closest('.media-item').find('td.savesend .del-link').attr('onclick');
+        }
+        id = parseInt(id.match(/del_attachment_([0-9]+)/)[1], 10);
+
+        /*
+         * Pass it to the parent
+         */
+        parentFS.checkedAttachments = [id];
+
+        /*
+         * Call parent to update.
+         */
+        parentFS.selectItems();
+        return false;
+    },
+
+    /**
+     * Callback for when a check-box or container of a check-box has been clicked.
+     * 
+     * @param  {Event} e
+     * @return {void}
+     */
+    _checkboxClicked = function(e) {
+        /*
+         * ignore clicks to the detail-view toggle
+         */
+        if ($(e.target).closest('table.slidetoggle').length
+         || $(e.target).hasClass('toggle')
+        ) {
+            return true;
+        }
+
+        // e.preventDefault();
+
+        /*
+         * initiate variables
+         */
+        var $wrp = $(this).closest('.media-item'),
+            $cbx = $wrp.find('.tm-fileselect_checkbox'),
+            id;
+
+        /*
+         * dig for the actual id
+         */
+        if ($(this).parent().attr('class') == 'savesend') {
+            id = $(this).siblings('.del-attachment').attr('id');
+        } else {
+            id = $(this).closest('.media-item').find('td.savesend .del-link').attr('onclick');
+        }
+        id = parseInt(id.match(/del_attachment_([0-9]+)/)[1], 10);
 
 
-                if ($cbx.attr('checked') === 'checked') {
-                    $cbx.removeAttr('checked');
-                    parent.tm_checkedAttachments.splice(
-                        parent.tm_checkedAttachments.indexOf(id),
-                        1
-                    );
-                } else {
-                    $cbx.attr('checked', 'checked');
-                    if (parent.tm_checkedAttachments.indexOf(id) < 0) {
-                        parent.tm_checkedAttachments.push(id);
-                    }
-                }
-                e.preventDefault();
-                return false;
-            });
-        } // ENDIF multiple
+        /*
+         * Get current state.
+         */
+        var checked = $cbx.is(':checked');
 
-        // Select functionality
-        $('a.tm-fileselect_insert').live('click', function(e) {
-            var id;
-            if ( $( this ).parent().attr( 'class' ) == 'savesend' ) {
-                id = $( this ).siblings( '.del-attachment' ).attr( 'id' );
-                id = id.match(/del_attachment_([0-9]+)/);
-                id = id[1];
+        if (e.target != $cbx[0]) {
+            /*
+             * Box was clicked - simulate checkbox click.
+             */
+            if (checked) {
+                $cbx.removeAttr('checked');
             } else {
-                id = $( this ).closest('.media-item').find('td.savesend .del-link').attr( 'onclick' );
-                id = id.match(/del_attachment_([0-9]+)/);
-                id = id[1];
+                $cbx.attr('checked', 'checked');
             }
-            if (multiple) {
-                if (parent.tm_checkedAttachments.indexOf(id) < 0) {
-                    parent.tm_checkedAttachments.push(id);
-                }
-                id = parent.tm_checkedAttachments;
+            checked = !checked;
+        } else if(selectAllClicked) {
+            /*
+             * Select all button was clicked - state is negative.
+             */
+            checked = !checked;
+        }
+        
+        if (checked) {
+            /*
+             * Add id to selection
+             */
+            if (parentFS.checkedAttachments.indexOf(id) < 0) {
+                parentFS.checkedAttachments.push(id);
             }
-
-            parent.xiphe.themaster.fileselect.selectItem(id, parent_src_vars['tm-fileselect_field']);
-            return false;
-        });
-
-        $('.submit button.tm-savechanges').live('click', function(e) {
-            if (current_tab === 'tab-type') {
-                return true;
+        } else {
+            /*
+             * Remove id from selection
+             */
+            if (parentFS.checkedAttachments.indexOf(id) >= 0) {
+                parentFS.checkedAttachments.splice(
+                    parentFS.checkedAttachments.indexOf(id),
+                    1
+                );
             }
-
-            var $cntr  = $(this).closest('.media-item'),
-                cID    = $cntr.attr('id'),
-                chckd  = $cntr.find('.tm-fileselect_checkbox').attr('checked')
-                $frm   = $(this).closest('form.media-upload-form'),
-                $inpts = $cntr.find('input')
-                    .add($cntr.find('textarea'))
-                    .add($cntr.find('select'))
-                    .add($frm.find('#_wpnonce'));
-
-            e.preventDefault();
-            
-            $.post($frm.attr('action'), $inpts.serialize(), function(c) {
-                s = self.regexIndexOf(c, /<body(.*)>/i);
-                e = self.regexIndexOf(c, /<\/body>/i);
-                c = c.substr(s,e-s).replace(/<!--(.*)-->/g, '').replace(/<body(.*)>/g, '').replace(/(\r\n)|(\r)/g, '').replace(/\t/g, '');
-                
-                var $ncntr = $(c).find('#'+cID);
-                if ($ncntr.length) {
-                    $cntr.replaceWith($ncntr);
-                    _manipulateColumns($ncntr);
-                    window.setTimeout(function() {
-                        if (chckd === 'checked') {
-                            $ncntr.find('.tm-fileselect_checkbox').attr('checked', 'checked');
-                        }   
-                    }, 0);
-                }
-            });
-        });
+        }
     },
 
     /**
@@ -336,25 +528,48 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
         /* Invoke Media Library interface on button click */
         $('.tm-fileselect_button').click(function(e) {
             e.preventDefault();
-            if ($(this).siblings('input.tm-fileselect_value').val().length) {
-                parent.tm_checkedAttachments = $(this).siblings('input.tm-fileselect_value').val().split(',');
-            } else {
-                parent.tm_checkedAttachments = [];
+
+            /*
+             * Point to the element that will receive the selected ids
+             */
+            self.$selection = $(this).siblings('input.tm-fileselect_value');
+
+            /*
+             * Initiate/Reset options.
+             */
+            self.previewsize = $(this).siblings('input.tm-fileselect_previewsize').val();
+            self.validation = $(this).siblings('input.tm-fileselect_validation').val();
+            self.validation_nonce = $(this).siblings('input.tm-fileselect_validation_nonce').val();
+            self.parent_id = $(this).siblings('input.tm-fileselect_parent_id').val();
+            self.multiple = $(this).siblings('input.tm-fileselect_multiple').val();
+
+            /*
+             * Reset the working list of attachment ids
+             */
+            self.checkedAttachments = [];
+            if (self.$selection.val().length) {
+                $(self.$selection.val().split(',')).each(function() {
+                    self.checkedAttachments.push(parseInt(this, 10));
+                });
             }
-            $('html').addClass( 'File' );
-            tb_show('', xiphe.themaster.fileselectbaseurl+
-                '&tm-fileselect_field='+$(this).siblings('input.tm-fileselect_value').attr('id')+
-                '&tm-fileselect_previewsize='+$(this).siblings('input.tm-fileselect_previewsize').val()+
-                '&tm-fileselect_validation='+$(this).siblings('input.tm-fileselect_validation').val()+
-                '&tm-fileselect_multiple='+$(this).siblings('input.tm-fileselect_multiple').val()+
-                '&type=file&TB_iframe=true&test=drrt'
-            );
+
+            /*
+             * Start the fileSelect interface
+             */
+            $('html').addClass('tm-fileSelect_active');
+            tb_show('', xiphe.themaster.fileselectbaseurl+'&type=file&TB_iframe=true');
             return false;
         });
     
-        /* Wipe form values when remove checkboxes are checked */
+        /*
+         * Remove an entry if the remove button on the preview is clicked
+         */
         $('.tm-fileselect_remove').live('click', function(e){
             e.preventDefault();
+
+            /*
+             * initiate variables
+             */
             var $wrp = $(this).closest('.tm-fileselect_wrap'),
                 $inpt = $(this).closest('.tm-fileselect_preview')
                     .siblings('.tm-fileselect_buttonwrap')
@@ -362,10 +577,21 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
                 vals = $inpt.val().split(','),
                 id = $wrp.find('.tm-fileselect_attachmentwrap').attr('data-id');
 
+            /*
+             * if the id exists - remove it from selection.
+             */
             if(vals.indexOf(id) >= 0) {
                 vals.splice(vals.indexOf(id), 1);
             }
+
+            /*
+             * Put the new value into the $selection
+             */
             $inpt.val(vals.join(','));
+
+            /*
+             * Remove the element
+             */
             $wrp.fadeOut(500, function() {
                 $(this).remove();
             });
@@ -443,38 +669,42 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
      * @param  {string} field_id  the id of the targeted input field.
      * @return {void}
      */
-    this.selectItem = function(item_id, field_id) {
-        var $ = jQuery,
-        /* the target input */
-        $field = $('#'+field_id),
-        /* the container of preview images */
-        $preview_div = $field.parent().next('.tm-fileselect_preview'),
-        /* the size of preview images */
-        preview_size = $field.siblings('.tm-fileselect_previewsize').val(),
-        /* the nonce */
-        nonce = $field.siblings('.tm-fileselect_nonce').val();
+    this.selectItems = function() {
 
-        /* Load preview image/s */
-        $preview_div.html('').load(ajaxurl, {
-            id:     item_id,
-            size:   preview_size,
-            action: 'tm_fileselect_getfile',
-            nonce: nonce
-        }, function() {
-            $preview_div.trigger('received_items');
-        });
+        /*
+         * initiate variables.
+         */
+        var $preview = self.$selection.parent().next('.tm-fileselect_preview');
 
-        /* convert list to string if its an array */
-        if (typeof item_id === 'array') {
-            item_id = item_id.join(',');
-        }
+        /*
+         * Set the selection
+         */
+        self.$selection.val(self.checkedAttachments.join(','));
 
-        /* Pass ID/s to form field */
-        $field.val(item_id);
+        /*
+         * Update the preview
+         */
+        $preview
+            .html('')
+            .addClass('tm-fileselect_loading')
+            .load(ajaxurl, {
+                id:     self.checkedAttachments,
+                size:   self.previewsize,
+                action: 'tm_fileselect_getfile',
+                parent_id: self.parent_id,
+                nonce:  self.$selection.siblings('.tm-fileselect_nonce').val()
+            }, function() {
+                $preview
+                    .removeClass('tm-fileselect_loading')
+                    .trigger('received_items');
+            });
 
-        /* Close interface down */
+        /*
+         * Close FileSelect
+         */
         tb_remove();
-        $('html').removeClass('File');
+        $('html').removeClass('tm-fileSelect_active');
     }
 
+/* initiation */
 ;(function(){_init();$(document).ready(_ready);})();return this;})(jQuery)}});

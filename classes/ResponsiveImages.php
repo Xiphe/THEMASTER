@@ -11,7 +11,7 @@ use Xiphe\THEMASTER\core as core;
  * bigger versions later by using javascript.
  * It can use realpath or Wordpress attachement_IDs as source.
  *
- * @copyright Copyright (c) 2012, Hannes Diercks
+ * @copyright Copyright (c) 2013, Hannes Diercks
  * @author    Hannes Diercks <xiphe@gmx.de>
  * @version   1.0.2
  * @link      https://github.com/Xiphe/-THE-MASTER/

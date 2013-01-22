@@ -6,7 +6,7 @@ use Xiphe as X;
 /**
  * THEWPUPDATES handles updates via the (WP-Project-Update-API)[https://github.com/Xiphe/WP-Project-Update-API]
  *
- * @copyright Copyright (c) 2012, Hannes Diercks
+ * @copyright Copyright (c) 2013, Hannes Diercks
  * @author    Hannes Diercks <xiphe@gmx.de>
  * @version   3.0.0
  * @link      https://github.com/Xiphe/-THE-MASTER/

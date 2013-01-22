@@ -6,7 +6,7 @@ use Xiphe\THEMASTER\core as core;
 /**
  * THEDEBUG is a standalone class for debugging purposes used by !THE MASTER
  *
- * @copyright Copyright (c) 2012, Hannes Diercks
+ * @copyright Copyright (c) 2013, Hannes Diercks
  * @author    Hannes Diercks <xiphe@gmx.de>
  * @version   3.0.0
  * @link      https://github.com/Xiphe/-THE-MASTER/

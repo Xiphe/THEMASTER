@@ -4,16 +4,15 @@ Plugin Name: THE MASTER
 Plugin URI: https://github.com/Xiphe/-THE-MASTER
 Namespace: Xiphe\THEMASTER
 Description: A Plugin to provide global access to the THEWPMASTER class. THEWPMASTER provides a lot of handy functions for plugins an themes.
-Version: 3.1.0-alpha15
-Date: 2013-01-17 18:10:28 +01.00
+Version: 3.1.0
+Date: 2013-01-22 17:54:27 +01.00
 Author: Hannes Diercks aka Xiphe
 Author URI: https://github.com/Xiphe
 Update Server: http://plugins.red-thorn.de/v2/api/
-Branch: 3.1_Alpha
 */
 
 /*
- Copyright (C) 2012 Hannes Diercks
+ Copyright (C) 2013 Hannes Diercks
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by

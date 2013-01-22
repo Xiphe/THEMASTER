@@ -1,7 +1,7 @@
 <?php
 /*
  !THE MASTER - a base for plugins and themes
- Copyright (C) 2012 Hannes Diercks
+ Copyright (C) 2013 Hannes Diercks
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@ use Xiphe as X;
  * THEWPMASTER is the last class inside !THE MASTER and the one that
  * Wordpress plugins and themes should extend.
  *
- * @copyright Copyright (c) 2012, Hannes Diercks
+ * @copyright Copyright (c) 2013, Hannes Diercks
  * @author  Hannes Diercks <xiphe@gmx.de>
  * @version 3.0.3
  * @link    https://github.com/Xiphe/-THE-MASTER/

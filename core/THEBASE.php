@@ -6,7 +6,7 @@ use Xiphe as X;
 /**
  * THEBASE is the backbone of !THE MASTER
  *
- * @copyright Copyright (c) 2012, Hannes Diercks
+ * @copyright Copyright (c) 2013, Hannes Diercks
  * @author    Hannes Diercks <xiphe@gmx.de>
  * @version   3.0.2
  * @link      https://github.com/Xiphe/-THE-MASTER/

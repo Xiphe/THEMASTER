@@ -7,7 +7,7 @@ use Xiphe as X;
  * THEWPSETTINGS is used to manage Master Settings stored in the Wordpress DB.
  * Can fall back to THESETTINGS.
  *
- * @copyright Copyright (c) 2012, Hannes Diercks
+ * @copyright Copyright (c) 2013, Hannes Diercks
  * @author    Hannes Diercks <xiphe@gmx.de>
  * @version   3.0.2
  * @link      https://github.com/Xiphe/-THE-MASTER/
