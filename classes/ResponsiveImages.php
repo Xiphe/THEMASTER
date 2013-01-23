@@ -582,24 +582,57 @@ class ResponsiveImages extends core\THEWPMASTER {
     public static function the_content($content)
     {	
     	if (!self::inst()->_active) {
-			return false;
+			return $content;
 		}
 
     	$PQ = X\THETOOLS::pq($content);
     	$HTML = core\THEBASE::sget_HTML();
     	foreach ($PQ->find('img') as $Img) {
+
+    		/*
+    		 * Ensure the image is on the same server as Wordpress
+    		 */
+    		$siteHost = parse_url(get_bloginfo('url'));
+    		$imgHost = parse_url(pq($Img)->attr('src'));
+    		if ($siteHost['host'] !== $imgHost['host']) {
+    			continue;
+    		}
+
 			$cls = pq($Img)->attr('class');
 			$m;
 			if (preg_match('/wp-image-([0-9]+)/', $cls, $m)) {
+				/*
+				 * Get the width from image Tag
+				 */
 				$w = pq($Img)->attr('width');
-				$r = $HTML->ris_span(array(
-					'class' => 'tm-responsiveimage_wrap',
-					'style' => "display: inline-block; width: 100%; max-width: {$w}px;",
-						
-				));
-				$r .= self::inst()->get_image(intval($m[1]), $w);
-				$r .= $HTML->r_close();
 
+				/*
+				 * Try to get a responsive image tag.
+				 */
+				$img = self::inst()->get_image(intval($m[1]), $w);
+				if (empty($img)) {
+					$imgPath = str_replace(X\THETOOLS::slash(get_bloginfo('wpurl')), ABSPATH, pq($Img)->attr('src'));
+					if (!file_exists($imgPath) || !($img = self::inst()->get_image($imgPath, $w))) {
+						continue;
+					}
+				}
+
+				/*
+				 * Put together the attributes
+				 */
+				$attrs = array(
+					'class' => 'tm-responsiveimage_wrap '.pq($Img)->attr('class'),
+					'style' => "display: inline-block; width: 100%; max-width: {$w}px;",
+				);
+
+				/*
+				 * wrap the image and try to keep the old attributes.
+				 */
+				$r = $HTML->ri_span($img, $attrs);
+
+				/*
+				 * replace the old image with the new responsive one.
+				 */
 				pq($Img)->replaceWith($r);
 			}
     	}
@@ -887,19 +920,21 @@ class ResponsiveImages extends core\THEWPMASTER {
 			imagefilledrectangle($new_image, 0, 0, $width, $height, $transparent);
 		}
 
-      	$sharpenMatrix = array(
-            array(-1.2, -1, -1.2),
-            array(-1, 20, -1),
-            array(-1.2, -1, -1.2)
-        );
+		if (false) {
+	      	$sharpenMatrix = array(
+	            array(-1.2, -1, -1.2),
+	            array(-1, 20, -1),
+	            array(-1.2, -1, -1.2)
+	        );
 
-        // calculate the sharpen divisor
-        $divisor = array_sum(array_map('array_sum', $sharpenMatrix));           
+	        // calculate the sharpen divisor
+	        $divisor = array_sum(array_map('array_sum', $sharpenMatrix));           
 
-        $offset = 0;
-       
-        // apply the matrix
-        imageconvolution($original, $sharpenMatrix, $divisor, $offset); 
+	        $offset = 0;
+	       
+	        // apply the matrix
+	        imageconvolution($original, $sharpenMatrix, $divisor, $offset); 
+		}
 
       	imagecopyresampled(
       		$new_image,

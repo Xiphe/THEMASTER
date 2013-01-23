@@ -156,6 +156,9 @@ Here is a list:
 Changelog
 ---------
 
+### 3.1.1
++ enhanced the content filter for ResponsiveImages.
+
 ### 3.1.0
 + new namespace autoloading
 + lots of small adjustments
