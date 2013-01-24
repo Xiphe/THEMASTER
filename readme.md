@@ -156,6 +156,12 @@ Here is a list:
 Changelog
 ---------
 
+### 3.1.2
++ updated jQuery UI themes
++ updated combobox.js
++ bugfixes for models and language in THEWPMASTER
++ added @masterRes and @baseUrl as less variables to every less file.
+
 ### 3.1.1
 + enhanced the content filter for ResponsiveImages.
 

@@ -889,14 +889,25 @@ class THEBASE {
              * Get the content from less file.
              */
             $c = file($file);
-            
+
             /*
              * Check if elements.less is already appended and add it if not.
              */
-            $import = "// themaster //\n@import \"elements.less\";\n// End: themaster //\n\n";
-            if (!isset($c[3]) || $import !== preg_replace('/[\n|\r|\r\n]+/', "\n", $c[0].$c[1].$c[2].$c[3])."\n") {
-                $c = $import.implode('', $c);
-                @file_put_contents($file, $c);
+            $import = "// Injected by THEMASTER(https://github.com/Xiphe/THEMASTER/) to provide you\n".
+                      "// some extra less functionality and easy access to the masters recourses.\n".
+                "@import \"elements.less\";\n".
+                "@masterRes: \"".self::$sBaseUrl."res/\";\n".
+                "@baseUrl: \"".$this->baseUrl."\";\n".
+                "// Now have fun, writing LESS!";
+
+            $iExp = explode("\n", $import);
+
+            foreach ($iExp as $i => $value) {
+                if (!isset($c[$i]) || trim($c[$i]) != trim($value)) {
+                    $c = $import."\n\n\n".implode('', $c);
+                    @file_put_contents($file, $c);
+                    break;
+                }
             }
 
             /*

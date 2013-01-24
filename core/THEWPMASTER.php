@@ -335,7 +335,7 @@ class THEWPMASTER extends THEWPUPDATES {
 
             if (is_dir($this->basePath.DS.'languages')) {
                 if ($this->projectType == 'plugin') {
-                    load_plugin_textdomain($this->textdomain, false, $this->foldername.'/languages/');
+                    load_plugin_textdomain($this->textdomain, false, $this->folderName.'/languages/');
                 } elseif ($this->projectType == 'theme') {
                     $path = dirname(X\THEMASTER\get_wpInstallPath($this->projectFile, true)).DS.'languages'.DS;
                     load_theme_textdomain($this->textdomain, $path);
@@ -873,44 +873,52 @@ class THEWPMASTER extends THEWPUPDATES {
     }
         
     
-    public function get_models( $modelname, $conditions = null, $orderby = null, $oder = 'DESC', $modelInit = array() ) {
-        $fullModelname = $this->namespace.'\\'.$modelname;
-        if( !class_exists( $fullModelname ) ) {
-            throw new \Exception('Model "' . $fullModelname . '" not available/existing for THEBASE::get_models().', 1);
+    public function get_models(
+        $modelname,
+        $conditions = null,
+        $orderby = null,
+        $oder = 'DESC',
+        $modelInit = array()
+    )
+    {
+        $fullModelname = $this->namespace.'\models\\'.$modelname;
+
+        if (!class_exists($fullModelname)) {
+            throw new \Exception('Model "'.$fullModelname.'" not available/existing for THEBASE::get_models().', 1);
             return false;
         }
         
-        if( !isset( $fullModelname::$table ) 
-         || empty( $fullModelname::$table ) 
-         || !is_string( ( $table = $fullModelname::$table ) )
+        if (!isset($fullModelname::$table) ||
+            empty( $fullModelname::$table) ||
+            !is_string(($table = $fullModelname::$table))
         ) {
             throw new Exception($fullModelname . '::$table not defined - unable to get models.', 1);
             return false;
         }
         
         $and = "\n";
-        if( is_array( $conditions ) ) {
+        if (is_array($conditions)) {
             foreach ($conditions as $key => $value) {
-                $value = (is_numeric( $value ) ? '' : '"') . $value . (is_numeric( $value ) ? '' : '"');
-                $and .= 'AND ' . $key . ' = ' . $value . "\n";
+                $value = (is_numeric($value) ? '' : '"').$value.(is_numeric($value) ? '' : '"');
+                $and .= 'AND '.$key.' = '.$value."\n";
             }
         }
         
-        $orderby = $orderby == null ? '' : 'ORDER BY ' . $orderby . ' ' . $oder;
+        $orderby = $orderby == null ? '' : 'ORDER BY '.$orderby.' '.$oder;
 
         global $wpdb;
         $query = 'SELECT *
-            FROM ' . $table . '
-            WHERE 1 = 1' .
-            $and . $orderby .
+            FROM '.$table.'
+            WHERE 1 = 1'.
+            $and . $orderby.
             ';';
         $r = array();
         
         // $this->diebug($query);
         
-        foreach( $wpdb->get_results( $query ) as $result ) {
-            $temp = new $fullModelname( $result );
-            foreach( $modelInit as $func => $args ) {
+        foreach ($wpdb->get_results($query) as $result) {
+            $temp = new $fullModelname($result);
+            foreach ($modelInit as $func => $args) {
                 call_user_func(array($temp, $func), $args);
             }
             array_push($r, $temp);

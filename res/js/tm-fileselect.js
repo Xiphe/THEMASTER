@@ -4,25 +4,26 @@
  *
  * [Original Plugin](http://sltaylor.co.uk/wordpress/plugins/slt-file-select/)
  *
- * This program is free software; you can redistribute it and/or modify 
- * it under the terms of the GNU General Public License as published by 
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; version 2 of the License.
  *
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
- * GNU General Public License for more details. 
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
  *
  * @author  Hannes Diercks <info@xiphe.net>
  *          Original Plugin by Steve Taylor (http://sltaylor.co.uk)
  * @license GPLv2
  */
+/*global ajaxurl, uploader, tb_show, tb_remove */
 if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{themaster:{fileselect:(function($){var
 
     /* PRIVATE VARS */
@@ -48,7 +49,7 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
 
     /**
      * Initiation
-     * 
+     *
      * @return {void}
      */
     _init = function() {
@@ -57,7 +58,7 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
 
     /**
      * Second initiation when the document is ready
-     * 
+     *
      * @return {void}
      */
     _ready = function() {
@@ -73,7 +74,7 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
 
     /**
      * Injects check-boxes etcetera.
-     * 
+     *
      * @param  {object} $target the target list
      * @return {void}
      */
@@ -134,7 +135,7 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
 
     /**
      * Things to do in the upload tab
-     * 
+     *
      * @return {void}
      */
     _manipulateUploadTab = function() {
@@ -169,8 +170,7 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
                 .attr('name', 'tm-fileselect_'+v)
                 .attr('value', parentFS[v])
             );
-            uploader.settings.multipart_params['tm-fileselect_'+v] =parentFS[v];
-            
+            uploader.settings.multipart_params['tm-fileselect_'+v] = parentFS[v];
         });
 
         /*
@@ -220,7 +220,7 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
 
     /**
      * Sets/Resets the basic buttons that will be appended to the uploader.
-     * 
+     *
      * @return {void}
      */
     _prepareButtons = function() {
@@ -281,7 +281,7 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
     /**
      * If all rows are selected, change the Select all button to
      * the Remove Selection button
-     * 
+     *
      * @return {void}
      */
     _checkSelectAllButton = function() {
@@ -296,7 +296,7 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
     /**
      * Callback function for when the Select all/Remove selection button
      * is pressed
-     * 
+     *
      * @param  {event}  e
      * @return {void}
      */
@@ -313,11 +313,11 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
                 .html(xiphe.themaster.fileselecttext.unselectAll);
         }
         selectAllClicked = false;
-    }
+    },
 
     /**
      * The actual change to the fileupload dialoge
-     * 
+     *
      * @return {void}
      */
     _manipulateMediaUpload = function() {
@@ -369,7 +369,7 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
         /*
          * Delete id's from list if attachment got deleted.
          */
-        $('.del-attachment a[id^="del"]').live('click', function(e) {
+        $('.del-attachment a[id^="del"]').live('click', function() {
             var id = parseInt($(this).attr('id').match(/del\[([0-9]+)\]/)[1], 10);
             if (parentFS.checkedAttachments.indexOf(id) >= 0) {
                 parentFS.checkedAttachments.splice(
@@ -411,7 +411,7 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
 
     /**
      * Callback for select buttons in single selections.
-     * 
+     *
      * @param  {Event} e
      * @return {boolean}
      */
@@ -422,7 +422,7 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
          * Extract the id from the current row.
          */
         var id;
-        if ($(this).parent().attr('class') == 'savesend') {
+        if ($(this).parent().attr('class') === 'savesend') {
             id = $(this).siblings('.del-attachment').attr('id');
         } else {
             id = $(this).closest('.media-item').find('td.savesend .del-link').attr('onclick');
@@ -443,7 +443,7 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
 
     /**
      * Callback for when a check-box or container of a check-box has been clicked.
-     * 
+     *
      * @param  {Event} e
      * @return {void}
      */
@@ -451,8 +451,8 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
         /*
          * ignore clicks to the detail-view toggle
          */
-        if ($(e.target).closest('table.slidetoggle').length
-         || $(e.target).hasClass('toggle')
+        if ($(e.target).closest('table.slidetoggle').length ||
+            $(e.target).hasClass('toggle')
         ) {
             return true;
         }
@@ -469,7 +469,7 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
         /*
          * dig for the actual id
          */
-        if ($(this).parent().attr('class') == 'savesend') {
+        if ($(this).parent().attr('class') === 'savesend') {
             id = $(this).siblings('.del-attachment').attr('id');
         } else {
             id = $(this).closest('.media-item').find('td.savesend .del-link').attr('onclick');
@@ -482,7 +482,7 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
          */
         var checked = $cbx.is(':checked');
 
-        if (e.target != $cbx[0]) {
+        if (e.target !== $cbx[0]) {
             /*
              * Box was clicked - simulate checkbox click.
              */
@@ -521,7 +521,7 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
 
     /**
      * Initiate actions for the fileselect buttons
-     * 
+     *
      * @return {void}
      */
     _initFileselectButton = function() {
@@ -599,22 +599,8 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
     },
 
     /**
-     * Parses the get query from an url
-     * 
-     * @param  {string} s url
-     * @return {object}   get variables
-     */
-    _getUrlVars = function(s) {
-        var vars = {};
-        var parts = s.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
-            vars[key] = value;
-        });
-        return vars;
-    },
-
-    /**
      * Adds active state animations to FileSelect Buttons.
-     * 
+     *
      * @return {void}
      */
     _buttonAnimation = function() {
@@ -628,13 +614,13 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
 
     /**
      * Initiates the jquery ui sortable module on fileselect lists.
-     * 
+     *
      * @return {void}
      */
     _initSortables = function() {
         $('.tm-fileselect_buttonwrap').each(function() {
             if ($(this).find('input.tm-fileselect_multiple').val()) {
-                $val = $(this).find('input.tm-fileselect_value');
+                var $val = $(this).find('input.tm-fileselect_value');
                 $(this).siblings('.tm-fileselect_preview').sortable({
                     stop: function() {
                         $val.val($(this).sortable("serialize").replace(/&tm-fileselect_id\[\]=/g, ',').replace(/tm-fileselect_id\[\]=/g, ''));
@@ -650,7 +636,7 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
     /**
      * Return the position of the first occurrence of the given regex
      * in the given string.
-     * 
+     *
      * @param  {string}  str      haystack
      * @param  {RegExp}  regex    needle
      * @param  {integer} startpos offset
