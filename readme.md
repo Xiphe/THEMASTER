@@ -156,6 +156,10 @@ Here is a list:
 Changelog
 ---------
 
+### 3.1.3
++ Better injection of less variables
++ added THEWPMASTER::wrapJsVar()
+
 ### 3.1.2
 + updated jQuery UI themes
 + updated combobox.js

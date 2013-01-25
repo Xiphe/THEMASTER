@@ -59,9 +59,9 @@ class THEWPMODEL extends THEMODEL {
 			global $wpdb;
 			$where = $this->_whereKey();
 			if(($result = $wpdb->get_row($wpdb->prepare('
-				SELECT ' . $keys . '
-				FROM ' . self::$table . '
-				' . $where['where'],
+				SELECT '.$keys.'
+				FROM '.self::$table.'
+				'.$where['where'],
 				$where['values']
 			)))) {
 				$structure = $this->_get_structure();

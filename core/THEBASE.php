@@ -893,22 +893,35 @@ class THEBASE {
             /*
              * Check if elements.less is already appended and add it if not.
              */
+            $uploadDir = wp_upload_dir();
+            $endings = array(
+                '// End: themaster //'
+            );
             $import = "// Injected by THEMASTER(https://github.com/Xiphe/THEMASTER/) to provide you\n".
                       "// some extra less functionality and easy access to the masters recourses.\n".
                 "@import \"elements.less\";\n".
                 "@masterRes: \"".self::$sBaseUrl."res/\";\n".
                 "@baseUrl: \"".$this->baseUrl."\";\n".
+                "@uploadUrl: \"".$uploadDir['url']."/\";\n".
                 "// Now have fun, writing LESS!";
 
             $iExp = explode("\n", $import);
 
-            foreach ($iExp as $i => $value) {
-                if (!isset($c[$i]) || trim($c[$i]) != trim($value)) {
-                    $c = $import."\n\n\n".implode('', $c);
-                    @file_put_contents($file, $c);
+            $endings[] = trim(end($iExp));
+
+            $i = 0;
+            while ($i < 10) {
+                if (in_array(trim($c[$i]), $endings)) {
+                    $c = array_splice($c, $i+1);
+                    if (trim($c[0]) === '') {
+                        $c = array_splice($c, 1);
+                    }
                     break;
                 }
+                $i++;
             }
+
+            file_put_contents($file, $import."\n\n".implode('', $c));
 
             /*
              * Convert css and append CSSfix

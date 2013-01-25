@@ -575,8 +575,7 @@ class THEWPMASTER extends THEWPUPDATES {
         $js = '';
         foreach ($source as $name => $var) {
             if (is_array($var) || is_object($var)) {
-                $js .= "if(typeof $name==='undefined'){var $name={};}$name=jQuery.extend(true,{},$name,";
-                $js .= json_encode($var).');';
+                $js .= self::s_wrapJsVar($name, $var);
             } else {
                 $js .= "var $name=".json_encode($var).';';
             }
@@ -595,7 +594,6 @@ class THEWPMASTER extends THEWPUPDATES {
             )
         );
 
-
         $url = add_query_arg(array(
             'action' => 'twpm_jsVars',
             'id' => $checksum
@@ -606,6 +604,21 @@ class THEWPMASTER extends THEWPUPDATES {
         } else {
             echo "<script src=\"$url\" type=\"text/javascript\"></script>";
         }
+    }
+
+    final public function wrapJsVar($var)
+    {
+        $ns = explode('\\', strtolower($this->namespace));
+        $name = $ns[0];
+        $var = array(
+            $ns[1] => $var
+        );
+        return self::s_wrapJsVar($name, $var);
+    }
+
+    final private static function s_wrapJsVar($namespace, $var)
+    {
+        return "if(typeof $namespace==='undefined'){var $namespace={};}$namespace=jQuery.extend(true,{},$namespace,".json_encode($var).');';
     }
 
     final public static function twpm_ajax_jsVars()
