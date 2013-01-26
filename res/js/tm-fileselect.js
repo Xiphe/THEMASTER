@@ -605,7 +605,7 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
      */
     _buttonAnimation = function() {
         $(document).mousedown(function(e) {
-            $('.tm-fileselect_buttons_wrap').find('a, button').removeClass('active');
+            $('.tm-fileselect_removewrap, .tm-fileselect_detailswrap').find('a, button').removeClass('active');
             if ($(e.target).hasClass('button') && $(e.target).closest('.tm-fileselect_buttons').length) {
                 $(e.target).addClass('active');
             }
