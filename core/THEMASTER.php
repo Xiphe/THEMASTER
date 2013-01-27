@@ -13,7 +13,7 @@ use Xiphe as X;
  * @link      https://github.com/Xiphe/-THE-MASTER/
  * @package   !THE MASTER
  */
-class THEMASTER extends THESETTINGS {   
+class THEMASTER extends THESETTINGS {
 
     /* ------------------ *
      *  STATIC VARIABLES  *

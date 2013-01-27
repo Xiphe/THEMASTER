@@ -97,11 +97,31 @@ class FileSelect extends core\THEWPMASTER {
                 $HTML->hidden('.tm-fileselect_parent_id|name=tm-fileselect_parent_id|value='.$HTML->esc($GLOBALS['post']->ID));
             }
 
-            $HTML->hidden('.tm-fileselect_previewsize|name=tm-fileselect_previewsize|value='.$HTML->esc($previewSize))
-            ->hidden('.tm-fileselect_validation|name=tm-fileselect_validation|value='.$HTML->esc($validation))
-            ->hidden('.tm-fileselect_validation_nonce|name=tm-fileselect_validation_nonce|value='.wp_create_nonce('tm-fileselect-allow:'.$validation))
-            ->hidden('.tm-fileselect_multiple|name=tm-fileselect_multiple|value='.$HTML->esc($multiple))
-            ->hidden('.tm-fileselect_nonce|name=tm-fileselect_nonce|value='.wp_create_nonce('tm-fileselect_getfile'))
+            $HTML->hidden(array(
+                'class' => 'tm-fileselect_previewsize',
+                'name' => 'tm-fileselect_previewsize',
+                'value' => $previewSize
+            ))
+            ->hidden(array(
+                'class' => 'tm-fileselect_validation',
+                'name' => 'tm-fileselect_validation',
+                'value' => $validation
+            ))
+            ->hidden(array(
+                'class' => 'tm-fileselect_validation_nonce',
+                'name' => 'tm-fileselect_validation_nonce',
+                'value' => wp_create_nonce('tm-fileselect-allow:'.$validation)
+            ))
+            ->hidden(array(
+                'class' => 'tm-fileselect_multiple',
+                'name' => 'tm-fileselect_multiple',
+                'value' => $multiple
+            ))
+            ->hidden(array(
+                'class' => 'tm-fileselect_nonce',
+                'name' => 'tm-fileselect_nonce',
+                'value' => wp_create_nonce('tm-fileselect_getfile')
+            ))
         ->end()
         ->sg_ul('#'.esc_attr($name).'_preview|.tm-fileselect_preview');
     		if (!empty($value)) {
@@ -367,7 +387,9 @@ class FileSelect extends core\THEWPMASTER {
             exit;
         }
 
-        if (!is_object($GLOBALS['post']) && isset($_REQUEST['parent_id'])) {
+        if ((!isset($GLOBALS['post']) || !is_object($GLOBALS['post']))
+            && isset($_REQUEST['parent_id'])
+        ) {
             $GLOBALS['post'] = get_post(intval($_REQUEST['parent_id']));
         }
 

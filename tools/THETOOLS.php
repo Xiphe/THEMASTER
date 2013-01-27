@@ -95,6 +95,18 @@ class THETOOLS {
      *  STATIC METHODS  *
      * ---------------- */
 
+
+    public function normalizeUrl($url) {
+        if (!class_exists('URLNormalizer')) {
+            require_once(THEMASTER_PROJECTFOLDER.'classes'.DS.'URLNormalizer.php'); 
+        }
+
+        $un = new \URLNormalizer();
+        $un->setUrl($url);
+        return $un->normalize();
+    }
+
+
     /**
      * Basic encryption method.
      *

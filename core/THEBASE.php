@@ -866,18 +866,49 @@ class THEBASE {
          * Prevent double handling in runtime.
          */
         self::$s_registeredSources[$foa]['less'][$file] = true;
-        
         /*
          * Predict the css path by replacing less with css in the filepath.
          */
-        $cssFile = str_replace(array(DS.'less'.DS, '.less'), array(DS.'css'.DS, '.less.css'), $file);
+        $cssFile = str_replace(
+            array(
+                DS.'less'.DS,
+                '.less'
+            ),
+            array(
+                DS.'css'.DS,
+                '.less.css'
+            ),
+            $file
+        );
         
         /*
          * If the file does not exist or the less is newer...
          */
-        if (!file_exists(($cssFile)) 
+        if (!file_exists($cssFile) 
          || filemtime($file) > filemtime($cssFile)
         ) {
+            /*
+             * Check if the target file is existent and writable.
+             */
+            if (!file_exists($cssFile)) {
+                if (!is_dir(dirname($cssFile))) {
+                    @mkdir(dirname($cssFile));
+                }
+                $h = @fopen($cssFile, 'w');
+                if ($h) {
+                    @fclose($h);
+                }
+                unset($h);
+            }
+            if (!file_exists($cssFile) || !is_writable($cssFile)) {
+                throw new \ErrorException(
+                    sprintf(
+                        'LessCss target file "%s" is not existent or writable.',
+                        $cssFile
+                    ),
+                    1
+                );
+            }
 
             /*
              * Include the libraries.
@@ -891,24 +922,56 @@ class THEBASE {
             $c = file($file);
 
             /*
-             * Check if elements.less is already appended and add it if not.
+             * List of old entries header endings.
              */
-            $uploadDir = wp_upload_dir();
             $endings = array(
-                '// End: themaster //'
+                '// End: themaster //',
+                '// Now have fun, writing LESS!'
             );
-            $import = "// Injected by THEMASTER(https://github.com/Xiphe/THEMASTER/) to provide you\n".
-                      "// some extra less functionality and easy access to the masters recourses.\n".
-                "@import \"elements.less\";\n".
-                "@masterRes: \"".self::$sBaseUrl."res/\";\n".
-                "@baseUrl: \"".$this->baseUrl."\";\n".
-                "@uploadUrl: \"".$uploadDir['url']."/\";\n".
-                "// Now have fun, writing LESS!";
 
-            $iExp = explode("\n", $import);
+            /*
+             * Determine witch baseUrl to use.
+             */
+            if (!isset($this) || strpos($file, self::$sBasePath) === 0) {
+                $baseUrl = self::$sBaseUrl;
+            } else {
+                $baseUrl = $this->baseUrl;
+            }
+            
+            /*
+             * Put together a list of globals that can be used inside .less
+             */
+            $globals = array(
+                'masterRes' => self::$sBaseUrl.'res/',
+                'baseUrl' => $baseUrl,
+            );
+            if (\Xiphe\THEMASTER\WP()) {
+                $uploadDir = wp_upload_dir();
+                $globals['uploadUrl'] = X\THETOOLS::slash(X\THETOOLS::normalizeUrl($uploadDir['url']));
+                $globals['home'] = X\THETOOLS::slash(X\THETOOLS::normalizeUrl(get_bloginfo('url')));
+                $globals['wpurl'] = X\THETOOLS::slash(X\THETOOLS::normalizeUrl(get_bloginfo('wpurl')));
+            }
+            ksort($globals);
 
+            /*
+             * Write the header.
+             */
+            $lessHeader = '// globals:';
+            foreach ($globals as $key => $value) {
+                $lessHeader .= " @$key,";
+            }
+            $lessHeader = rtrim($lessHeader, ',')."\n";
+            $lessHeader .= "// Have fun, writing LESS!";
+
+            /*
+             * End the last line of the header to the list of known header endings.
+             */
+            $iExp = explode("\n", $lessHeader);
             $endings[] = trim(end($iExp));
 
+            /*
+             * Delete old headers and add the new one.
+             */
             $i = 0;
             while ($i < 10) {
                 if (in_array(trim($c[$i]), $endings)) {
@@ -920,8 +983,17 @@ class THEBASE {
                 }
                 $i++;
             }
+            file_put_contents($file, $lessHeader."\n\n".implode('', $c));
 
-            file_put_contents($file, $import."\n\n".implode('', $c));
+            /*
+             * Make the globals available in .less
+             */
+            $less = array();
+            foreach ($globals as $key => $value) {
+                $less[] = "@$key: \"$value\";\n";
+            }
+            $less[] = "@import \"elements.less\";\n";
+            $less = implode('', array_merge($less, $c));
 
             /*
              * Convert css and append CSSfix
@@ -931,12 +1003,13 @@ class THEBASE {
                 $Less->addImportDir(dirname($file));
                 $Less->addImportDir(THEMASTER_PROJECTFOLDER.'res'.DS.'less');
                 
-                $CSS = $Less->compileFile($file);
+                $CSS = $Less->compile($less);
 
                 $fix = true;
-                foreach (array(3, 4, 5) as $i) {
+                for ($i=0; $i < 15; $i++) { 
                     if (trim($c[$i]) == '// NOFIX //') {
                         $fix = false;
+                        break;
                     }
                 }
 
@@ -946,24 +1019,14 @@ class THEBASE {
                     $CSS = $CSSfix->generate(false);
                 }
 
-                if (!file_exists($cssFile)) {
-                    if (!is_dir(dirname($cssFile))) {
-                        @mkdir(dirname($cssFile));
-                    }
-                    $h = @fopen($cssFile, 'w');
-                    if ($h) {
-                        @fclose($h);
-                    }
-                    unset($h);
-                }
-
-                @file_put_contents($cssFile, $CSS);
+                file_put_contents($cssFile, $CSS);
 
             } catch (\Exception $e) {
                 X\THEDEBUG::debug('LESS ERROR: '.$e->getMessage()." \nFile: ".$e->getFile()." \nLine: ".$e->getLine(), 4);
                 return false;
             }
         }
+
         if (!file_exists($cssFile)) {
             throw new \Exception("Error on .less generation \"$cssFile\" does not exist.", 1);
             return false;

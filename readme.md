@@ -58,6 +58,18 @@ This plugin uses and includes some scripts from other people.
 Here is a list:
 
 ###PHP
+* **[Browser.php](http://chrisschuld.com/projects/browser-php-detecting-a-users-browser-from-php/)**  
+  Used for Browser-detection.  
+  License: GNU General Public License V2  
+  File: http://www.gnu.org/copyleft/gpl.html  
+  Copyright (C) 2008-2010 Chris Schuld  (chris@chrisschuld.com)
+
+* **[CSSfix](http://www.phpclasses.org/css-fix)**  
+  Used to apply vendor prefixes to specified CSS rules while parsing less to css.  
+  License: BSD  
+  File: http://opensource.org/licenses/bsd-license.html  
+  Developed by Arturs Sosins aka ar2rsawseen, http://webcodingeasy.com
+
 * **[FirePHP](http://www.firephp.org/)**  
   Used for debuging into Firebug console.  
   License: New BSD License  
@@ -71,17 +83,15 @@ Here is a list:
   File: /_themaster/classes/lessPHP/LICENSE  
   Copyright (c) 2010 Leaf Corcoran, http://leafo.net/lessphp
 
-* **[Browser.php](http://chrisschuld.com/projects/browser-php-detecting-a-users-browser-from-php/)**  
-  Used for Browser-detection.  
-  License: GNU General Public License V2  
+* **MIMEType-Array from [MIME Types Class](http://www.phpclasses.org/phpmimetypeclass)**  
+  Used for suffix to mimetype.  
+  License: GNU GPL.  
   File: http://www.gnu.org/copyleft/gpl.html  
-  Copyright (C) 2008-2010 Chris Schuld  (chris@chrisschuld.com)
+  Developed by Robert Widdick
 
-* **[CSSfix](http://www.phpclasses.org/css-fix)**  
-  Used to apply vendor prefixes to specified CSS rules while parsing less to css.  
-  License: BSD  
-  File: http://opensource.org/licenses/bsd-license.html  
-  Developed by Arturs Sosins aka ar2rsawseen, http://webcodingeasy.com
+* **[modernizr-server](https://github.com/jamesgpearce/modernizr-server)**  
+  Author: [James Pearce](http://tripleodeon.com/)
+  License: [The MIT License](https://github.com/jamesgpearce/modernizr-server/blob/master/LICENSE)  
 
 * **[phpQuery](http://code.google.com/p/phpquery/)**  
   Not used by THE MASTER but some shorthands are served.  
@@ -89,20 +99,15 @@ Here is a list:
   File: http://www.opensource.org/licenses/mit-license.php  
   Developed by Tobiasz Cudnik <tobiasz.cudnik/gmail.com>
 
-* **MIMEType-Array from [MIME Types Class](http://www.phpclasses.org/phpmimetypeclass)**  
-  Used for suffix to mimetype.  
-  License: GNU GPL.  
-  File: http://www.gnu.org/copyleft/gpl.html  
-  Developed by Robert Widdick
-
-* **SLT File Select(http://sltaylor.co.uk/wordpress/plugins/slt-file-select/)**
+* **[SLT File Select](http://sltaylor.co.uk/wordpress/plugins/slt-file-select/)**
   I implemented the idears of Steve Taylors File Select Plugin as Class FileSelect for usage in other Plugins
-  and as a part of THEWPSETTINGS. I modifyed his code a bit to make it fit into my workflow.
+  and as a part of THEWPSETTINGS. I modified his code to make it fit into my workflow.
   Donate Link: http://www.babyloniantimes.co.uk/index.php?page=donate
 
-* **[modernizr-server](https://github.com/jamesgpearce/modernizr-server)**  
-  Author: [James Pearce](http://tripleodeon.com/)
-  License: [The MIT License](https://github.com/jamesgpearce/modernizr-server/blob/master/LICENSE)  
+* **[URLNormalizer](https://github.com/glenscott/url-normalizer)**
+  Author: [Glen Scott](http://www.glenscott.co.uk/)
+  License: (c) Glen Scott - Usage allowed here: http://www.glenscott.co.uk/blog/2011/01/09/normalize-urls-with-php/#comment-98235
+
 
 ###JS
 * **[animaterotatescale](https://github.com/zachstronaut/jquery-animate-css-rotate-scale/blob/master/jquery-animate-css-rotate-scale.js)**  
@@ -155,6 +160,11 @@ Here is a list:
 
 Changelog
 ---------
+
+### 3.1.4
++ some File Select Bugs fixed
++ even better injection of less globals
++ URLNormalizer class for usage in THETOOLS::normalizeUrl() added 
 
 ### 3.1.3
 + Better injection of less variables
