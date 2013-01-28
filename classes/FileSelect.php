@@ -89,6 +89,9 @@ class FileSelect extends core\THEWPMASTER {
         if (is_array($value)) {
             $value = implode(',', $value);
         }
+
+        $validation = $this->sanitizeValidation($validation);
+
     	$HTML->s_div('.tm-fileselect_buttonwrap')
     		->button(__('Upload/Choose', 'themaster'), '.button-secondary tm-fileselect_button')
             ->hidden('.tm-fileselect_value|name='.esc_attr($name).'|value='.esc_attr($value));
@@ -196,6 +199,14 @@ class FileSelect extends core\THEWPMASTER {
         }
 
         return $allOk;
+    }
+
+    public function sanitizeValidation($val)
+    {
+        if (is_string($val)) {
+            $val = preg_replace('/[\\\\\/]+/', '/', $val);
+        }
+        return $val;
     }
 
     public function validateSizeFor($attachmentIDs, $chksizes)
@@ -412,7 +423,7 @@ class FileSelect extends core\THEWPMASTER {
             return $mimes;
         }
 
-        $allowed = $_REQUEST['tm-fileselect_validation'];
+        $allowed = $this->sanitizeValidation($_REQUEST['tm-fileselect_validation']);
 
         if (!wp_verify_nonce($_REQUEST['tm-fileselect_validation_nonce'], 'tm-fileselect-allow:'.$allowed)) {
             return array();
@@ -444,12 +455,13 @@ class FileSelect extends core\THEWPMASTER {
          && !empty($_REQUEST['tm-fileselect_validation'])
          && ($vals = $_REQUEST['tm-fileselect_validation']) != false
         ) {
+            $vals = $this->sanitizeValidation($vals);
             $name = isset($_REQUEST['name']) ? $_REQUEST['name'] :
                 $_FILES['async-upload']['name'];
             return sprintf(
                 __('Sorry your file %1$s does not match with the allowed Filetypes (%2$s).'),
                 esc_attr($name),
-                X\THETOOLS::readableList(esc_attr($_REQUEST['tm-fileselect_validation']))
+                X\THETOOLS::readableList($vals)
             );
         }
         return $translated_text;

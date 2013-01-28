@@ -441,6 +441,9 @@ class ResponsiveImages extends core\THEWPMASTER {
 		 */
 		if ($alt === null && is_numeric($image)) {
 			$alt = get_post_meta($image, '_wp_attachment_image_alt', true);
+			if (empty($alt)) {
+				$alt = null;
+			}
 		}
 
 		if ($title === null && is_numeric($image)) {

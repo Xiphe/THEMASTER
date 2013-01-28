@@ -161,6 +161,10 @@ Here is a list:
 Changelog
 ---------
 
+### 3.1.5
++ sanitizeValidation for fileSelect
++ bugfixes and restructuring of ResponsiveImages.
+
 ### 3.1.4
 + some File Select Bugs fixed
 + even better injection of less globals
