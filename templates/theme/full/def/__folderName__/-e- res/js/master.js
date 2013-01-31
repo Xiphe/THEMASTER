@@ -1,4 +1,4 @@
-if(typeof __stlvendor__==='undefined'){var __stlvendor__={};}__stlvendor__=jQuery.extend(true,{},__stlvendor__,{__stlfoldername__:{master:(function($){var
+var __stlvendor__=__stlvendor__||{};__stlvendor__=jQuery.extend(true,{},__stlvendor__,{__stlfoldername__:{master:(function($){var
 	
 	/* PRIVATE VARS */
 	$thiz = $(this)

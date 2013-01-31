@@ -130,7 +130,7 @@ class THEWPMASTER extends THEWPUPDATES {
      * @access public
      * @return void
      */
-    final public function __construct( $initArgs ) {
+    final public function __construct($initArgs) {
         if (is_object(($r = THEBASE::check_singleton_(get_class($this))))) {
             return $r;
         } else {
@@ -181,6 +181,11 @@ class THEWPMASTER extends THEWPUPDATES {
             }
 
             /*
+             * Call aditional hooks.
+             */
+            self::s_hooks();
+
+            /*
              * Register basic less and js files.
              */
             if (!function_exists('is_admin') || !is_admin()) {
@@ -192,11 +197,6 @@ class THEWPMASTER extends THEWPUPDATES {
                     THEBASE::get_instance('FileSelect');
                 });
             }
-
-            /*
-             * Call aditional hooks.
-             */
-            self::s_hooks();
 
             /*
              * Register hash rederect for login.
@@ -618,7 +618,7 @@ class THEWPMASTER extends THEWPUPDATES {
 
     final private static function s_wrapJsVar($namespace, $var)
     {
-        return "if(typeof $namespace==='undefined'){var $namespace={};}$namespace=jQuery.extend(true,{},$namespace,".json_encode($var).');';
+        return "var $namespace=$namespace||{};$namespace=jQuery.extend(true,{},$namespace,".json_encode($var).');';
     }
 
     final public static function twpm_ajax_jsVars()

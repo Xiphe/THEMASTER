@@ -1007,7 +1007,9 @@ class THEBASE {
 
                 $fix = true;
                 for ($i=0; $i < 15; $i++) { 
-                    if (trim($c[$i]) == '// NOFIX //') {
+                    if (!isset($c[$i])) {
+                        break;
+                    } elseif (trim($c[$i]) === '// NOFIX //') {
                         $fix = false;
                         break;
                     }
@@ -1261,8 +1263,14 @@ class THEBASE {
      */
     final public function get_instance($name, $initArgs = array())
     {
-        
         $paths = array();
+
+        /*
+         * Remove potential namespace from instance name.
+         */
+        $name = explode('\\', $name);
+        $name = $name[count($name)-1];
+
         if ($name === 'Master') {
             if (isset($initArgs['basePath']) && $initArgs['namespace']) {
                 $paths[]  = array(

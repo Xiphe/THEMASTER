@@ -161,6 +161,11 @@ Here is a list:
 Changelog
 ---------
 
+### 3.1.6
++ minor bugfixes
++ THEWPMASTER will register hooks now BEFORE less files are registered. To ensure error messages will be printed correctly
++ Shortend the merge of js globals
+
 ### 3.1.5
 + sanitizeValidation for fileSelect
 + bugfixes and restructuring of ResponsiveImages.
