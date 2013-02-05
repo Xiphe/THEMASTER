@@ -1,0 +1,20 @@
+{
+    "name": "xiphe/themaster",
+    "description": "A base for plugins and themes",
+    "authors": [
+        {
+            "name": "Hannes Diercks",
+            "email": "info@xiphe.net"
+        }
+    ],
+    "minimum-stability": "beta",
+    "require": {
+        "coffeescript/coffeescript": "~1.3",
+        "css-crush/css-crush": "~1.9",
+        "leafo/lessphp": "~0.3",
+        "firephp/firephp-core": "dev-master",
+        "ikimea/browser": "dev-master",
+        "xiphe/base": "~1.0",
+        "duvanmonsa/php-query": "dev-master"
+    }
+}
