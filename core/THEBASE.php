@@ -559,7 +559,12 @@ class THEBASE {
                     if (($HTML = $this->get_HTML())) {
                         $ar['HTML'] = $HTML;
                     }
-                    $ar['Master'] = call_user_func(array($this->namespace.'\classes\Master', 'inst'));
+
+                    if ($this->namespace === "Xiphe\THEMASTER") {
+                        $ar['Master'] = THEMASTER::inst();
+                    } else {
+                        $ar['Master'] = call_user_func(array($this->namespace.'\classes\Master', 'inst'));
+                    }
 
                     extract(array_merge(
                         $ar, 

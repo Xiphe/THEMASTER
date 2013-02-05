@@ -23,7 +23,7 @@
  *          Original Plugin by Steve Taylor (http://sltaylor.co.uk)
  * @license GPLv2
  */
-/*global ajaxurl, uploader, tb_show, tb_remove */
+/*global ajaxurl, uploader, tb_show, tb_remove, console */
 if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{themaster:{fileselect:(function($){var
 
     /* PRIVATE VARS */
@@ -37,7 +37,9 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
 
 
     /* PUBLIC VARS */;
+    this.$current = false;
     this.checkedAttachments = [];
+    this.foreignAttachments = {};
     this.$selection = $('');
     this.previewsize = false;
     this.validation = false;
@@ -53,7 +55,9 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
      * @return {void}
      */
     _init = function() {
-        parentFS = parent.xiphe.themaster.fileselect;
+        if (parent && typeof parent.xiphe !== 'undefined') {
+            parentFS = parent.xiphe.themaster.fileselect;
+        }
     },
 
     /**
@@ -529,29 +533,7 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
         $('.tm-fileselect_button').click(function(e) {
             e.preventDefault();
 
-            /*
-             * Point to the element that will receive the selected ids
-             */
-            self.$selection = $(this).siblings('input.tm-fileselect_value');
-
-            /*
-             * Initiate/Reset options.
-             */
-            self.previewsize = $(this).siblings('input.tm-fileselect_previewsize').val();
-            self.validation = $(this).siblings('input.tm-fileselect_validation').val();
-            self.validation_nonce = $(this).siblings('input.tm-fileselect_validation_nonce').val();
-            self.parent_id = $(this).siblings('input.tm-fileselect_parent_id').val();
-            self.multiple = $(this).siblings('input.tm-fileselect_multiple').val();
-
-            /*
-             * Reset the working list of attachment ids
-             */
-            self.checkedAttachments = [];
-            if (self.$selection.val().length) {
-                $(self.$selection.val().split(',')).each(function() {
-                    self.checkedAttachments.push(parseInt(this, 10));
-                });
-            }
+            self.setScope(this);
 
             /*
              * Start the fileSelect interface
@@ -566,35 +548,12 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
          */
         $('.tm-fileselect_remove').live('click', function(e){
             e.preventDefault();
-
             /*
              * initiate variables
              */
             var $wrp = $(this).closest('.tm-fileselect_wrap'),
-                $inpt = $(this).closest('.tm-fileselect_preview')
-                    .siblings('.tm-fileselect_buttonwrap')
-                    .find('input.tm-fileselect_value'),
-                vals = $inpt.val().split(','),
-                id = $wrp.find('.tm-fileselect_attachmentwrap').attr('data-id');
-
-            /*
-             * if the id exists - remove it from selection.
-             */
-            if(vals.indexOf(id) >= 0) {
-                vals.splice(vals.indexOf(id), 1);
-            }
-
-            /*
-             * Put the new value into the $selection
-             */
-            $inpt.val(vals.join(','));
-
-            /*
-             * Remove the element
-             */
-            $wrp.fadeOut(500, function() {
-                $(this).remove();
-            });
+                $btn = $(this).closest('.tm-fileselect_fullwrap').find('.tm-fileselect_button');
+            self.removeAttachment.call($btn, $wrp.attr('fullid'));
         });
     },
 
@@ -629,9 +588,198 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
                 $(this).siblings('.tm-fileselect_preview').disableSelection();
             }
         });
+    },
+
+    _mergeSelections = function(namespace, data) {
+        if (typeof namespace === 'undefined' || namespace == null) {
+            namespace = '--';
+        }
+
+        var vals = self.$selection.val().split(','),
+            has = [],
+            newVals = [];
+
+        $.each(vals, function(k, val) {
+            if ((val+'').indexOf(namespace) === 0) {
+                var id = parseInt(''+val.replace(namespace + '_', ''), 10);
+
+                if (data.indexOf(id) > -1) {
+                    newVals.push(val);
+                    has.push(id);
+                }
+            } else {
+                newVals.push(val);
+            }
+        });
+
+        $.each(data, function(k, id) {
+            if (has.indexOf(id) === -1) {
+                newVals.push(namespace + '_' + id);
+            }
+        });
+
+        self.$selection.val(newVals.join(','));
     }
 
     /* PUBLIC METHODS */;
+
+    this.setScope = function(elm) {
+        if (!$(elm).hasClass('tm-fileselect_button')) {
+            return false;
+        }
+
+        if (self.$current && self.$current.length && self.$current[0] === elm) {
+            return true;
+        }
+
+        self.$current = $(elm);
+
+        /*
+         * Point to the element that will receive the selected ids
+         */
+        self.$selection = $(elm).siblings('input.tm-fileselect_value');
+
+        /*
+         * Initiate/Reset options.
+         */
+        self.previewsize = $(elm).siblings('input.tm-fileselect_previewsize').val();
+        self.validation = $(elm).siblings('input.tm-fileselect_validation').val();
+        self.validation_nonce = $(elm).siblings('input.tm-fileselect_validation_nonce').val();
+        self.parent_id = $(elm).siblings('input.tm-fileselect_parent_id').val();
+        self.multiple = $(elm).siblings('input.tm-fileselect_multiple').val();
+        self.foreign = $(elm).siblings('input.tm-fileselect_foreign').val();
+
+        /*
+         * Reset the working list of attachment ids
+         */
+        self.checkedAttachments = [];
+        if (self.$selection.val().length) {
+            $(self.$selection.val().split(',')).each(function() {
+                var attachment = self.getAttachementData(this);
+
+                if (attachment.namespace === 'fileselect') {
+                    self.checkedAttachments.push(attachment.id);
+                } else {
+                    if (typeof self.foreignAttachments[attachment.namespace] === 'undefined') {
+                        self.foreignAttachments[attachment.namespace] = [];
+                    }
+
+                    self.foreignAttachments[attachment.namespace].push(attachment.id);
+                }
+            });
+        }
+        return true;
+    };
+
+    this.getAttachementData = function(fullid) {
+        var r = {},
+            namespacePrt = fullid.match(/[a-z_]+/)[0];
+        r.namespace = namespacePrt.substring(0, namespacePrt.length-1);
+        r.id = parseInt(fullid.replace(namespacePrt, ''), 10);
+
+        return r;
+    };
+
+    this.removeAttachment = function(fullid) {
+        /* Make sure we can set right scope */
+        if (!$(this).hasClass('tm-fileselect_button')) {
+            return false;
+        } else {
+            /* and set it */
+            self.setScope(this);
+        }
+
+        /* Ensure presence of fullid */
+        if (typeof fullid === 'undefined') {
+            return;
+        }
+
+        /* Initiate vars */
+        var attachment = self.getAttachementData(fullid),
+            index = -1;
+
+        /* Remove native attachments from internal selection */
+        if (attachment.namespace === 'fileselect') {
+            index = self.checkedAttachments.indexOf(attachment.id);
+            if (index > -1) {
+                self.checkedAttachments.splice(index, 1);
+            }
+
+        /* Remove foreign attachments from internal selection */
+        } else if (typeof self.foreignAttachments[attachment.namespace] === 'undefined') {
+            index = self.foreignAttachments[attachment.namespace].indexOf(attachment.id);
+            self.foreignAttachments[attachment.namespace].splice(index, 1);
+        }
+
+        /* Try to find an element with the id and remove it */
+        $('#tmfs_'+attachment.namespace+'_id_'+attachment.id).fadeOut(function() {
+            $(this).remove();
+        }, 500);
+
+        /* Remove the id from input */
+        var vals = self.$selection.val().split(',');
+        /* If the id exists - remove it from selection. */
+        if(vals.indexOf(fullid) >= 0) {
+            vals.splice(vals.indexOf(fullid), 1);
+        }
+        /* Put the new value into the $selection */
+        self.$selection.val(vals.join(','));
+    };
+
+    /**
+     * Register additional attachments handled by plug-ins
+     *
+     * @param {string} namespace the plugin namespace
+     * @param {array}  data      id's of attachments
+     */
+    this.addForeignAttachment = function(namespace, data) {
+        if (!self.setScope(this)) {
+            return false;
+        }
+
+        self.foreignAttachments[namespace] = data;
+
+        self.updateForeignAttachements.call(this);
+    };
+
+    /**
+     * Get additional attachments handled by plug-ins
+     *
+     * @param {string}  namespace the plugin namespace
+     * @param {integer} i         optional index of specific attachment
+     */
+    this.getForeignAttachment = function(namespace, i) {
+        if (!self.setScope(this)) {
+            return false;
+        }
+
+        if (typeof self.foreignAttachments[namespace] === 'undefined') {
+            self.foreignAttachments[namespace] = [];
+        }
+
+        if (typeof i === 'undefined' || i === null) {
+            return self.foreignAttachments[namespace];
+        } else if (typeof self.foreignAttachments[namespace][i] !== 'undefined') {
+            return self.foreignAttachments[namespace][i];
+        } else {
+            return [];
+        }
+    };
+
+    /**
+     * merge the foreign attachments and the native ones.
+     *
+     * @return {void}
+     */
+    this.updateForeignAttachements = function() {
+        if (!self.setScope(this)) {
+            return false;
+        }
+
+        $.each(self.foreignAttachments, function(namespace, data) {
+            _mergeSelections(namespace, data);
+        });
+    };
 
     /**
      * Return the position of the first occurrence of the given regex
@@ -651,8 +799,6 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
      * Function that gets called when the media uploader ends by clicking
      * A "Select"-Button.
      *
-     * @param  {mixed}  item_id   the id or array of id's of the selected media
-     * @param  {string} field_id  the id of the targeted input field.
      * @return {void}
      */
     this.selectItems = function() {
@@ -665,7 +811,7 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
         /*
          * Set the selection
          */
-        self.$selection.val(self.checkedAttachments.join(','));
+        _mergeSelections('fileselect', self.checkedAttachments);
 
         /*
          * Update the preview
@@ -674,7 +820,7 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
             .html('')
             .addClass('tm-fileselect_loading')
             .load(ajaxurl, {
-                id:     self.checkedAttachments,
+                id:     self.$selection.val(),
                 size:   self.previewsize,
                 action: 'tm_fileselect_getfile',
                 parent_id: self.parent_id,

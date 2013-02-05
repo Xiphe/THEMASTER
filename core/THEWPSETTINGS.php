@@ -680,9 +680,11 @@ class THEWPSETTINGS extends THEWPBUILDER
                 'type' => '', // checkbox|dropdown|select|input|textarea
                 'default' => '', // bool|name|array(names)|string
                 'validation' => '', // function|regex OPTIONAL
-                'args' => array() // OPTIONAL
-                'errorMessage' => '' // OPTIONAL
-                'description' => '' // OPTIONAL
+                'args' => array(), // OPTIONAL
+                'errorMessage' => '', // OPTIONAL
+                'description' => '', // OPTIONAL
+                'beforeDisplay' => function(), // OPTIONAL
+                'beforeSave' => function() // OPTIONAL
             ),*/
             'errorReporting' => array(
                 'label' => __('Error Reporting', 'themaster'),

@@ -986,7 +986,7 @@ class THETOOLS {
      * 
      * @return string the current URL
      */
-    public static function get_currentUrl($filter = array())
+    public static function get_currentUrl($filter = array(), $queryFilter = array(), $queryFilterMethod = 'remove')
     {
         if (!is_array($filter)) {
             $filter = array($filter);
@@ -1006,9 +1006,32 @@ class THETOOLS {
         if (!in_array('port', $filter) && isset($_SERVER["SERVER_PORT"]) && $_SERVER["SERVER_PORT"] != "80") {
             $pageURL .= ":".$_SERVER["SERVER_PORT"];
         }
+        
         if (!in_array('request', $filter)) {
-            $pageURL .= $_SERVER["REQUEST_URI"];
+
+            $request_uri = $_SERVER["REQUEST_URI"];
+
+            if (!empty($queryFilter) && is_array($queryFilter)) {
+                $request = explode('?', $request_uri);
+                if (count($request) > 1) {
+                    parse_str($request[1], $query);
+
+                    self::filter_data($query, $queryFilter, $queryFilterMethod);
+
+
+                    if (empty($query)) {
+                        unset($request[1]);
+                    } else {
+                        $request[1] = http_build_query($query);
+                    }
+
+                    $request_uri = implode('?', $request);
+                }
+            }
+
+            $pageURL .= $request_uri;
         }
+
         return $pageURL;
     }
 

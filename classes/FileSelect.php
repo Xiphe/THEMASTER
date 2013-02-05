@@ -134,7 +134,8 @@ class FileSelect extends core\THEWPMASTER {
                     $values = array(esc_attr($value));
                 }
                 foreach ($values as $value) {
-                    echo $this->_get_preview($value, esc_attr($previewSize));
+                    extract($this->parseAttachementData($value));
+                    echo $this->_get_preview($namespace, $id, esc_attr($previewSize));
                 }
             }
         $HTML->end('#'.esc_attr($name).'_preview')->clear()
@@ -154,18 +155,20 @@ class FileSelect extends core\THEWPMASTER {
     }
 
 
-    public function validateTypeFor($attachmentIDs, $validTypes) {
-        if (!is_array($attachmentIDs)) {
-            $attachmentIDs = array($attachmentIDs);
+    public function validateTypeFor($attachments, $validTypes) {
+        if (!is_array($attachments)) {
+            $attachments = array($attachments);
         }
         $validTypes = explode('|', $validTypes);
         $allOk = true;
 
+        foreach ($attachments as $k => $attachment) {
+            if (is_object($attachment)) {
+                $attachmentID = $attachment->id;
+            } else {
+                $attachmentID = $attachment;
+            }
 
-        if($attachmentIDs === '') {
-            $attachmentIDs = array();
-        }
-        foreach ((array) $attachmentIDs as $k => $attachmentID) {
             $attachment_url = wp_get_attachment_url($attachmentID);
             $type = wp_check_filetype($attachment_url);
             $type = $type['type'];
@@ -287,14 +290,21 @@ class FileSelect extends core\THEWPMASTER {
         return false;
     }
 
-    public function get_typeErrorMessageFor($attachmentIDs)
+    public function get_typeErrorMessageFor($attachments)
     {
-        if($attachmentIDs === '') {
-            $attachmentIDs = array();
+        if (!is_array($attachments)) {
+            $attachments = array($attachments);
         }
+
         $valids = array();
         $files = array();
-        foreach ((array) $attachmentIDs as $k => $id) {
+        foreach ($attachments as $k => $attachment) {
+            if (is_object($attachment)) {
+                $id = $attachment->id;
+            } else {
+                $id = $attachment;
+            }
+
             if (isset($this->_typeErrors[$id])) {
                 $files[] = $this->_typeErrors[$id]['file'];
                 $valids = array_merge($valids, array_flip($this->_typeErrors[$id]['valid']));
@@ -313,14 +323,20 @@ class FileSelect extends core\THEWPMASTER {
         );
     }
 
-    public function bind_attachment($attachmentIDs, $postID) {
-        if (!is_array($attachmentIDs)) {
-            $attachmentIDs = explode(',', $attachmentIDs);
+    public function bind_attachment($attachments, $postID) {
+        if (!is_array($attachments)) {
+            $attachments = explode(',', $attachments);
         }
 
         global $wpdb;
-        foreach ($attachmentIDs as $k => $attachmentID) {
-            $post = get_post($attachmentID);
+        foreach ($attachments as $k => $attachment) {
+            if (is_object($attachment)) {
+                $id = $attachment->id;
+            } else {
+                $id = $attachment;
+            }
+
+            $post = get_post($id);
             if (isset($post->post_parent) && empty($post->post_parent)) {
                 $wpdb->update(
                     $wpdb->posts,
@@ -391,28 +407,138 @@ class FileSelect extends core\THEWPMASTER {
 
     public function wp_ajax_tm_fileselect_getfile()
     {
+        /* validate the request */
         if (!is_admin()
          || !wp_verify_nonce(esc_attr($_REQUEST['nonce']), 'tm-fileselect_getfile')
          || empty($_REQUEST['id'])
         ) {
-            exit;
+            $this->_exit('error', 'unauthenticated', 1);
         }
 
+        /* Ensure a the post is present */
         if ((!isset($GLOBALS['post']) || !is_object($GLOBALS['post']))
             && isset($_REQUEST['parent_id'])
         ) {
             $GLOBALS['post'] = get_post(intval($_REQUEST['parent_id']));
         }
 
-        if (!is_array($_REQUEST['id'])) {
-            $_REQUEST['id'] = array($_REQUEST['id']);
-        }
+        /* Parse an attachment list from input */
+        $input = explode(',', esc_attr($_REQUEST['id']));
 
-        foreach ($_REQUEST['id'] as $id) {
-            echo $this->_get_preview(esc_attr($id), esc_attr($_REQUEST['size']));
+        $size = esc_attr($_REQUEST['size']);
+
+        /* Loop though the namespaces */
+        foreach($input as $data) {
+            extract($this->parseAttachementData($data));
+            $this->_get_preview($namespace, $id, $size);
         }
 
         exit;
+    }
+
+    private function _get_preview($namespace, $id, $size = 'medium')
+    {
+        if (empty($size)) {
+            $size = 'medium';
+        }
+
+        if ($namespace === 'fileselect') {
+            $attachment_url = wp_get_attachment_url($id);
+            if ($attachment_url == false) {
+                return false;
+            }
+        } elseif (do_action("xiphe_themaster_fileselect_validate_$namespace", $id) === false) {
+            return false;
+        }
+
+        $r = core\THEBASE::get_view('fileselect/open_preview', compact('namespace', 'id'));
+
+        if ($namespace === 'fileselect') {
+            $attachment_markup = core\THEBASE::get_view(
+                'fileselect/preview',
+                compact('namespace', 'id', 'size')
+            );
+        } else {
+            ob_start();
+            do_action(
+                "xiphe_themaster_fileselect_preview_$namespace",
+                $id,
+                esc_attr($_REQUEST['size'])
+            );
+            $attachment_markup = ob_get_clean();
+        }
+
+        $attachment_markup = apply_filters('xiphe_themaster_fileselect_attachment', $attachment_markup);
+        if (empty($attachment_markup)) {
+            return false;
+        }
+        $r .= $attachment_markup;
+
+
+        
+        $r .= self::sget_HTML()->r_end('.tm-fileselect_wrap');
+        $r = apply_filters('xiphe_themaster_fileselect_preview', $r, $id);
+
+        if (is_string($r)) {
+            echo $r;
+        }
+    }
+
+    public function parseInputData($data) {
+        /* The return object */
+        $r = array();
+
+        if (!is_array($data)) {
+            $data = explode(',', $data);
+        }
+
+        /* Loop though all inputs (separated by commas) */
+        foreach ($data as $i => $attachment) {
+            /* Ignore empty */
+            if (empty($attachment)) {
+                continue;
+            }
+
+            extract($this->parseAttachementData($attachment));
+
+            /* build a new entry into the return array */
+            $r[$namespace][] = (object) array(
+                'id' => $id,
+                'position' => $i
+            );
+        }
+
+        return $r;
+    }
+
+    public function parseAttachementData($input) {
+        /* split into namespace and id */
+        $r = array();
+
+        preg_match('/[a-z_]+/', $input, $namespace);
+        $r['namespace'] = trim($namespace[0], '_');
+        $r['id'] = intval(str_replace($r['namespace'].'_', '', $input));
+
+        return $r;
+    }
+
+    public function attachNamespaces($data)
+    {
+        $r = array();
+
+        foreach ($data as $namespace => $attachments) {
+            foreach ($attachments as $data) {
+                $r[$data->position] = "{$namespace}_{$data->id}";
+            }
+        }
+        ksort($r);
+
+        return $r;
+    }
+
+    public function toString($data)
+    {
+        return implode(',', $this->attachNamespaces($data));
     }
 
     public function upload_mimes($mimes)
@@ -478,68 +604,7 @@ class FileSelect extends core\THEWPMASTER {
         exit;
     }
 
-    private function _get_preview($id, $size = 'thumbnail')
-    {
-        $attachment_url = wp_get_attachment_url($id);
-        if ($attachment_url == false) {
-            return false;
-        }
-        
-        $HTML = core\THEBASE::sget_HTML();
-        $r = $HTML->sr_li(array(
-            'class' => 'tm-fileselect_wrap '.(wp_attachment_is_image($id) ? 'tm-fileselect_wrap_image' : 'tm-fileselect_wrap_file'),
-            'id' => 'tm-fileselect_id_'.$id
-        ));
-        $r .= $HTML->sr_div('.tm-fileselect_buttons_wrap');
-        $r .= $HTML->sr_div('.tm-fileselect_buttons');
-        $b = $HTML->sr_div('.tm-fileselect_removewrap');
-        $b .= $HTML->r_button(__('Remove', 'themaster'), '.button button-secondary tm-fileselect_remove');
-        $b .= $HTML->r_end();
-        $b .= $HTML->sr_div('.tm-fileselect_detailswrap');
-        $b .= $HTML->r_a(__('Details', 'themaster'), array(
-            'class' => 'button button-secondary tm-fileselect_details',
-            'href' => sprintf('\./media.php?attachment_id=%s&action=edit', $id),
-            'target' => '_blank'
-        ));
-        $b .= $HTML->r_end(1);
-        $b = apply_filters('Xiphe\THEMASTER\FileSelect_buttons', $b, $id);
-        if (is_string($b)) {
-            $r .= $b;
-        }
-        $r .= $HTML->r_end(2);
-
-        $attachment_r = '';
-        if (wp_attachment_is_image($id)) {
-            $attachment_r .= $HTML->rs_a(array(
-                'href' => admin_url('admin-ajax.php?').http_build_query(array(
-                    'action' => 'tm_fileselect_getfullsize',
-                    'id' => $id,
-                    'nonce' => wp_create_nonce('tm-fileselect_fullsize')
-                )),
-                'class' => 'thickbox tm-fileselect_attachmentwrap',
-                'data-id' => $id
-            ));
-            $attachment_r .= wp_get_attachment_image($id, $size);
-            $attachment_r .= $HTML->r_end('.thickbox');
-        } else {
-            $attachment_r .= $HTML->rs_span('.tm-fileselect_attachmentwrap|data-id='.$id);
-            $attachment_r .= $this->_get_link($id);
-            $attachment_r .= $HTML->r_end();
-        }
-        $attachment_r = apply_filters('Xiphe\THEMASTER\FileSelect_attachement', $attachment_r);
-        if (empty($attachment_r)) {
-            return false;
-        }
-        $r .= $attachment_r;
-
-        $r .= $HTML->r_end('.tm-fileselect_wrap');
-        $r = apply_filters('Xiphe\THEMASTER\FileSelect_preview', $r, $id);
-        if (is_string($r)) {
-            return $r;
-        }
-    }
-
-    private function _get_link($id)
+    public function get_link($id)
     {
         $post = get_post($id);
 		$attachment_url = wp_get_attachment_url($id);
@@ -556,11 +621,11 @@ class FileSelect extends core\THEWPMASTER {
                 .' tm-fileselect_attachment-'.$fts[1]
         ));
 
-        $r .= $HTML->r_span($post->post_title, '.tm-fileselect_attachement-title');
+        $r .= $HTML->r_span($post->post_title, '.tm-fileselect_attachment-title');
         $r .= $HTML->r_end();
 
         $r .= $HTML->r_br();
-        $r .= $HTML->r_span(basename($attachment_url), '.hidden tm-fileselect_attachement-file');
+        $r .= $HTML->r_span(basename($attachment_url), '.hidden tm-fileselect_attachment-file');
 
 		return $r;
     }
