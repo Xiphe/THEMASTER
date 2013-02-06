@@ -62,7 +62,7 @@ namespace Xiphe\THEMASTER;
     // \Xiphe\THEDEBUG::$modus = 'FirePHP';
     // \Xiphe\THEDEBUG::enable();
 
-    
+
 /*
  * Define THEMASTER_HAS_WPRDPRESS for use in WP().
  */
