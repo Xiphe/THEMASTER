@@ -134,6 +134,9 @@ class FileSelect extends core\THEWPMASTER {
                     $values = array(esc_attr($value));
                 }
                 foreach ($values as $value) {
+                    if (empty($value)) {
+                        continue;
+                    }
                     extract($this->parseAttachementData($value));
                     echo $this->_get_preview($namespace, $id, esc_attr($previewSize));
                 }
@@ -429,6 +432,9 @@ class FileSelect extends core\THEWPMASTER {
 
         /* Loop though the namespaces */
         foreach($input as $data) {
+            if (empty($data)) {
+                continue;
+            }
             extract($this->parseAttachementData($data));
             $this->_get_preview($namespace, $id, $size);
         }
@@ -514,6 +520,10 @@ class FileSelect extends core\THEWPMASTER {
     public function parseAttachementData($input) {
         /* split into namespace and id */
         $r = array();
+
+        if (empty($input)) {
+            return array();
+        }
 
         preg_match('/[a-z_]+/', $input, $namespace);
         $r['namespace'] = trim($namespace[0], '_');
