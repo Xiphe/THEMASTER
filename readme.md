@@ -9,7 +9,6 @@ for plugin and theme development in wordpress.
 See [Plugin Page](https://github.com/Xiphe/-THE-MASTER) for details
 
 
-
 Installation
 ------------
 
@@ -57,57 +56,13 @@ influenced my code strongly.
 This plugin uses and includes some scripts from other people.
 Here is a list:
 
-###PHP
-* **[Browser.php](http://chrisschuld.com/projects/browser-php-detecting-a-users-browser-from-php/)**  
-  Used for Browser-detection.  
-  License: GNU General Public License V2  
-  File: http://www.gnu.org/copyleft/gpl.html  
-  Copyright (C) 2008-2010 Chris Schuld  (chris@chrisschuld.com)
+### Composer
+coffeescript/coffeescript, css-crush/css-crush, duvanmonsa/php-query, 
+firephp/firephp-core leafo/lessphp, ikimea/browser and some of my own packages.
 
-* **[CSSfix](http://www.phpclasses.org/css-fix)**  
-  Used to apply vendor prefixes to specified CSS rules while parsing less to css.  
-  License: BSD  
-  File: http://opensource.org/licenses/bsd-license.html  
-  Developed by Arturs Sosins aka ar2rsawseen, http://webcodingeasy.com
-
-* **[FirePHP](http://www.firephp.org/)**  
-  Used for debuging into Firebug console.  
-  License: New BSD License  
-  File: /_themaster/classes/FirePHPCore/LICENSE  
-  Copyright (c) 2006-2009, Christoph Dorn  
-  All rights reserved.
-
-* **[lessPHP](http://leafo.net/lessphp/)**  
-  Used for server-side compiling of .less files.  
-  License: MIT LICENSE  
-  File: /_themaster/classes/lessPHP/LICENSE  
-  Copyright (c) 2010 Leaf Corcoran, http://leafo.net/lessphp
-
+### PHP
+* Diverse Snippets from all around the World - added the author whenever possible.
 * **MIMEType-Array from [MIME Types Class](http://www.phpclasses.org/phpmimetypeclass)**  
-  Used for suffix to mimetype.  
-  License: GNU GPL.  
-  File: http://www.gnu.org/copyleft/gpl.html  
-  Developed by Robert Widdick
-
-* **[modernizr-server](https://github.com/jamesgpearce/modernizr-server)**  
-  Author: [James Pearce](http://tripleodeon.com/)
-  License: [The MIT License](https://github.com/jamesgpearce/modernizr-server/blob/master/LICENSE)  
-
-* **[phpQuery](http://code.google.com/p/phpquery/)**  
-  Not used by THE MASTER but some shorthands are served.  
-  License: MIT License  
-  File: http://www.opensource.org/licenses/mit-license.php  
-  Developed by Tobiasz Cudnik <tobiasz.cudnik/gmail.com>
-
-* **[SLT File Select](http://sltaylor.co.uk/wordpress/plugins/slt-file-select/)**
-  I implemented the idears of Steve Taylors File Select Plugin as Class FileSelect for usage in other Plugins
-  and as a part of THEWPSETTINGS. I modified his code to make it fit into my workflow.
-  Donate Link: http://www.babyloniantimes.co.uk/index.php?page=donate
-
-* **[URLNormalizer](https://github.com/glenscott/url-normalizer)**
-  Author: [Glen Scott](http://www.glenscott.co.uk/)
-  License: (c) Glen Scott - Usage allowed here: http://www.glenscott.co.uk/blog/2011/01/09/normalize-urls-with-php/#comment-98235
-
 
 ###JS
 * **[animaterotatescale](https://github.com/zachstronaut/jquery-animate-css-rotate-scale/blob/master/jquery-animate-css-rotate-scale.js)**  
@@ -116,7 +71,7 @@ Here is a list:
 * **[coloumnmanager](http://p.sohei.org/jquery-plugins/columnmanager/)**  
 
 * **combobox**  
-  From jQueryUI-Examples - modifyed by Hannes Diercks.
+  From jQueryUI-Examples - modifyed by me.
 
 * **[colorbox](http://www.jacklmoore.com/colorbox)**  
   (c) 2011 Jack Moore - jacklmoore.com  
@@ -161,54 +116,23 @@ Here is a list:
 Changelog
 ---------
 
-### 3.1.6
-+ minor bugfixes
-+ THEWPMASTER will register hooks now BEFORE less files are registered. To ensure error messages will be printed correctly
-+ Shortend the merge of js globals
+### 3.2
+* exclude THEDEBUG, THETOOLS and THEWPTOOLS
+* switch to composer libraries
+* Autoloading of THEMASTER handled through composer
+* Autoloading of other plugin and theme classes handled by THEAUTOLOADER
+* include coffeescript parser
 
-### 3.1.5
-+ sanitizeValidation for fileSelect
-+ bugfixes and restructuring of ResponsiveImages.
-
-### 3.1.4
-+ some File Select Bugs fixed
-+ even better injection of less globals
-+ URLNormalizer class for usage in THETOOLS::normalizeUrl() added 
-
-### 3.1.3
-+ Better injection of less variables
-+ added THEWPMASTER::wrapJsVar()
-
-### 3.1.2
-+ updated jQuery UI themes
-+ updated combobox.js
-+ bugfixes for models and language in THEWPMASTER
-+ added @masterRes and @baseUrl as less variables to every less file.
-
-### 3.1.1
-+ enhanced the content filter for ResponsiveImages.
-
-### 3.1.0
-+ new namespace autoloading
-+ lots of small adjustments
-+ update from 3.0.* needs many adjustments to depending themes.
-
-### pre 3.1
+### pre 3.2
 + See changelog.md
 
-
-Known Bugs
-----------
-
-+   None ;)
 
 
 Todo
 ----
 
-+ composer compatibility
-+ ResponsiveImages, FileSelect, THETOOLS, THEWPTOOLS and THEDEBUG should be
-  WP-Plugins by itself and/or composer packages.
++ Cleanup the js lib. (Bower?)
++ Convert ResponsiveImages and FileSelect into WP-Plugins.
 +	build skeleton builder for standalones
 + Better documentation
 + Spell-check O_°
