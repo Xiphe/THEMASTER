@@ -9,8 +9,8 @@ use Xiphe as X;
  * @copyright Copyright (c) 2013, Hannes Diercks
  * @author    Hannes Diercks <xiphe@gmx.de>
  * @version   3.0.2
- * @link      https://github.com/Xiphe/-THE-MASTER/
- * @package   !THE MASTER
+ * @link      https://github.com/Xiphe/THEMASTER/
+ * @package   THEMASTER
  */
 class THEBASE {
 
@@ -213,7 +213,7 @@ class THEBASE {
          * Prevent direct instancing of THEBASE.
          */
         if (!isset( $this->constructing ) || $this->constructing !== true) {
-            throw new \Exception("ERROR: THEBASE is not ment to be constructed directly.", 1);
+            throw new THEBASEException("ERROR: THEBASE is not ment to be constructed directly.");
             return false;
         } else {
             unset($this->constructing);
@@ -280,7 +280,7 @@ class THEBASE {
                 isset($initArgs['projectType']) ? $initArgs['projectType'] : __('Project', 'themaster'),
                 isset($initArgs['projectName']) ?  $initArgs['projectName'] : __('Unknown', 'themaster')
             );
-            throw new \Exception($msg, 1);
+            throw new THEBASEException($msg);
             return false;
         }
         return $this;
@@ -308,7 +308,15 @@ class THEBASE {
             self::$s_themastersInitArgs['textID']
                 = self::$sTextID = self::$sFolderName.'/'.basename(self::$sProjectFile);
 
-            X\THEDEBUG::sInit();
+            /* Pass settings to THEDEBUG */
+            $toggle = THESETTINGS::sGet_setting('debug', self::$sTextID) ? 'enable' : 'disable';
+            call_user_func(array('Xiphe\THEDEBUG', $toggle));
+            X\THEDEBUG::$modus = THESETTINGS::sGet_setting('debugMode', self::$sTextID);
+            X\THEDEBUG::$ensureByGet = THESETTINGS::sGet_setting('debugGet', self::$sTextID);
+
+            if (!defined('DOING_AJAX') && !isset($_REQUEST['ajax'])) {
+                X\THEDEBUG::debug(__(sprintf('Debug is on and Mode is set to %s.', X\THEDEBUG::$modus)), 2);
+            }
 
             self::$s_themastersInitArgs['namespace'] = 'Xiphe\\THEMASTER';
             self::$s_themastersInitArgs['projectName'] = '!THE MASTER';
@@ -577,8 +585,8 @@ class THEBASE {
                 }
             }
 
-            throw new \Exception('Error: View File not Found (' . $file . ')', 1);
-        } catch(\Exception $e) {
+            throw new THEBASEException('Error: View File not Found (' . $file . ')');
+        } catch(THEBASEException $e) {
             X\THEDEBUG::debug($e);
         }
     }
@@ -605,7 +613,7 @@ class THEBASE {
         if( isset( $GLOBALS['HTML'] ) )
             return $GLOBALS['HTML'];
         elseif( $silence !== true )
-            throw new \Exception( "HTML Class Needed but not available.", 1 );
+            throw new THEBASEException( "HTML Class Needed but not available.", 1 );
         else
             return false;
     }
@@ -622,10 +630,18 @@ class THEBASE {
         self::_reg_source('js', $filename, $args);
     }
 
+    final public static function reg_coffee($filename, $args = array()) {
+        self::_reg_source('coffee', $filename, $args);
+    }
+
     final public static function sReg_js($filename, $args = array()) {
         self::_reg_source('js', $filename, $args);
     }
     
+    final public static function sReg_coffee($filename, $args = array()) {
+        self::_reg_source('coffee', $filename, $args);
+    }
+
     final public function reg_less($filename, $args = array()) {
         self::_reg_source('less', $filename, $args);
     }
@@ -640,6 +656,14 @@ class THEBASE {
 
     final public static function sReg_adminJs($filename, $args = array()) {
         self::_reg_source('js', $filename, $args, true);
+    }
+
+    final public function reg_adminCoffee($filename, $args = array()) {
+        self::_reg_source('coffee', $filename, $args, true);
+    }
+
+    final public static function sReg_adminCoffee($filename, $args = array()) {
+        self::_reg_source('coffee', $filename, $args, true);
     }
     
     final public function reg_adminLess($filename, $args = array()) {
@@ -769,6 +793,7 @@ class THEBASE {
             $suffix .= '.php';
         }
 
+
         /*
          * Circle through the path's
          */
@@ -813,9 +838,14 @@ class THEBASE {
                 self::$s_registeredSources[$foa][$source][$file] = true;
                 return true;
             } elseif ($folder == false) {
-                /*
-                 * Is file -> Add it.
-                 */
+
+                if ($source === 'coffee') {
+                    $file = self::_handle_coffee($file, $foa);
+                    $relpath = str_replace(DS.'coffee'.DS, DS.'js'.DS, $relpath);
+                    $source = 'js';
+                    $suffix = 'coffee.js';
+                }
+
                 if ($source == 'less') {
                     $file = self::_handle_less($file, $foa);
                     $relpath = str_replace(DS.'less'.DS, DS.'css'.DS, $relpath);
@@ -823,6 +853,9 @@ class THEBASE {
                     $suffix = 'less.css';
                 }
 
+                /*
+                 * Is file -> Add it.
+                 */
                 $url = X\THETOOLS::slash($url).str_replace(DS, '/', $relpath).$filename.'.'.$suffix;
 
                 if (!is_array($vars)) {
@@ -850,7 +883,7 @@ class THEBASE {
             "$filename.$source",
             implode(__('" or here "', 'themaster'), $ePaths)
         );
-        throw new \Exception($msg,1);
+        throw new THEBASEException($msg,1);
     }
 
     /**
@@ -906,7 +939,7 @@ class THEBASE {
                 unset($h);
             }
             if (!file_exists($cssFile) || !is_writable($cssFile)) {
-                throw new \ErrorException(
+                throw new THEBASEException(
                     sprintf(
                         'LessCss target file "%s" is not existent or writable.',
                         $cssFile
@@ -918,8 +951,9 @@ class THEBASE {
             /*
              * Include the libraries.
              */
-            require_once(self::$sBasePath.'classes'.DS.'lessPHP'.DS.'lessc.inc.php');
-            require_once(self::$sBasePath.'classes'.DS.'CSSfix'.DS.'CSSfix.php');
+            if (!class_exists('lessc')) {
+                throw new THEBASEException("Unable to find the less compiler");
+            }
 
             /*
              * Get the content from less file.
@@ -1010,24 +1044,25 @@ class THEBASE {
                 
                 $CSS = $Less->compile($less);
 
-                $fix = true;
+                $Crush = false;
                 for ($i=0; $i < 15; $i++) { 
                     if (!isset($c[$i])) {
                         break;
-                    } elseif (trim($c[$i]) === '// NOFIX //') {
-                        $fix = false;
+                    } elseif (trim($c[$i]) === '// AppendCrush //') {
+                        $Crush = true;
                         break;
                     }
                 }
 
-                if ($fix) {
-                    $CSSfix = new \CSSfix();
-                    $CSSfix->from_string($CSS);
-                    $CSS = $CSSfix->generate(false);
+                if ($Crush) {
+                    if (!class_exists('csscrush')) {
+                        throw new THEBASEException("CSSCrush could not be loaded");
+                    }
+                    $CSS = \csscrush::string($CSS);
+                    $CSS = $CSS->raw;
                 }
 
                 file_put_contents($cssFile, $CSS);
-
             } catch (\Exception $e) {
                 X\THEDEBUG::debug('LESS ERROR: '.$e->getMessage()." \nFile: ".$e->getFile()." \nLine: ".$e->getLine(), 4);
                 return false;
@@ -1035,10 +1070,95 @@ class THEBASE {
         }
 
         if (!file_exists($cssFile)) {
-            throw new \Exception("Error on .less generation \"$cssFile\" does not exist.", 1);
+            throw new THEBASEException("Error on .less generation \"$cssFile\" does not exist.", 1);
             return false;
         } else {
             return $cssFile;
+        }
+    }
+
+    private function _handle_coffee($file, $foa)
+    {
+        /*
+         * Prevent double handling in runtime.
+         */
+        self::$s_registeredSources[$foa]['coffee'][$file] = true;
+
+        /*
+         * Predict the css path by replacing less with css in the filepath.
+         */
+        $jsFile = str_replace(
+            array(
+                DS.'coffee'.DS,
+                '.coffee'
+            ),
+            array(
+                DS.'js'.DS,
+                '.coffee.js'
+            ),
+            $file
+        );
+
+        /*
+         * If the file does not exist or the less is newer...
+         */
+        if (!file_exists($jsFile) 
+         || filemtime($file) > filemtime($jsFile)
+        ) {
+            /*
+             * Check if the target file is existent and writable.
+             */
+            if (!file_exists($jsFile)) {
+                if (!is_dir(dirname($jsFile))) {
+                    @mkdir(dirname($jsFile));
+                }
+                $h = @fopen($jsFile, 'w');
+                if ($h) {
+                    @fclose($h);
+                }
+                unset($h);
+            }
+            if (!file_exists($jsFile) || !is_writable($jsFile)) {
+                throw new THEBASEException(
+                    sprintf(
+                        'CoffeeScript target file "%s" is not existent or writable.',
+                        $jsFile
+                    ),
+                    1
+                );
+            }
+
+            touch($file);
+            
+
+            /*
+             * Include the libraries.
+             */
+            if (!class_exists('CoffeeScript\Compiler')) {
+                throw new THEBASEException("Unable to find the CoffeeScript Compiler");
+            }
+
+
+            /*
+             * Get the content from less file.
+             */
+            $content = file_get_contents($file);
+
+            try {
+                $js = \CoffeeScript\Compiler::compile($content);
+            } catch (\Exception $e) {
+                X\THEDEBUG::debug($e);
+                return;
+            }
+
+            file_put_contents($jsFile, $js);
+        }
+
+        if (!file_exists($jsFile)) {
+            throw new THEBASEException("Error on .less generation \"$jsFile\" does not exist.");
+            return false;
+        } else {
+            return $jsFile;
         }
     }
     
@@ -1172,7 +1292,7 @@ class THEBASE {
                 return $include ? include $path : $path;
             }
         }
-        throw new \Exception('Tryed to include unexistent file "'.$source.'"', 1);
+        throw new THEBASEException('Tryed to include unexistent file "'.$source.'"');
     }
     
     
@@ -1208,7 +1328,7 @@ class THEBASE {
             __('**!THE MASTER ERROR:** Model File for %s not found.', 'themaster'),
             $modelname
         );
-        throw new \Exception($msg,1);
+        throw new THEBASEException($msg);
     }
     
     /**
@@ -1283,7 +1403,7 @@ class THEBASE {
                     'basePath' => $initArgs['basePath']
                 );
             } else {
-                throw new \Exception( 'Master initiation misses arguments (prefix & basePath)', 1);
+                throw new THEBASEException( 'Master initiation misses arguments (prefix & basePath)');
                 return false;
             }
         } else {
@@ -1347,9 +1467,9 @@ class THEBASE {
                             if (defined('XIPHE_HTML_AVAILABLE') && XIPHE_HTML_AVAILABLE === true) {
                                 $obj->HTML = new X\HTML($obj->baseUrl);
                             } else {
-                                throw new \Exception( '<strong>!THE MASTER ERROR:</strong> Class "'
+                                throw new THEBASEException( '<strong>!THE MASTER ERROR:</strong> Class "'
                                     .get_class($obj).'" should have been initiated whith HTML Object,'
-                                    .' but it seems as the HTML Class file is not available.', 4
+                                    .' but it seems as the HTML Class file is not available.'
                                 );
                             }
                         }
@@ -1388,7 +1508,7 @@ class THEBASE {
                     $classname,
                     implode(__('" or here "', 'themaster'), $ePaths)
                 );
-                throw new \Exception($msg,1);
+                throw new THEBASEException($msg);
             }
         }
         return $obj;
@@ -1414,7 +1534,7 @@ class THEBASE {
             $cID = get_class($obj);
         }
         if (!$force && isset(self::$s_singletons[$cID])) {
-            throw new \Exception('Invalid double construction of singleton "'.$cID.'"', 1);
+            throw new THEBASEException('Invalid double construction of singleton "'.$cID.'"');
         } else {
             self::$s_singletons[$cID] = $obj;
         }
@@ -1593,9 +1713,12 @@ class THEBASE {
          */
         } else {
             X\THEDEBUG::debug('callstack', null, null, 2);
-            throw new \Exception('Call to undefined method '.$method, 1);
+            throw new THEBASEException('Call to undefined method '.$method);
         }
     }
+}
+
+class THEBASEException extends \Exception {
 }
 
 /**

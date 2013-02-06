@@ -144,7 +144,7 @@ class THEWPMASTER extends THEWPUPDATES {
 
         if (!self::$s_initiated) {
             if (function_exists('load_plugin_textdomain')) {
-                load_plugin_textdomain('themaster', false, '_themaster/languages/');
+                @load_plugin_textdomain('themaster', false, '_themaster/languages/');
             }
             THEBASE::sRegister_callback('afterBaseS_init', array(THE::WPMASTER, 'sinit'));
         }
@@ -280,14 +280,6 @@ class THEWPMASTER extends THEWPUPDATES {
          * Register callback for admin notices.
          */
         add_action('admin_notices', array(THE::WPMASTER, 'twpm_admin_notices'), 999, 0);
-
-        /*
-         * Register callback for printing debugs from THEDEBUG.
-         */
-        add_action('shutdown', array('Xiphe\THEDEBUG', 'print_debugcounts'), 0, 0);
-        if (X\THEDEBUG::get_mode() === 'summed') {
-            add_action('shutdown', array('Xiphe\THEDEBUG', 'print_debug'), 0, 0);
-        }
 
         /*
          * Js Var Cache

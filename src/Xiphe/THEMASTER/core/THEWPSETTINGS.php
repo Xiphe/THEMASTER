@@ -10,8 +10,8 @@ use Xiphe as X;
  * @copyright Copyright (c) 2013, Hannes Diercks
  * @author    Hannes Diercks <xiphe@gmx.de>
  * @version   3.0.2
- * @link      https://github.com/Xiphe/-THE-MASTER/
- * @package   !THE MASTER
+ * @link      https://github.com/Xiphe/THEMASTER/
+ * @package   THEMASTER
  */
 class THEWPSETTINGS extends THEWPBUILDER
 {
@@ -680,11 +680,9 @@ class THEWPSETTINGS extends THEWPBUILDER
                 'type' => '', // checkbox|dropdown|select|input|textarea
                 'default' => '', // bool|name|array(names)|string
                 'validation' => '', // function|regex OPTIONAL
-                'args' => array(), // OPTIONAL
-                'errorMessage' => '', // OPTIONAL
-                'description' => '', // OPTIONAL
-                'beforeDisplay' => function(), // OPTIONAL
-                'beforeSave' => function() // OPTIONAL
+                'args' => array() // OPTIONAL
+                'errorMessage' => '' // OPTIONAL
+                'description' => '' // OPTIONAL
             ),*/
             'errorReporting' => array(
                 'label' => __('Error Reporting', 'themaster'),
@@ -710,22 +708,8 @@ class THEWPSETTINGS extends THEWPBUILDER
                 'default' => 'inline',
                 'args' => array(
                     'inline' => __('Inline', 'themaster'),
-                    'mail' => __('Mail', 'themaster'),
-                    'FirePHP' => __('FirePHP', 'themaster'),
-                    'summed' => __('Summed', 'themaster')
+                    'FirePHP' => __('FirePHP', 'themaster')
                 )
-            ),
-            'useHTML' => array(
-                'label' => __('Use HTML Class', 'themaster'),
-                'type' => 'checkbox',
-                'default' => true
-            ),
-            'debugEmail' => array(
-                'label' => __('Debug Email To', 'themaster'),
-                'type' => 'input',
-                'default' => '',
-                'validation' => '^(([a-zA-ZäöüÄÖÜß0-9_\.\-])+\@(([a-zA-ZäöüÄÖÜß0-9\-])+\.)+([a-zA-Z0-9]{2,4}))?$',
-                'errorMessage' => __('Please leave blank or use valid E-Mail.', 'themaster')
             ),
             // 'debugEmailFrom' => 'noreply@uptoyou.de',
             'forceUpdates' => array(
@@ -739,5 +723,4 @@ class THEWPSETTINGS extends THEWPBUILDER
             ),
         );
     }
-
 }
