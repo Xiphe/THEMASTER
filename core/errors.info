@@ -1,6 +1,0 @@
-1 = Class File Not Found
-2 = Class not found
-3 = Class was not initiated
-4 = Class should have been initiated with HTML-CLass but HTML is not available.
-
-10 = $this not available in THEWPSETTINGS::_get_setting()
