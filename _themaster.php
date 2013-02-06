@@ -4,8 +4,8 @@ Plugin Name: THE MASTER
 Plugin URI: https://github.com/Xiphe/-THE-MASTER
 Namespace: Xiphe\THEMASTER
 Description: A Plugin to provide global access to the THEWPMASTER class. THEWPMASTER provides a lot of handy functions for plugins an themes.
-Version: 3.1.6
-Date: 2013-01-31 14:49:49 +01.00
+Version: 3.2.0-beta1
+Date: 2013-02-06 04:36:27 +01:00
 Author: Hannes Diercks aka Xiphe
 Author URI: https://github.com/Xiphe
 Update Server: http://wpupdates.xiphe.net/v1/
@@ -48,6 +48,9 @@ namespace Xiphe\THEMASTER;
      */ 
     // \xdebugBreak();
 
+    require_once 'vendor/autoload.php';
+    require_once 'vendor/xiphe/thedebug/globaldebug.php';
+
     /*
      * Some settings for development (if anything inside the master is broken).
      */
@@ -56,10 +59,9 @@ namespace Xiphe\THEMASTER;
     // error_reporting(E_ALL);
     // ini_set('display_errors', 1);
     // define($tmSettingsID.'_ERRORREPORTING', true);
-    // define($tmSettingsID.'_DEBUG', true);
-    // define($tmSettingsID.'_DEBUGMODE', 'FirePHP');
+    // \Xiphe\THEDEBUG::$modus = 'FirePHP';
+    // \Xiphe\THEDEBUG::enable();
 
-    include 'globaldebug.php';
     
 /*
  * Define THEMASTER_HAS_WPRDPRESS for use in WP().
@@ -123,45 +125,12 @@ define('THEMASTER_PROJECTFOLDER', dirname(__FILE__).DS);
  */
 define('THEMASTER_COREFOLDER', dirname(__FILE__).DS.'core'.DS);
 
-
-spl_autoload_register(function($class) {
-    if (strpos($class, 'Xiphe\THEMASTER\\') === 0) {
-        $path = explode('\\', $class);
-        $name = end($path);
-        $path = array_splice($path, 2, -1);
-        $path[] = $name.'.php';
-        $path = implode(DS, $path);
-
-        if ((strpos($path, 'classes'.DS) !== 0 && strpos($path, 'models'.DS) !== 0)
-            || file_exists(THEMASTER_PROJECTFOLDER.$path)
-        ) {
-            if (!file_exists(THEMASTER_PROJECTFOLDER.$path)) {
-                debug(sprintf('Invalid include path "%s".', THEMASTER_PROJECTFOLDER.$path), 4, null, 2);
-                diebug('callstack', 5);
-            } else {
-                require(THEMASTER_PROJECTFOLDER.$path);
-            }
-        }
-    } elseif(in_array($class, array('Xiphe\THETOOLS', 'Xiphe\THEWPTOOLS', 'Xiphe\THEDEBUG'))) {
-        $file = str_replace('Xiphe\\', '', $class).'.php';
-        include(THEMASTER_PROJECTFOLDER.'tools'.DS.$file);
-    } elseif(WP()) {
-        $path = explode('\\', $class);
-        unset($path[0]);
-        $path = implode(DS, $path).'.php';
-        foreach(array('plugins', 'themes') as $t) {
-            $t = \Xiphe\THETOOLS::unify_slashes(ABSPATH).'wp-content'.DS.$t.DS.$path;
-            if (file_exists($t)) {
-                include $t;
-                break;
-            }
-        }
-    }
-});
-
+/*
+ * Register an autoloader for Themes and Plugins that do not have one.
+ */
+spl_autoload_register(array('Xiphe\THEMASTER\core\THEAUTOLOADER', 'autoload'));
 
 if (WP()) {
-
     /**
      * Transforms the filepath as if it is a subdirectory of wp-content/themes or
      * wp-content/plugins.
@@ -300,11 +269,15 @@ function INIT($initArgs = null, $file = null)
         $initArgs['isMaster'] = true;
     } 
 
+    if (isset($initArgs['namespace']) && isset($initArgs['basePath'])) {
+        core\THEAUTOLOADER::add($initArgs['namespace'], $initArgs['basePath']);
+    }
+
     /*
      * Try to build a new Master with the initiation arguments.
      */
     try {
-        $r = core\THEWPMASTER::get_instance( 'Master', $initArgs );
+        $r = core\THEWPMASTER::get_instance('Master', $initArgs);
     } catch (\Exception $e) {
         /*
          * Errors Occured -> try to write an admin notice.
