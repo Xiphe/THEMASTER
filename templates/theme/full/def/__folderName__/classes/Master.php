@@ -228,11 +228,12 @@ class Master extends TM\core\THEWPMASTER {
 	 *
 	 * @return void
 	 */
-	public function init() {
+	public function init()
+	{
 
 		// **EXTENDED** //
-		// $this->reg_js( 'script' );
-		// $this->reg_less( 'style' );
+		// $this->reg_coffee('master');
+		// $this->reg_less('style');
 		// **EXTENDED_END** //
 	}
 	// **EXTENDED** //
@@ -245,7 +246,8 @@ class Master extends TM\core\THEWPMASTER {
 	 *
 	 * @return void
 	 */
-	// public function wpinit() {
+	// public function wpinit()
+	// {
 		
 	// }
 	
@@ -254,9 +256,7 @@ class Master extends TM\core\THEWPMASTER {
 	 *
 	 * @return void
 	 */
-	// public function update() {
-
-	// }
+	// public function update() {}
 
 	/**
 	 * Shorthand Theme Options
@@ -267,7 +267,8 @@ class Master extends TM\core\THEWPMASTER {
 	 *
 	 * @return array the options and defaults.
 	 */
-	// public function settings() {
+	// public function settings()
+	// {
 	// 	return array(
 	// 		'updateApikey' => array(
 	// 			'label' => __('Product Key', '__textdomain__'),

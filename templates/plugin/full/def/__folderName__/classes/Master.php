@@ -228,11 +228,12 @@ class Master extends TM\core\THEWPMASTER {
 	 *
 	 * @return void
 	 */
-	public function init() {
+	public function init()
+	{
 
 		// **EXTENDED** //
-		// $this->reg_js( 'script' );
-		// $this->reg_less( 'style' );
+		// $this->reg_coffee('master');
+		// $this->reg_less('style');
 		// **EXTENDED_END** //
 	}
 	// **EXTENDED** //
@@ -245,7 +246,8 @@ class Master extends TM\core\THEWPMASTER {
 	 *
 	 * @return void
 	 */
-	// public function wpinit() {
+	// public function wpinit()
+	// {
 		
 	// }
 	
@@ -254,27 +256,21 @@ class Master extends TM\core\THEWPMASTER {
 	 *
 	 * @return void
 	 */
-	// public function activate() {
-		
-	// }
+	// public function activate() {}
 
 	/**
 	 * This method is called when the plugin gets deactivated by the user.
 	 *
 	 * @return void
 	 */
-	// public function deactivate() {
-		
-	// }
+	// public function deactivate() {}
 
 	/**
 	 * This method is called whenever the theme gets updated
 	 *
 	 * @return void
 	 */
-	// public function update() {
-
-	// }
+	// public function update() {}
 
 	/**
 	 * Shorthand Plugin Options
@@ -286,10 +282,11 @@ class Master extends TM\core\THEWPMASTER {
 	 *
 	 * @return array the options and defaults.
 	 */
-	// public function settings() {
+	// public function settings()
+	// {
 	// 	return array(
 	// 		'updateApikey' => array(
-	// 			'label' => __( 'Product Key', '__textdomain__' ),
+	// 			'label' => __('Product Key', '__textdomain__'),
 	// 			'type' => 'input',
 	// 			'default' => ''
 	// 		)
