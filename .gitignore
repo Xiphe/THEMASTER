@@ -6,4 +6,5 @@
 *.DS_Store
 *.less.css
 /demo
-/res/js/tmp/*
+/vendor
+composer.lock
