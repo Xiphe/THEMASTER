@@ -9,14 +9,13 @@ use Xiphe as X;
  * @copyright Copyright (c) 2013, Hannes Diercks
  * @author    Hannes Diercks <xiphe@gmx.de>
  * @version   3.0.0
- * @link      https://github.com/Xiphe/-THE-MASTER/
- * @package   !THE MASTER
+ * @link      https://github.com/Xiphe/THEMASTER/
+ * @package   THEMASTER
  */
 class THESETTINGS extends THEBASE {
 
 	// Turns true after first initiation.
 	private static $s_initiated = false;
-
 
 	private static $s_settings = array();
 			
@@ -34,11 +33,8 @@ class THESETTINGS extends THEBASE {
 		if( !self::$s_initiated ) {
 			self::$s_settings[X\THETOOLS::get_textID(THEMASTER_PROJECTFILE)] = array(
 				'debug' => false,
-				'debugMode' => 'inline',  // inline, mail, FirePHP, summed
+				'debugMode' => 'inline',  // inline, FirePHP
 				'debugGet' => false,
-				'useHTML' => true,
-				'debugEmail' => false,
-				'debugEmailFrom' => false,
 				'errorReporting' => false,
 				'forceUpdates' => false
 			);
