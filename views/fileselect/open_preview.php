@@ -31,7 +31,7 @@ if ($namespace === 'fileselect') {
     $b .= $HTML->sr_div('.tm-fileselect_detailswrap');
     $b .= $HTML->r_a(__('Details', 'themaster'), array(
         'class' => 'button button-secondary tm-fileselect_details',
-        'href' => sprintf('\./media.php?attachment_id=%s&action=edit', $id),
+        'href' => sprintf('\./post.php?post=%s&action=edit', $id),
         'target' => '_blank'
     ));
     $b .= $HTML->r_end('.tm-fileselect_detailswrap');

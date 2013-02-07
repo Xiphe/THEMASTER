@@ -96,7 +96,7 @@ class FileSelect extends core\THEWPMASTER {
     		->button(__('Upload/Choose', 'themaster'), '.button-secondary tm-fileselect_button')
             ->hidden('.tm-fileselect_value|name='.esc_attr($name).'|value='.esc_attr($value));
 
-            if (is_object($GLOBALS['post'])) {
+            if (isset($GLOBALS['post']) && is_object($GLOBALS['post'])) {
                 $HTML->hidden('.tm-fileselect_parent_id|name=tm-fileselect_parent_id|value='.$HTML->esc($GLOBALS['post']->ID));
             }
 
@@ -165,14 +165,21 @@ class FileSelect extends core\THEWPMASTER {
         $validTypes = explode('|', $validTypes);
         $allOk = true;
 
+
         foreach ($attachments as $k => $attachment) {
-            if (is_object($attachment)) {
+            if (empty($attachment)) {
+                unset($attachments[$k]);
+                continue;
+            } elseif (is_object($attachment)) {
                 $attachmentID = $attachment->id;
             } else {
                 $attachmentID = $attachment;
             }
 
-            $attachment_url = wp_get_attachment_url($attachmentID);
+            extract($this->parseAttachementData($attachment));
+
+            $attachment_url = wp_get_attachment_url($id);
+
             $type = wp_check_filetype($attachment_url);
             $type = $type['type'];
             $ok = false;
@@ -526,6 +533,9 @@ class FileSelect extends core\THEWPMASTER {
         }
 
         preg_match('/[a-z_]+/', $input, $namespace);
+        if (!isset($namespace[0])) {
+            return false;
+        }
         $r['namespace'] = trim($namespace[0], '_');
         $r['id'] = intval(str_replace($r['namespace'].'_', '', $input));
 
