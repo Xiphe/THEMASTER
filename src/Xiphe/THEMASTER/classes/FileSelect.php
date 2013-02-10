@@ -176,7 +176,13 @@ class FileSelect extends core\THEWPMASTER {
                 $attachmentID = $attachment;
             }
 
-            extract($this->parseAttachementData($attachment));
+            if (is_object($attachment) && isset($attachment->id)) {
+                $id = $attachment->id;
+            } elseif (!is_numeric($attachment)) {
+                extract($this->parseAttachementData($attachment));
+            } else {
+                $id = $attachment;
+            }
 
             $attachment_url = wp_get_attachment_url($id);
 
