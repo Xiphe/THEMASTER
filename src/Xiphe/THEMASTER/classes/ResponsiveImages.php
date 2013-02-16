@@ -327,7 +327,9 @@ class ResponsiveImages extends core\THEWPMASTER {
 			return false;
 		}
 
-		return $this->_get_imageUrl($image, $width, $height, $quality);
+		$url = $this->_get_imageUrl($image, $width, $height, $quality);
+		$url = apply_filters('xiphe_responsiveimages_imageurl', $url);
+		return $url;
 	}
 
 	/**
