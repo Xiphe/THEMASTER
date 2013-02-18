@@ -35,6 +35,7 @@ class ResponsiveImages extends core\THEWPMASTER {
 
 	private $_active = false;
 
+	private static $_availableHosts = false;
 	/**
 	 * Action Hooks into Wordpress.
 	 * @var array
@@ -579,6 +580,18 @@ class ResponsiveImages extends core\THEWPMASTER {
 		return $slave;
 	}
 
+	public function availableHosts()
+	{
+		if (!self::$_availableHosts) {
+			$home = parse_url(get_bloginfo('url'));
+			$hosts = array(
+				$home['host']
+			);
+			$hosts = apply_filters('xiphe_responsiveimages_availablehosts', $hosts);
+			self::$_availableHosts = is_array($hosts) ? $hosts : array();
+		}
+		return self::$_availableHosts;
+	}
 
     /* ------------------ *
      *  INTERNAL METHODS  *
@@ -597,9 +610,9 @@ class ResponsiveImages extends core\THEWPMASTER {
     		/*
     		 * Ensure the image is on the same server as Wordpress
     		 */
-    		$siteHost = parse_url(get_bloginfo('url'));
     		$imgHost = parse_url(pq($Img)->attr('src'));
-    		if ($siteHost['host'] !== $imgHost['host']) {
+    		$imgHost = $imgHost['host'];
+    		if (!in_array($imgHost, self::availableHosts())) {
     			continue;
     		}
 

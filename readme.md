@@ -116,6 +116,10 @@ firephp/firephp-core leafo/lessphp, ikimea/browser and some of my own packages.
 Changelog
 ---------
 
+### 3.2.2
+* introducing xiphe_responsiveimages_availablehosts filter
+* fileselect.js bugfixes
+
 ### 3.2.1
 * new scrollend.js
 * minified resizeend.js
