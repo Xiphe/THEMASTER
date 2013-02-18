@@ -23,8 +23,8 @@
  *          Original Plugin by Steve Taylor (http://sltaylor.co.uk)
  * @license GPLv2
  */
-/*global ajaxurl, uploader, tb_show, tb_remove, console */
-if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{themaster:{fileselect:(function($){var
+/*global ajaxurl, uploader, tb_show, tb_remove */
+var xiphe=xiphe||{};xiphe=jQuery.extend(true,{},xiphe,{themaster:{fileselect:(function($){var
 
     /* PRIVATE VARS */
     self = this,
@@ -546,14 +546,14 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
         /*
          * Remove an entry if the remove button on the preview is clicked
          */
-        $('.tm-fileselect_remove').live('click', function(e){
+        $('.tm-fileselect_remove').live('click', function(e) {
             e.preventDefault();
             /*
              * initiate variables
              */
             var $wrp = $(this).closest('.tm-fileselect_wrap'),
                 $btn = $(this).closest('.tm-fileselect_fullwrap').find('.tm-fileselect_button');
-            self.removeAttachment.call($btn, $wrp.attr('fullid'));
+            self.removeAttachment.call($btn, $wrp.attr('data-fullid'));
         });
     },
 
@@ -656,6 +656,9 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
         if (self.$selection.val().length) {
             $(self.$selection.val().split(',')).each(function() {
                 var attachment = self.getAttachementData(this);
+                if (!attachment) {
+                    return;
+                }
 
                 if (attachment.namespace === 'fileselect') {
                     self.checkedAttachments.push(attachment.id);
@@ -672,10 +675,24 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
     };
 
     this.getAttachementData = function(fullid) {
+        if (!fullid || fullid == '') {
+            return false;
+        }
+
         var r = {},
-            namespacePrt = fullid.match(/[a-z_]+/)[0];
-        r.namespace = namespacePrt.substring(0, namespacePrt.length-1);
-        r.id = parseInt(fullid.replace(namespacePrt, ''), 10);
+            namespacePrt = fullid.match(/[a-z_]+/);
+
+        if (!namespacePrt ||
+            typeof namespacePrt[0] === 'undefined' ||
+            namespacePrt === null ||
+            namespacePrt[0] === ''
+        ) {
+            r.namespace = 'fileselect';
+            r.id = parseInt(fullid, 10);
+        } else {
+            r.namespace = namespacePrt[0].substring(0, namespacePrt[0].length-1);
+            r.id = parseInt(fullid.replace(namespacePrt, ''), 10);
+        }
 
         return r;
     };
@@ -698,6 +715,11 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
         var attachment = self.getAttachementData(fullid),
             index = -1;
 
+        /* Skip empty attachments */
+        if (!attachment) {
+            return;
+        }
+
         /* Remove native attachments from internal selection */
         if (attachment.namespace === 'fileselect') {
             index = self.checkedAttachments.indexOf(attachment.id);
@@ -714,7 +736,7 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
         /* Try to find an element with the id and remove it */
         $('#tmfs_'+attachment.namespace+'_id_'+attachment.id).fadeOut(function() {
             $(this).remove();
-        }, 500);
+        });
 
         /* Remove the id from input */
         var vals = self.$selection.val().split(',');
