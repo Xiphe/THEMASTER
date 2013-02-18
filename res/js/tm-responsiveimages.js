@@ -20,12 +20,11 @@
  * @license GPLv2
  */
 /*global ajaxurl */
-if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{themaster:{responsiveimages:(function($){var
+var xiphe=xiphe||{};xiphe=jQuery.extend(true,{},xiphe,{themaster:{responsiveimages:(function($){var
 
     /* PRIVATE VARS */
 	self = this,
 	slideimgs = {},
-	sTime = 5000,
 	waitForTouches = false,
 	touchIntervall = 10000,
 	touched = {},
@@ -41,6 +40,8 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
 
 	/* PUBLIC VARS */;
 
+	self.slideshowChangeIntervall = 5000;
+	self.slideshowAnimationDuration = 1000;
 
     /* PRIVATE METHODS */ var
 
@@ -60,7 +61,7 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
 			$.removeCookie('tmri_nojsfallback');
 		}
 		if(typeof xiphe.themaster.responsive_slideshowTime !== 'undefined') {
-			sTime = parseInt(xiphe.themaster.responsive_slideshowTime, 10);
+			self.slideshowChangeIntervall = parseInt(xiphe.themaster.responsive_slideshowTime, 10);
 		}
 		_resize();
 		window.setTimeout(function() {
@@ -177,23 +178,26 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
 			 */
 			url = url.join('.');
 
-			self.loadImg(
+			self.loadImg.call(
+				this,
 				url,
 				function() {
 					_setImg.call(thiz, url, nW, nH);
 					self.touch($(thiz).attr('data-origin'), nW, quality, $(thiz).attr('data-nonce'));
 				},
 				function() {
-					$.get(ajaxurl, {
+					$.getJSON(ajaxurl, {
 						action: 'tm_responsiveimageget',
 						width: iWidth,
 						image: $(thiz).attr('data-origin'),
 						nonce: $(thiz).attr('data-nonce'),
 						quality: quality
 					}, function(r) {
-						r = eval('('+r+')');
 						if (r && r.status === 'ok') {
-							self.loadImg(
+							/* Add the current times to prevent false errors through cache */
+							r.uri += '?ts='+new Date().getTime();
+							self.loadImg.call(
+								this,
 								r.uri,
 								function() {
 									_setImg.call(thiz, r.uri, nW, nH);
@@ -250,8 +254,7 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
 				args.title = $(this).attr('title');
 			}
 
-			$.get(ajaxurl, args, function(r) {
-				r = eval("(" + r + ")");
+			$.getJSON(ajaxurl, args, function(r) {
 				if(r && r.status === 'ok') {
 					self.loadImg($(r.img).attr('src'), function() {
 						slideimgs[args.image] = r.img;
@@ -273,11 +276,12 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
 			} else {
 				addit = true;
 			}
-		}, sTime);
+		}, self.slideshowChangeIntervall);
 	},
 
 	_slideshowNext = function($img) {
 		var $old = $(this);
+		$old.trigger('tm-responsiveimage_slideshowchange', {$next: $img, $current: $old});
 		$old = $old.wrap('<div />').parent().css({
 			'position' : 'relative',
 			'z-index' : 0
@@ -289,7 +293,7 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
 			'z-index' : 1
 		});
 		$old.before($img.parent());
-		$img.parent().animate({'opacity' : '1'}, 1000, function() {
+		$img.parent().animate({'opacity' : '1'}, self.slideshowAnimationDuration, function() {
 			$old.remove();
 			$img.unwrap();
 			_responsizePlugin($img[0]);
@@ -324,6 +328,9 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
 	/* PUBLIC METHODS */;
 
 	self.loadImg = function(src, loadCb, errorCb) {
+		if ($(this).hasClass('tm-responsiveimage')) {
+			$(this).addClass('tm-loading');
+		}
 		if ($loader.data('attached') === false) {
 			$('body').append($loader).data('attached', true);
 		}
@@ -342,14 +349,14 @@ if(typeof xiphe==='undefined'){var xiphe={};}xiphe=jQuery.extend(true,{},xiphe,{
 					if (typeof loadCb === 'function') {
 						loadCb.call($i);
 					}
-				}, 1000);
+				}, 0);
 			})
 			.error(function() {
 				finished();
 				if (typeof errorCb === 'function') {
 					errorCb.call($i);
 				}
-			})[0].src = src;
+			}).attr('src', src);
 
 		$i.appendTo($loader);
 	};

@@ -540,7 +540,7 @@ class FileSelect extends core\THEWPMASTER {
 
         preg_match('/[a-z_]+/', $input, $namespace);
         if (!isset($namespace[0])) {
-            return false;
+            $namespace[0] = 'fileselect_';
         }
         $r['namespace'] = trim($namespace[0], '_');
         $r['id'] = intval(str_replace($r['namespace'].'_', '', $input));

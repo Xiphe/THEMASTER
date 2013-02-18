@@ -116,6 +116,12 @@ firephp/firephp-core leafo/lessphp, ikimea/browser and some of my own packages.
 Changelog
 ---------
 
+### 3.2.1
+* new scrollend.js
+* minified resizeend.js
+* fixed bug where responsive images were not placed after generation.
+* minor bugfixes
+
 ### 3.2
 * exclude THEDEBUG, THETOOLS and THEWPTOOLS
 * switch to composer libraries
