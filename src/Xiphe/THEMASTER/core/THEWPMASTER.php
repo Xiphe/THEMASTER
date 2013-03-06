@@ -189,10 +189,10 @@ class THEWPMASTER extends THEWPUPDATES {
              * Register basic less and js files.
              */
             if (!function_exists('is_admin') || !is_admin()) {
-                THEBASE::reg_less('base');
+                THEBASE::sReg_less('base');
             } else {
-                THEBASE::reg_adminLess('tm-admin');
-                THEBASE::reg_adminJs('tm-admin');
+                THEBASE::sReg_adminLess('tm-admin');
+                THEBASE::sReg_adminJs('tm-admin');
                 add_action('plugins_loaded', function() {
                     THEBASE::get_instance('FileSelect');
                 });
@@ -569,11 +569,17 @@ class THEWPMASTER extends THEWPUPDATES {
             if (is_array($var) || is_object($var)) {
                 $js .= self::s_wrapJsVar($name, $var);
             } else {
-                $js .= "var $name=".json_encode($var).';';
+                $js .= "a.$name=".json_encode($var).";\n";
             }
         }
 
         $checksum = md5($js);
+
+        $wrap = "(function(){";
+        $wrap .= 'var a=this;';
+        $wrap .= "function b(c,b){for(var a in b)b[a]&&b[a].constructor&&b[a].constructor===Object?(c[a]=c[a]||{},arguments.callee(c[a],b[a])):c[a]=b[a];return c};\n";
+        $wrap .= $js;
+        $wrap .= '}).call(this);';
 
         update_option(
             "Xiphe\THEMASTER\jsVarCache\\$checksum",
@@ -581,7 +587,7 @@ class THEWPMASTER extends THEWPUPDATES {
                 array(
                     'admin' => $admin,
                     'creation' => time(),
-                    'content' => $js
+                    'content' => $wrap
                 )
             )
         );
@@ -610,7 +616,7 @@ class THEWPMASTER extends THEWPUPDATES {
 
     final private static function s_wrapJsVar($namespace, $var)
     {
-        return "var $namespace=$namespace||{};$namespace=jQuery.extend(true,{},$namespace,".json_encode($var).');';
+        return "a.$namespace=a.$namespace||{};b(a.$namespace,".json_encode($var).");\n";
     }
 
     final public static function twpm_ajax_jsVars()
