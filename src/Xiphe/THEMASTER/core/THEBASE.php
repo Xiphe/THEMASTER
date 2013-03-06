@@ -626,60 +626,66 @@ class THEBASE {
         self::s_reg_jsVar($name, $var, $global, $this->namespace, true);
     }
     
+    final public static function sRegJsVar($name, $var, $global = false) {
+        self::s_reg_jsVar($name, $var, $global, self::$sNameSpace, false);
+    }
+
+    final public static function sRegAdminJsVar($name, $var, $global = false) {
+        self::s_reg_jsVar($name, $var, $global, self::$sNameSpace, true);
+    }
+
+    final public function reg_coffee($filename, $args = array()) {
+        $this->_reg_source('coffee', $filename, $args);
+    }
+    final public function reg_css($filename, $args = array()) {
+        $this->_reg_source('css', $filename, $args);
+    }
     final public function reg_js($filename, $args = array()) {
-        self::_reg_source('js', $filename, $args);
+        $this->_reg_source('js', $filename, $args);
+    }
+    final public function reg_less($filename, $args = array()) {
+        $this->_reg_source('less', $filename, $args);
     }
 
-    final public static function reg_coffee($filename, $args = array()) {
-        self::_reg_source('coffee', $filename, $args);
-    }
 
-    final public static function sReg_js($filename, $args = array()) {
-        self::_reg_source('js', $filename, $args);
+    final public function reg_adminCoffee($filename, $args = array()) {
+        $this->_reg_source('coffee', $filename, $args, true);
     }
+    final public function reg_adminJs($filename, $args = array()) {
+        $this->_reg_source('js', $filename, $args, true);
+    }
+    final public function reg_adminCss($filename, $args = array()) {
+        $this->_reg_source('css', $filename, $args, true);
+    }
+    final public function reg_adminLess($filename, $args = array()) {
+        $this->_reg_source('less', $filename, $args, true);
+    }
+    
     
     final public static function sReg_coffee($filename, $args = array()) {
         self::_reg_source('coffee', $filename, $args);
     }
-
-    final public function reg_less($filename, $args = array()) {
-        self::_reg_source('less', $filename, $args);
+    final public static function sReg_js($filename, $args = array()) {
+        self::_reg_source('js', $filename, $args);
     }
-    
-    final public function reg_css($filename, $args = array()) {
+    final public static function sReg_css($filename, $args = array()) {
         self::_reg_source('css', $filename, $args);
     }
-
-    final public function reg_adminJs($filename, $args = array()) {
-        self::_reg_source('js', $filename, $args, true);
-    }
-
-    final public static function sReg_adminJs($filename, $args = array()) {
-        self::_reg_source('js', $filename, $args, true);
-    }
-
-    final public function reg_adminCoffee($filename, $args = array()) {
-        self::_reg_source('coffee', $filename, $args, true);
+    final public static function sReg_less($filename, $args = array()) {
+        self::_reg_source('less', $filename, $args);
     }
 
     final public static function sReg_adminCoffee($filename, $args = array()) {
         self::_reg_source('coffee', $filename, $args, true);
     }
-    
-    final public function reg_adminLess($filename, $args = array()) {
-        self::_reg_source('less', $filename, $args, true);
+    final public static function sReg_adminJs($filename, $args = array()) {
+        self::_reg_source('js', $filename, $args, true);
     }
-    
-    final public function reg_adminCss($filename, $args = array()) {
+    final public static function sReg_adminCss($filename, $args = array()) {
         self::_reg_source('css', $filename, $args, true);
     }
-    
-    final public static function sRegJsVar($name, $var, $global) {
-        self::s_reg_jsVar($name, $var, $global, self::$sNameSpace, false);
-    }
-
-    final public static function sRegAdminJsVar($name, $var, $global) {
-        self::s_reg_jsVar($name, $var, $global, self::$sNameSpace, true);
+    final public static function sReg_adminLess($filename, $args = array()) {
+        self::_reg_source('less', $filename, $args, true);
     }
 
     private static function s_reg_jsVar($name, $var, $global, $namespace, $admin = false) {
@@ -792,7 +798,6 @@ class THEBASE {
         if (is_array($vars) && $folder == false && $source !== 'less') {
             $suffix .= '.php';
         }
-
 
         /*
          * Circle through the path's
