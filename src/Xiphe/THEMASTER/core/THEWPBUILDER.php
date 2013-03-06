@@ -88,15 +88,15 @@ class THEWPBUILDER extends THEMASTER {
 	 * One time initiaton.
 	 */
 	public static function sinit() {
-		if( !self::$s_initiated ) {
+		if (!self::$s_initiated) {
 			// Get all options from database.
 
-			if( isset( $GLOBALS['pagenow'] ) 
-			 && in_array( $GLOBALS['pagenow'], array( 'plugins.php', 'themes.php' ) )
-			 && function_exists( 'is_admin' ) && is_admin()
+			if (isset($GLOBALS['pagenow']) &&
+				in_array($GLOBALS['pagenow'], array('plugins.php', 'themes.php')) &&
+				function_exists('is_admin') && is_admin()
 			) {
 				self::$s_access = true;
-				add_action( 'init', array(THE::WPBUILDER, 'sStartToBuild' ) );	
+				add_action( 'init', array(THE::WPBUILDER, 'sStartToBuild'));	
 			}
 
 			if (function_exists('add_action')) {
@@ -116,21 +116,21 @@ class THEWPBUILDER extends THEMASTER {
 	}
 
 	private static function s_getBaseTemplatePath() {
-		if( !isset( self::$s_baseTemplatePath ) ) {
-			self::$s_baseTemplatePath = dirname( dirname( __FILE__ ) ) . DS . 'templates' . DS;
+		if (!isset(self::$s_baseTemplatePath)) {
+			self::$s_baseTemplatePath = THEMASTER_PROJECTFOLDER.'templates'.DS;
 		}
 		return self::$s_baseTemplatePath;
 	}
 
 	protected function _masterInit() {
-		if( !isset( $this ) ) {
+		if (!isset($this)) {
 			throw new Exception("_masterInit should not be called staticaly.", 1);
 		}
-		if( isset( $this->_masterInitiated ) && $this->_masterInitiated === true ) {
+		if (isset($this->_masterInitiated) && $this->_masterInitiated === true) {
 			return;
 		}
 
-		if( parent::_masterInit() ) {
+		if (parent::_masterInit()) {
 			return true;
 		}
 	}
