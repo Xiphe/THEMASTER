@@ -968,7 +968,7 @@ class ResponsiveImages extends core\THEWPMASTER {
       		mkdir(dirname($target), 0777, true);
       	}
 
-      	$q = ($quality+1)*25;
+      	$q = 10;
 
       	switch ($type) {
 			case 'image/gif':
@@ -1066,7 +1066,7 @@ class ResponsiveImages extends core\THEWPMASTER {
 			return false;
 		} 
 		$dirs = wp_upload_dir();
-		return X\THETOOLS::DS(realpath($dirs['path'])).$image['file'];
+		return X\THETOOLS::DS(realpath($dirs['basedir'])).$image['file'];
 	}
 
 	public function shutdown() {

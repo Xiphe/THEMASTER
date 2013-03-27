@@ -259,6 +259,12 @@ class THEWPMASTER extends THEWPUPDATES {
         /*
          * Register callbacks for printing js-variables.
          */
+        add_action('wp_enqueue_scripts', array(THE::WPMASTER, 'print_xiphe_init_js'), 0, 0);
+        add_action('admin_enqueue_scripts', array(THE::WPMASTER, 'print_xiphe_init_js'), 0, 0);
+
+        /*
+         * Register callbacks for printing js-variables.
+         */
         add_action('wp_head', array(THE::WPMASTER, 'twpm_print_jsVars'), 999, 0);
         add_action('admin_head', array(THE::WPMASTER, 'twpm_print_adminJsVars'), 999, 0);
 
@@ -504,6 +510,18 @@ class THEWPMASTER extends THEWPUPDATES {
     /*  PUBLIC INTERNAL METHODS  */
     /* ------------------------- */
     
+    final public static function print_xiphe_init_js()
+    {
+        $script = file_get_contents(self::$sBasePath.'res'.DS.'js'.DS.'xiphe_init.min.js');
+        $script = preg_replace('/\r\n|\n|\r/', ' ', $script);
+        $script = "<script type=\"text/javascript\">$script</script>";
+
+        if (($HTML = self::sGet_HTML())) {
+            $HTML->blank($script);
+        } else {
+            echo $script;
+        }
+    }
 
     final public static function twpm_wp_nav_menu_objects($sorted_menu_items)
     {   
@@ -558,37 +576,19 @@ class THEWPMASTER extends THEWPUPDATES {
      */
     final public static function twpm_print_jsVars($admin = false) {
         if ($admin) {
-            $source = THEBASE::sGet_registeredAdminJsVars();
-            $regMethod = 'sReg_adminJs';
+            $js = THEBASE::sGet_registeredAdminJsVars();
         } else {
-            $source = THEBASE::sGet_registeredJsVars();
-            $regMethod = 'sReg_js';
-        }
-        $js = '';
-        foreach ($source as $name => $var) {
-            if (is_array($var) || is_object($var)) {
-                $js .= self::s_wrapJsVar($name, $var);
-            } else {
-                $js .= "a.$name=".json_encode($var).";\n";
-            }
+            $js = THEBASE::sGet_registeredJsVars();
         }
 
         $checksum = md5($js);
 
-        $wrap = "(function(){";
-        $wrap .= 'var a=this;';
-        $wrap .= "function b(c,b){for(var a in b)b[a]&&b[a].constructor&&b[a].constructor===Object?(c[a]=c[a]||{},arguments.callee(c[a],b[a])):c[a]=b[a];return c};\n";
-        $wrap .= $js;
-        $wrap .= '}).call(this);';
-
         update_option(
             "Xiphe\THEMASTER\jsVarCache\\$checksum",
-            X\THETOOLS::sc(
-                array(
-                    'admin' => $admin,
-                    'creation' => time(),
-                    'content' => $wrap
-                )
+            (object) array(
+                'admin' => $admin,
+                'creation' => time(),
+                'content' => $js
             )
         );
 
@@ -602,21 +602,6 @@ class THEWPMASTER extends THEWPUPDATES {
         } else {
             echo "<script src=\"$url\" type=\"text/javascript\"></script>";
         }
-    }
-
-    final public function wrapJsVar($var)
-    {
-        $ns = explode('\\', strtolower($this->namespace));
-        $name = $ns[0];
-        $var = array(
-            $ns[1] => $var
-        );
-        return self::s_wrapJsVar($name, $var);
-    }
-
-    final private static function s_wrapJsVar($namespace, $var)
-    {
-        return "a.$namespace=a.$namespace||{};b(a.$namespace,".json_encode($var).");\n";
     }
 
     final public static function twpm_ajax_jsVars()

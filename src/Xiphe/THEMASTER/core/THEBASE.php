@@ -689,28 +689,11 @@ class THEBASE {
     }
 
     private static function s_reg_jsVar($name, $var, $global, $namespace, $admin = false) {
-        $r = array();
-
-        if ($admin) {
-            $r['admin'] = array();
-            $rl = &$r['admin'];
-        } else {
-            $r['front'] = array();
-            $rl = &$r['front'];
-        }
-
         if (!$global) {
-            foreach (explode('\\', $namespace) as $k) {
-                $k = strtolower($k);
-                $rl[$k] = array();
-                $rl = &$rl[$k];
-            }
-            $rl[$name] = $var;
-        } else {
-            $rl[$name] = $var;
+            $name = str_replace('\\', '.', strtolower($namespace)).'.'.$name;
         }
 
-        self::$s_registeredJsVars = array_merge_recursive(self::$s_registeredJsVars, $r);
+        self::$s_registeredJsVars[($admin ? 'admin' : 'front')][$name] = $var;
     }
 
     /**
@@ -1150,7 +1133,7 @@ class THEBASE {
             $content = file_get_contents($file);
 
             try {
-                $js = \CoffeeScript\Compiler::compile($content);
+                $js = @\CoffeeScript\Compiler::compile($content);
             } catch (\Exception $e) {
                 X\THEDEBUG::debug($e);
                 return;
@@ -1211,9 +1194,14 @@ class THEBASE {
      * @access public
      * @return array
      */
-    public static function sGet_registeredJsVars()
+    public static function sGet_registeredJsVars($admin = false)
     {
-        return self::$s_registeredJsVars['front'];
+        $js = '';
+        foreach (self::$s_registeredJsVars[($admin ? 'admin' : 'front')] as $name => $val) {
+            $js .= "namespace('$name',".json_encode($val).');';
+        }
+
+        return $js;
     }
 
     /**
@@ -1224,7 +1212,7 @@ class THEBASE {
      */
     public static function sGet_registeredAdminJsVars()
     {
-        return self::$s_registeredJsVars['admin'];
+        return self::sGet_registeredJsVars(true);
     }
     
     /**
@@ -1235,14 +1223,15 @@ class THEBASE {
      */
     public function echo_jsVars($admin = false)
     {
-        self::_echo_jsVars();
-        $HTML = self::sGet_HTML();
-        $HTML->sg_script();
-        foreach (self::$s_registeredJsVars as $name => $var) {
-            $HTML->blank('var '.$name.' = '.json_encode($var).';');
-            unset(self::$s_registeredJsVars[$name]);
+        $js = self::sGet_registeredJsVars($admin);
+        $js = "<script type=\"text/javascript\">$js</script>";
+        if (is_object($HTML = THEBASE::sGet_HTML(true))) {
+            $HTML->blank($js);
+        } else {
+            echo $js;
         }
-        $HTML->end();
+
+        unset(self::$s_registeredJsVars[($admin ? 'admin' : 'front')]);
     }
     
     /**
@@ -1253,27 +1242,9 @@ class THEBASE {
      */
     public function echo_AdmimJsVars()
     {
-        self::_echo_jsVars(true);
-        $HTML = $this->get_HTML();
-        $HTML->sg_script();
-        foreach (self::$s_registeredAdminJsVars as $name => $var) {
-            $HTML->blank('var '.$name.' = '.json_encode($var));
-            unset(self::$s_registeredAdminJsVars[$name]);
-        }
-        $HTML->end();
+        self::echo_jsVars(true);
     }
 
-    private static function _echo_jsVars($admin = false)
-    {
-        $HTML = self::sGet_HTML();
-        $HTML->sg_script();
-        $admin = ($admin ? 'admin' : 'front');
-        foreach (self::$s_registeredJsVars[$admin] as $name => $var) {
-            $HTML->blank('var '.$name.' = '.json_encode($var).';');
-            unset(self::$s_registeredJsVars[$admin][$name]);
-        }
-        $HTML->end();
-    }
     
     /**
      * Prepares the including of a file in res/includes
