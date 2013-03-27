@@ -60,7 +60,7 @@ var xiphe=xiphe||{};xiphe=jQuery.extend(true,{},xiphe,{themaster:{responsiveimag
 		if ($.cookie('tmri_nojsfallback') === 'active') {
 			$.removeCookie('tmri_nojsfallback');
 		}
-		if(typeof xiphe.themaster.responsive_slideshowTime !== 'undefined') {
+		if(typeof xiphe.themaster !== 'undefined' && xiphe.themaster.responsive_slideshowTime !== 'undefined') {
 			self.slideshowChangeIntervall = parseInt(xiphe.themaster.responsive_slideshowTime, 10);
 		}
 		_resize();

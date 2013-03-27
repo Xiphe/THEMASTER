@@ -9,7 +9,6 @@ Date: 2013-03-06 20:52:37 +01.00
 Author: Hannes Diercks aka Xiphe
 Author URI: https://github.com/Xiphe
 Update Server: http://wpupdates.xiphe.net/v1/
-Branch: alldeps
 */
 
 /*

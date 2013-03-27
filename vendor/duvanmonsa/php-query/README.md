@@ -1,4 +1,0 @@
-phpQuery
-========
-
-phpQuery

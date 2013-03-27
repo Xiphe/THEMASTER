@@ -373,7 +373,7 @@ var xiphe=xiphe||{};xiphe=jQuery.extend(true,{},xiphe,{themaster:{fileselect:(fu
         /*
          * Delete id's from list if attachment got deleted.
          */
-        $('.del-attachment a[id^="del"]').live('click', function() {
+        $('body').on('click', '.del-attachment a[id^="del"]', function() {
             var id = parseInt($(this).attr('id').match(/del\[([0-9]+)\]/)[1], 10);
             if (parentFS.checkedAttachments.indexOf(id) >= 0) {
                 parentFS.checkedAttachments.splice(
@@ -400,16 +400,15 @@ var xiphe=xiphe||{};xiphe=jQuery.extend(true,{},xiphe,{themaster:{fileselect:(fu
 
             /*
              * The selection process.
-             * Live because element may be reloaded through detail adjustments (new name etc.)
              */
-            $('.tm-fileselect_checkbox, .media-item').live('click', _checkboxClicked);
+            $('body').on('click', '.tm-fileselect_checkbox, .media-item', _checkboxClicked);
 
             $single_select_btn.click(parentFS.selectItems);
         } else {
             /*
              * Single.
              */
-            $('a.tm-fileselect_insert').live('click', _selectSingleClicked);
+            $('body').on('click', 'a.tm-fileselect_insert', _selectSingleClicked);
         }
     },
 
@@ -546,7 +545,7 @@ var xiphe=xiphe||{};xiphe=jQuery.extend(true,{},xiphe,{themaster:{fileselect:(fu
         /*
          * Remove an entry if the remove button on the preview is clicked
          */
-        $('.tm-fileselect_remove').live('click', function(e) {
+        $('body').on('click', '.tm-fileselect_remove', function(e) {
             e.preventDefault();
             /*
              * initiate variables

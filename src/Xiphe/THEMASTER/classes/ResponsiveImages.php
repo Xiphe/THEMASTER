@@ -969,7 +969,7 @@ class ResponsiveImages extends core\THEWPMASTER {
       	}
 
       	$q = ($quality+1)*25;
-
+      	
       	switch ($type) {
 			case 'image/gif':
 				$r = imagegif($new_image, $target);
@@ -1066,7 +1066,7 @@ class ResponsiveImages extends core\THEWPMASTER {
 			return false;
 		} 
 		$dirs = wp_upload_dir();
-		return X\THETOOLS::DS(realpath($dirs['path'])).$image['file'];
+		return X\THETOOLS::DS(realpath($dirs['basedir'])).$image['file'];
 	}
 
 	public function shutdown() {
