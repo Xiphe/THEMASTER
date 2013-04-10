@@ -93,7 +93,8 @@ class ResponsiveImages extends core\THEWPMASTER {
 		$this->reg_js('resizeend');
 		$this->reg_js('jquery.cookie.min');
 		$this->reg_js('tm-responsiveimages');
-		core\THEBASE::reg_jsVar('ajaxurl', admin_url('admin-ajax.php'), true);
+
+		core\THEBASE::sRegJsVar('ajaxurl', admin_url('admin-ajax.php'), true);
 		$this->_active = true;
 	}
 
