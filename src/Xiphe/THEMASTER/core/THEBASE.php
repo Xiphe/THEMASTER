@@ -907,12 +907,32 @@ class THEBASE {
             $file
         );
         
+        $update = false;
+        if (!file_exists($cssFile)) {
+            $update = true;
+        } elseif (strpos(basename($file), '.inc.less') > -1) {
+            /*
+             * When the less file is called [...].inc.less search for sub-imports and check their
+             * filemtime to determine if the file should be evaluated again. 
+             */
+            $m;
+            preg_match_all('/@import[\s]?["\']?([^";]+.less)["\']?;/', file_get_contents($file), $m);
+            if (!empty($m[1])) {
+                foreach ($m[1] as $import) {
+                    if (file_exists($import) || ($import = realpath(dirname($file).DS.$import))) {
+                        if (filemtime($import) > filemtime($cssFile)) {
+                            $update = true;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
         /*
          * If the file does not exist or the less is newer...
          */
-        if (!file_exists($cssFile) 
-         || filemtime($file) > filemtime($cssFile)
-        ) {
+        if ($update || filemtime($file) > filemtime($cssFile)) {
             /*
              * Check if the target file is existent and writable.
              */
@@ -971,6 +991,8 @@ class THEBASE {
             $globals = array(
                 'masterRes' => self::$sBaseUrl.'res/',
                 'baseUrl' => $baseUrl,
+                'res' => $baseUrl.'res/',
+                'img' => $baseUrl.'res/img/',
             );
             if (\Xiphe\THEMASTER\WP()) {
                 $uploadDir = wp_upload_dir();
@@ -1001,7 +1023,7 @@ class THEBASE {
              */
             $i = 0;
             while ($i < 10) {
-                if (in_array(trim($c[$i]), $endings)) {
+                if (isset($c[$i]) && in_array(trim($c[$i]), $endings)) {
                     $c = array_splice($c, $i+1);
                     if (trim($c[0]) === '') {
                         $c = array_splice($c, 1);
