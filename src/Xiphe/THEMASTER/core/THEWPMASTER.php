@@ -592,10 +592,10 @@ class THEWPMASTER extends THEWPUPDATES {
             )
         );
 
-        $url = add_query_arg(array(
+        $url = str_replace('&', '&#038;', add_query_arg(array(
             'action' => 'twpm_jsVars',
             'id' => $checksum
-        ), admin_url('admin-ajax.php'));
+        ), admin_url('admin-ajax.php')));
 
         if (is_object($HTML = THEBASE::sGet_HTML(true))) {
             THEBASE::sGet_HTML()->script(array('src' => $url));
