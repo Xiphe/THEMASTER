@@ -116,6 +116,9 @@ firephp/firephp-core leafo/lessphp, ikimea/browser and some of my own packages.
 Changelog
 ---------
 
+### 3.2.5
+* minor bugfixes
+
 ### 3.2.4
 * *.inc.less files will be checked against updated files imported by the .inc.less file and re-parsed correctly
 * minor bugfixes

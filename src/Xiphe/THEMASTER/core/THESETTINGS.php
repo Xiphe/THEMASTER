@@ -107,7 +107,7 @@ class THESETTINGS extends THEBASE {
 		return;
 	}
 
-	public function sSet_setting( $key, $textID, $value ) {
+	public static function sSet_setting( $key, $textID, $value ) {
 		if (isset(self::$s_settings[$textID][$key])
 			|| (class_exists(THE::WPSETTINGS) && THEWPSETTINGS::settingExists($key, $textID))
 		) {

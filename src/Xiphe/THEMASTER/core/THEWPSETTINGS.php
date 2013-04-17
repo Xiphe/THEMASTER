@@ -257,7 +257,7 @@ class THEWPSETTINGS extends THEWPBUILDER
     {
         if( isset( self::$s_themeSettings ) && ( $k = self::$s_themeSettings ) !== false
          && ( $allSettings = self::s_getSettings( $k ) ) !== false
-         && is_object( ( $HTML = self::get_HTML( true ) ) )
+         && is_object( ( $HTML = self::sGet_HTML( true ) ) )
         ) {
             $HTML->s_div( '.tm-settings body' )
                 ->h1( __( 'Theme Settings', 'themaster' ) )
@@ -421,14 +421,14 @@ class THEWPSETTINGS extends THEWPBUILDER
             $obj->_exit('validationError', __('Invalid attachment count.', 'themaster'), 2);
         }
         if (isset($regOpts['validation']) && !empty($v)) {
-            if (!THEBASE::get_instance('FileSelect')->validateTypeFor(
+            if (!THEBASE::sGet_instance('FileSelect')->validateTypeFor(
                 $v,
                 $regOpts['validation']
             )) {
                 if (isset($regOpts['errorMessage'])) {
                     $msg = $regOpts['errorMessage'];
                 } else {
-                    $msg = THEBASE::get_instance('FileSelect')->get_typeErrorMessageFor($v);
+                    $msg = THEBASE::sGet_instance('FileSelect')->get_typeErrorMessageFor($v);
                 }
                 $obj->_r['errorMsg'] = $msg;
                 $obj->_r['id'] = $inpID;
@@ -437,14 +437,14 @@ class THEWPSETTINGS extends THEWPBUILDER
         }
 
         if (isset($regOpts['args'])) {
-            if (!THEBASE::get_instance('FileSelect')->validateSizeFor(
+            if (!THEBASE::sGet_instance('FileSelect')->validateSizeFor(
                 $v,
                 $regOpts['args']
             )) {
                 if (isset($regOpts['errorMessage'])) {
                     $msg = $regOpts['errorMessage'];
                 } else {
-                    $msg = THEBASE::get_instance('FileSelect')->get_sizeErrorMessageFor($v);
+                    $msg = THEBASE::sGet_instance('FileSelect')->get_sizeErrorMessageFor($v);
                 }
                 $obj->_r['errorMsg'] = $msg;
                 $obj->_r['id'] = $inpID;
@@ -456,7 +456,7 @@ class THEWPSETTINGS extends THEWPBUILDER
     public static function sInject_settingsLink( $links, $k )
     {
         $args = self::$s_settings[ $k ];
-        if ( is_object( ( $HTML = self::get_HTML(true) ))) {
+        if ( is_object( ( $HTML = self::sGet_HTML(true) ))) {
             $settingLink = $HTML->r_a(__('Settings', 'themaster'), array(
                 'title' => sprintf( __('Show/Hide Settings for %s', 'themaster'), $args['name'] ),
                 'href' => '#' . $k . '/Settings',
@@ -482,7 +482,7 @@ class THEWPSETTINGS extends THEWPBUILDER
         $args = self::$s_settings[ $k ];
         $allSettings = self::s_getSettings( $k );
 
-        if ( is_object( ( $HTML = self::get_HTML( true ) ) ) ) {
+        if ( is_object( ( $HTML = self::sGet_HTML( true ) ) ) ) {
             $id = '#' . preg_replace( '/[^a-z0-9-_]/', '', str_replace( ' ', '-', strtolower( $args['name'] ))) . '-settings';
 
             $HTML->s_tr($id.'|.tm-setting-row closed tm-settings' )
@@ -584,7 +584,7 @@ class THEWPSETTINGS extends THEWPBUILDER
                 if (strstr($default, ',')) {
                     $args['multiple'] = true;
                 }
-                THEBASE::get_instance('FileSelect')->button(
+                THEBASE::sGet_instance('FileSelect')->button(
                     $name,
                     $default,
                     $label,

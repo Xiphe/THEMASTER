@@ -442,7 +442,7 @@ class THEBASE {
             }
             $inst = self::$s_singletons[$called];
         } elseif (class_exists($called))
-            $inst = self::get_instance( $called );
+            $inst = self::sGet_instance($called);
         else  {
             return false;
         }
@@ -1367,10 +1367,44 @@ class THEBASE {
      */
     final public function gi($classname, $initArgs = array())
     {
-        if (isset($this)) {
-            return $this->get_instance($classname, $initArgs);
-        } else {
-            return self::get_instance($classname, $initArgs);
+        return $this->get_instance($classname, $initArgs);
+    }
+
+    final public static function sGi($classname, $initArgs = array())
+    {
+        return self::sGet_instance($classname, $initArgs);
+    }
+
+    final public function get_instance($name, $initArgs = array()) {
+        $addPath = array();
+        if (get_class($this) != THE::WPMASTER &&
+            isset($this->namespace) &&
+            isset($this->basePath)
+        ) {
+            $addPath[] = array(
+                'namespace' => $this->namespace,
+                'basePath' => $this->basePath
+            );
+        }
+
+        $initArgs = array_merge(
+            $this->_mastersInitArgs,
+            $this->_initArgs,
+            $initArgs
+        );
+        $initArgs['_mastersInitArgs'] = $this->_mastersInitArgs;
+
+        try {
+            return self::sGet_instance($name, $initArgs, $addPath);
+        } catch(THEBASEException $e) {
+            if (class_exists(THE::WPBUILDER) &&
+                isset($this->buildMissingClasses) &&
+                $this->buildMissingClasses === true
+            ) {
+                return THEWPBUILDER::sBuildClass($buildClass, $initArgs, $this);
+            } else {
+                throw new THEBASEException($e->getMessage());
+            }
         }
     }
 
@@ -1384,10 +1418,8 @@ class THEBASE {
      * @param  array  $initArgs  optional initiation arguments for the instance.
      * @return mixed             the instance or false if not available.
      */
-    final public function get_instance($name, $initArgs = array())
+    final public static function sGet_instance($name, $initArgs = array(), $paths = array())
     {
-        $paths = array();
-
         /*
          * Remove potential namespace from instance name.
          */
@@ -1405,16 +1437,6 @@ class THEBASE {
                 return false;
             }
         } else {
-            if (isset($this)
-             && get_class($this) != THE::WPMASTER
-             && isset($this->namespace)
-             && isset($this->basePath)
-            ) {
-                $paths[] = array(
-                    'namespace' => $this->namespace,
-                    'basePath' => $this->basePath
-                );
-            }
             $paths[] = array(
                 'namespace' => self::$sNameSpace,
                 'basePath' => self::$sBasePath
@@ -1437,20 +1459,11 @@ class THEBASE {
 
             if (class_exists($classname)) {
 
-                if (isset($this)) {
-                    $initArgs = array_merge(
-                        $this->_mastersInitArgs,
-                        $this->_initArgs,
-                        $initArgs
-                    );
-                    $initArgs['_mastersInitArgs'] = $this->_mastersInitArgs;
-                } else {
-                    $initArgs = array_merge(
-                        self::$s_themastersInitArgs,
-                        $initArgs
-                    );
-                    $initArgs['_mastersInitArgs'] = self::$s_themastersInitArgs;
-                }
+                $initArgs = array_merge(
+                    self::$s_themastersInitArgs,
+                    $initArgs
+                );
+                $initArgs['_mastersInitArgs'] = self::$s_themastersInitArgs;
 
                 self::sRegister_callback(
                     'initiated', 
@@ -1495,19 +1508,11 @@ class THEBASE {
         }
 
         if(!isset($obj) || !$obj) {
-            if (isset($this)
-             && class_exists(THE::WPBUILDER)
-             && isset($this->buildMissingClasses)
-             && $this->buildMissingClasses === true
-            ) {
-                return THEWPBUILDER::sBuildClass($buildClass, $initArgs, $this);
-            } else {
-                $msg = sprintf(__( '**!THE MASTER ERROR:** Class File for %s expected here: "%s".', 'themaster' ),
-                    $classname,
-                    implode(__('" or here "', 'themaster'), $ePaths)
-                );
-                throw new THEBASEException($msg);
-            }
+            $msg = sprintf(__( '**!THE MASTER ERROR:** Class File for %s expected here: "%s".', 'themaster' ),
+                $classname,
+                implode(__('" or here "', 'themaster'), $ePaths)
+            );
+            throw new THEBASEException($msg);
         }
         return $obj;
     }

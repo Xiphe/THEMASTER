@@ -4,8 +4,8 @@ Plugin Name: THE MASTER
 Plugin URI: https://github.com/Xiphe/-THE-MASTER
 Namespace: Xiphe\THEMASTER
 Description: A Plugin to provide global access to the THEWPMASTER class. THEWPMASTER provides a lot of handy functions for plugins an themes.
-Version: 3.2.4
-Date: 2013-04-10 18:07:02 +02.00
+Version: 3.2.5
+Date: 2013-04-17 17:40:18 +02.00
 Author: Hannes Diercks aka Xiphe
 Author URI: https://github.com/Xiphe
 Update Server: http://wpupdates.xiphe.net/v1/
@@ -277,7 +277,7 @@ function INIT($initArgs = null, $file = null)
      * Try to build a new Master with the initiation arguments.
      */
     try {
-        $r = core\THEWPMASTER::get_instance('Master', $initArgs);
+        $r = core\THEWPMASTER::sGet_instance('Master', $initArgs);
     } catch (\Exception $e) {
         /*
          * Errors Occured -> try to write an admin notice.

@@ -194,7 +194,7 @@ class THEWPMASTER extends THEWPUPDATES {
                 THEBASE::sReg_adminLess('tm-admin');
                 THEBASE::sReg_adminJs('tm-admin');
                 add_action('plugins_loaded', function() {
-                    THEBASE::get_instance('FileSelect');
+                    THEBASE::sGet_instance('FileSelect');
                 });
             }
 
@@ -413,7 +413,7 @@ class THEWPMASTER extends THEWPUPDATES {
      * @access public
      * @return void
      */
-    public function twpm_check_initiated() {
+    public static function twpm_check_initiated() {
         if( count( ( $uninitiateds = THEMASTER::get_uninitiated() ) ) > 0 ) {
             $uninit = array(
                 'theme' => array(),
@@ -583,14 +583,17 @@ class THEWPMASTER extends THEWPUPDATES {
 
         $checksum = md5($js);
 
-        update_option(
-            "Xiphe\THEMASTER\jsVarCache\\$checksum",
-            (object) array(
-                'admin' => $admin,
-                'creation' => time(),
-                'content' => $js
-            )
-        );
+        $key = "xiphe_themaster_jsvarcache_$checksum";
+        if (!get_option($key, false)) {
+            update_option(
+                $key,
+                (object) array(
+                    'admin' => $admin,
+                    'creation' => time(),
+                    'content' => $js
+                )
+            );
+        }
 
         $url = str_replace('&', '&#038;', add_query_arg(array(
             'action' => 'twpm_jsVars',
@@ -606,7 +609,7 @@ class THEWPMASTER extends THEWPUPDATES {
 
     final public static function twpm_ajax_jsVars()
     {
-        $vars = get_option('Xiphe\THEMASTER\jsVarCache\\'.esc_attr($_GET['id']));
+        $vars = get_option('xiphe_themaster_jsvarcache_'.esc_attr($_GET['id']));
 
         if (!empty($vars) && (!$vars->admin || (is_admin() && is_user_logged_in()))) {
             header("Content-type: text/javascript");
@@ -622,8 +625,9 @@ class THEWPMASTER extends THEWPUPDATES {
         $query = "
             SELECT *
             FROM wp_options
-            WHERE option_name LIKE 'Xiphe\\\\\\\\THEMASTER\\\\\\\\jsVarCache\\\\\\\\%'
+            WHERE option_name LIKE 'xiphe_themaster_jsvarcache_%'
         ";
+        
         foreach ($wpdb->get_results($query) as $jsCache) {
             $data = unserialize($jsCache->option_value);
             if (time()-60*60*48 > intval($data->creation)) {
