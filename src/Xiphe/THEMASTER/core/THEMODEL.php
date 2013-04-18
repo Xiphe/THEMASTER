@@ -8,7 +8,7 @@ use Xiphe as X;
  *
  * @copyright Copyright (c) 2013, Hannes Diercks
  * @author    Hannes Diercks <xiphe@gmx.de>
- * @version   3.0.0
+ * @version   3.1.0
  * @link      https://github.com/Xiphe/THEMASTER/
  * @package   THEMASTER
  */
@@ -23,10 +23,11 @@ class THEMODEL
         if (is_int($initArgs)) {
             $this->ID = $initArgs;
         } elseif (is_array($initArgs) || is_object($initArgs)) {
-            foreach ($initArgs as $k => $v) {
-                $this->$k = $v;
+            foreach ($initArgs as $key => $value) {
+                $this->set($key, $value);
             }
         }
+
         $this->init();
     }
 
@@ -34,29 +35,38 @@ class THEMODEL
     {
     }
 
-    public function get( $name )
+    public function get($name)
     {
-        if ( method_exists( $this, 'get_' . $name ) ) {
+        $method = "get_$name";
+        if (method_exists($this, $method)) {
             $args = func_get_args();
-            unset( $args[0] );
+            unset($args[0]);
 
-            return call_user_func_array( array( $this, 'get_' . $name ), $args );
+            return call_user_func_array(array($this, $method), $args );
+        } elseif (isset($this->$name)) {
+            return $this->$name;
+        } else {
+            return;
         }
-
-        return $this->$name;
     }
 
     public function set($name, $var)
     {
-        if ( method_exists( $this, 'set_' . $name )) {
-            return call_user_func( $f );
+        $method = "set_$name";
+        if (method_exists($this, $method)) {
+            $args = func_get_args();
+            unset($args[0]);
+
+            return call_user_func_array(array($this, $method), $args);
         }
-        if($var == '++' && is_int($this->$name))
+
+        if ($var === '++' && is_int($this->$name)) {
             $this->$name = $this->$name+1;
-        elseif($var == '--' && is_int($this->$name))
+        } elseif($var === '--' && is_int($this->$name)) {
             $this->$name--;
-        else
+        } else {
             $this->$name = $var;
+        }
 
         return $this;
     }
