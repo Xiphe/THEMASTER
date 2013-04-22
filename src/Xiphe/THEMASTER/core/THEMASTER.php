@@ -178,11 +178,11 @@ class THEMASTER extends THESETTINGS {
         echo $e->getMessage() . "\nFile: " . $e->getFile() . "\nLine: " . $e->getLine();
     }
 
-    public function get_uninitiated() {
+    public static function get_uninitiated() {
         return self::$s_toBeInitiated;
     }
 
-    public function get_initiated() {
+    public static function get_initiated() {
         return self::$s_initiatedProjects;
     }
         

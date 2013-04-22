@@ -132,7 +132,7 @@ class THEWPUPDATES extends THEWPSETTINGS {
 		}
 	}
 	
-	public function checkGlobal() {
+	public static function checkGlobal() {
 		if (isset($GLOBALS['Xiphe\THEMASTER\Updatable'])
 			&& is_array($GLOBALS['Xiphe\THEMASTER\Updatable'])
 		) {
@@ -179,7 +179,7 @@ class THEWPUPDATES extends THEWPSETTINGS {
 	/* ---------------- */
 
 
-	public function updatable( $textID, $server = null ) {
+	public static function updatable( $textID, $server = null ) {
 		self::$s_updatables[$textID] = isset( $server ) ? $server : self::$s_defUpdateServer;
 	}
 	

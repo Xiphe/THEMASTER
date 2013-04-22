@@ -157,11 +157,37 @@ class FileSelect extends core\THEWPMASTER {
         return implode('|', $r);
     }
 
+    public function removeEmptyFrom(&$attachments)
+    {
+        if (!is_array($attachments)) {
+            $attachments = explode(',', $attachments);
+        }
+        $attachments = array_filter($attachments, function ($item) {
+            return !empty($item);
+        });
+
+        $attachments = array_values($attachments);
+        
+        return $attachments;
+    }
+
+    public function validateCountFor(&$attachments, $valid = '>=1')
+    {
+        $this->removeEmptyFrom($attachments);
+
+        if (!X\THETOOLS::compareNumbers(count($attachments), $valid)) {
+            $this->_countErrors[implode(',', $attachments)] = array(
+                'count' => count($attachments),
+                'valid' => $valid
+            );
+            return false;
+        }
+
+        return true;
+    }
 
     public function validateTypeFor($attachments, $validTypes) {
-        if (!is_array($attachments)) {
-            $attachments = array($attachments);
-        }
+        $attachments = $this->removeEmptyFrom($attachments);
         $validTypes = explode('|', $validTypes);
         $allOk = true;
 
@@ -277,6 +303,70 @@ class FileSelect extends core\THEWPMASTER {
             }
         }
        return !$hasError;
+    }
+
+    public function get_countErrorMessageFor($attachments, $label)
+    {
+        if (is_array($attachments)) {
+            $attachments = implode(',', $attachments);
+        }
+        $msg = '';
+
+        if (isset($this->_countErrors[$attachments])) {
+            $error = $this->_countErrors[$attachments];
+            $validStr = $this->getValidCountStr($error['valid']);
+            $msg = sprintf(
+                __('Error: Attachment count for "%1$s" should be %2$s. %3$s %4$s selected.', 'themaster'),
+                $label,
+                $validStr['str'],
+                $error['count'],
+                ($error['count'] > 1 ? __('were', 'themaster') : __('is', 'themaster'))
+            );
+        }
+
+        return $msg;
+    }
+
+    public function getValidCountStr($valid)
+    {
+        if (strstr($valid, '-')) {
+            $valid = explode('-', $valid);
+            $from = intval($valid[0]);
+            $to = intval($valid[1]);
+
+            return array(
+                'str' => sprintf(__('from %d to %d', 'themaster'), $valid[0], $valid[1]),
+                'count' => intval($valid[1])
+            );
+        }
+
+        $plain_number = intval(preg_replace('/<>=/', '', $input));
+        if (strstr($valid, '<=')) {
+            return array(
+                'str' => sprintf(__('%d or less', 'themaster'), $plain_number),
+                'count' => $plain_number
+            );
+        } elseif (strstr($valid, '<')) {
+            return array(
+                'str' => sprintf(__('less than %d', 'themaster'), $plain_number),
+                'count' => $plain_number
+            );
+        } elseif (strstr($valid, '>=')) {
+            return array(
+                'str' => sprintf(__('%d or more', 'themaster'), $plain_number),
+                'count' => $plain_number
+            );
+        } elseif (strstr($valid, '>')) {
+            return array(
+                'str' => sprintf(__('more than %d', 'themaster'), $plain_number),
+                'count' => $plain_number
+            );
+        }
+
+        return array(
+            'str' => $valid,
+            'count' => $plain_number
+        );
     }
 
     public function get_sizeErrorMessageFor($attachmentIDs)

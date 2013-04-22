@@ -42,11 +42,11 @@ class THEWPMODEL extends THEMODEL {
 			return self::$_WPTypes['default'];
 	}
 	
-	public function pre_read() {
+	public function pre_read($args = null) {
 		return true;
 	}
-	public function after_read() {}
-	public function read_empty() {
+	public function after_read($args = null) {}
+	public function read_empty($args = null) {
 		return true;
 	}
 	final public function read( $keys = '*', $args = null ) {
