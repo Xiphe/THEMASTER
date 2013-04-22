@@ -1715,7 +1715,7 @@ class THEBASE {
          * Throw exception.
          */
         } else {
-            X\THEDEBUG::debug('callstack', null, null, 2);
+            X\THEDEBUG::getFirePhp()->trace('callstack');
             throw new THEBASEException('Call to undefined method '.$method);
         }
     }
