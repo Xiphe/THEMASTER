@@ -116,6 +116,11 @@ firephp/firephp-core leafo/lessphp, ikimea/browser and some of my own packages.
 Changelog
 ---------
 
+### 3.2.6
+* add validateCountFor, removeEmptyFrom, get_countErrorMessageFor & getValidCountStr methods to FileSelect.
+* bugfix
+
+
 ### 3.2.5
 * minor bugfixes
 
