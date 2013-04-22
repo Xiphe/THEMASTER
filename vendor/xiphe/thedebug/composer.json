@@ -1,0 +1,23 @@
+{
+	"name": "xiphe/thedebug",
+    "type": "debugging",
+    "keywords": ["debug", "firephp"],
+    "description": "Multiple Handy debugging methods.",
+    "homepage": "https://github.com/Xiphe/THEDEBUG",
+    "license": "GNU GENERAL PUBLIC LICENSE",
+    "authors": [
+        {
+            "name": "Hannes 'Xiphe' Diercks",
+            "email": "info@xiphe.net",
+            "homepage": "http://xiphe.net"
+        }
+    ],
+    "require": {
+        "xiphe/base": ">=1.0",
+        "firephp/firephp-core": "dev-master",
+        "php": ">=5.3"
+    },
+    "autoload": {
+        "psr-0": { "Xiphe\\THEDEBUG": "src/" }
+    }
+}

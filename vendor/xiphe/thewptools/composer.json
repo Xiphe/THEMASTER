@@ -1,0 +1,22 @@
+{
+    "name": "xiphe/thewptools",
+    "description": "A loose collection of functions for wordpress.",
+    "type": "tools",
+    "homepage": "https://github.com/Xiphe/THEWPTOOLS",
+    "license": "GNU GENERAL PUBLIC LICENSE",
+    "authors": [
+        {
+            "name": "Hannes Diercks",
+            "email": "info@xiphe.net"
+        }
+    ],
+    "minimum-stability": "beta",
+    "require": {
+        "ikimea/browser": "dev-master",
+        "duvanmonsa/php-query": "dev-master",
+        "xiphe/thetools": "~1.0"
+    },
+    "autoload": {
+        "psr-0": { "Xiphe\\THEWPTOOLS": "src/" }
+    }
+}
