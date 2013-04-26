@@ -33,7 +33,7 @@ Here is a list:
   Used for Browser-detection.  
   License: GNU General Public License V2  
   File: http://www.gnu.org/copyleft/gpl.html  
-  Copyright (C) 2008-2010 Chris Schuld  (chris@chrisschuld.com)
+  Copyright (C) 2008-2010 Chris Schuld (chris@chrisschuld.com)
 
 * **[phpQuery](https://github.com/duvanmonsa/phpQuery)**  
   License: MIT License  
@@ -48,6 +48,12 @@ Here is a list:
 
 Changelog
 ---------
+
+### 1.0.9
++ compareNumbers added.
+
+### 1.0.8
++ bugfix for get_currentUrl filters
 
 ### 1.0.2
 + move class file into src
