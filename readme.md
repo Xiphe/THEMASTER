@@ -85,6 +85,13 @@ firephp/firephp-core leafo/lessphp, ikimea/browser and some of my own packages.
   by Brantley Harris  
   [MIT License](http://opensource.org/licenses/mit-license.php)
 
+* **[jQuery Mouse Wheel Plugin](https://github.com/brandonaaron/jquery-mousewheel)**  
+  by Brandon Aaron  
+  [MIT License](https://github.com/brandonaaron/jquery-mousewheel/blob/master/LICENSE.txt)
+
+* **jQuery Outer HTML**
+  by [Ca-Phun Ung](http://www.yelotofu.com/2008/08/jquery-outerhtml/)
+
 * **[jquery-timing](https://github.com/creativecouple/jquery-timing)**  
   by [CreativeCouple](http://www.creativecouple.de/) - Peter Liske
   [MIT License](https://github.com/creativecouple/jquery-timing/blob/master/README.md)
@@ -115,6 +122,11 @@ firephp/firephp-core leafo/lessphp, ikimea/browser and some of my own packages.
 
 Changelog
 ---------
+
+### 3.2.7
+* update spin.js
+* add jquery.mousewheel.min.js
+* add jquery.outer_html.min.js
 
 ### 3.2.6
 * add validateCountFor, removeEmptyFrom, get_countErrorMessageFor & getValidCountStr methods to FileSelect.
