@@ -31,7 +31,7 @@ class ResponsiveImages extends core\THEWPMASTER {
 
 	public $cacheLivetime = 0;
 
-	private $tmpDir = false;
+	private $_tmpDir = false;
 
 	private $_active = false;
 
@@ -88,7 +88,7 @@ class ResponsiveImages extends core\THEWPMASTER {
 			return false;
 		}
 		$this->uploadDir = realpath($this->uploadDir['path']).DS;
-		$this->tmpDir = dirname($this->uploadDir).DS.'tmp'.DS;
+		$this->_tmpDir = dirname($this->uploadDir).DS.'tmp'.DS;
 
 		$this->reg_js('resizeend');
 		$this->reg_js('jquery.cookie.min');
@@ -895,7 +895,7 @@ class ResponsiveImages extends core\THEWPMASTER {
 			$quality,
 			pathinfo($image, PATHINFO_EXTENSION)
 		);
-		$image = X\THETOOLS::unDS($this->tmpDir).$path.$file;
+		$image = X\THETOOLS::unDS($this->_tmpDir).$path.$file;
 
 		$this->touch($origin, $image);
 		return $image;
