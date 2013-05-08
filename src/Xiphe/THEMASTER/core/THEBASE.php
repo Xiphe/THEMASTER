@@ -23,7 +23,6 @@ class THEBASE {
     /**
      * Turns true after first initiation.
      *
-     * @access private
      * @var    boolean
      */
     private static $s_initiated = false;
@@ -31,7 +30,6 @@ class THEBASE {
     /**
      * Holds the js/css files that will be echoed in the header.
      * 
-     * @access private
      * @var    array
      */
     private static $s_registeredSources = array();
@@ -39,7 +37,6 @@ class THEBASE {
     /**
      * Holder for js-variables that will be echoed in the frontend-header.
      *
-     * @access private
      * @var    array
      */
     private static $s_registeredJsVars = array(
@@ -50,7 +47,6 @@ class THEBASE {
     /**
      * Holder for !THEMASTERs internal callbacks
      *
-     * @access private
      * @var    array
      */
     private static $s_callbacks = array();
@@ -58,7 +54,6 @@ class THEBASE {
     /**
      * Holder for all singleton classes. Populated by THEBASE::get_instance().
      *
-     * @access private
      * @var    array
      */
     private static $s_singletons = array();
@@ -69,7 +64,6 @@ class THEBASE {
     /**
      * The namespace of !THEMASTER
      *
-     * @access public
      * @var string
      */
     public static $sNameSpace = 'Xiphe\THEMASTER';
@@ -77,7 +71,6 @@ class THEBASE {
     /**
      * The version of !THEMASTER
      *
-     * @access public
      * @var string
      */
     public static $sVersion;
@@ -85,7 +78,6 @@ class THEBASE {
     /**
      * The basepath of !THEMASTER.
      *
-     * @access public
      * @var    string
      */
     public static $sBasePath;
@@ -93,7 +85,6 @@ class THEBASE {
     /**
      * The foldername of !THEMASTER
      *
-     * @access public
      * @var    string
      */
     public static $sFolderName;
@@ -101,7 +92,6 @@ class THEBASE {
     /**
      * The projectfile of !THEMASTER
      *
-     * @access public
      * @var    string
      */
     public static $sProjectFile;
@@ -109,7 +99,6 @@ class THEBASE {
     /**
      * The textdomain of !THEMASTER
      *
-     * @access public
      * @var    string
      */
     public static $sTextdomain;
@@ -117,15 +106,25 @@ class THEBASE {
     /**
      * The baseurl of !THEMASTER
      *
-     * @access public
      * @var    string
      */
     public static $sBaseUrl;
 
     /**
+     * Base Path for temporary files
+     * @var string
+     */
+    public static $sTmpPath;
+
+    /**
+     * Base Url for temporary files
+     * @var string
+     */
+    public static $sTmpUrl;
+
+    /**
      * The textid of !THEMASTER
      *
-     * @access public
      * @var    string
      */
     public static $sTextID;
@@ -278,7 +277,7 @@ class THEBASE {
                 '<strong>!THEMASTER - Required args Error:</strong> "%1$s" in %2$s "%3$s"',
                 $err,
                 isset($initArgs['projectType']) ? $initArgs['projectType'] : __('Project', 'themaster'),
-                isset($initArgs['projectName']) ?  $initArgs['projectName'] : __('Unknown', 'themaster')
+                isset($initArgs['projectName']) ? $initArgs['projectName'] : __('Unknown', 'themaster')
             );
             throw new THEBASEException($msg);
             return false;
@@ -287,7 +286,7 @@ class THEBASE {
     }
 
     private static function s_init() {
-        if( !self::$s_initiated ) {
+        if (!self::$s_initiated) {
             X\THETOOLS::session();
 
             self::$s_themastersInitArgs['projectFile']
@@ -301,6 +300,8 @@ class THEBASE {
 
             self::$s_themastersInitArgs['basePath']
                 = self::$sBasePath = $bp;
+            self::$s_themastersInitArgs['tmpPath']
+                = self::$sTmpPath = $bp.'tmp'.DS;
             self::$s_themastersInitArgs['folderName']
                 = self::$sFolderName = basename(self::$sBasePath);
             self::$s_themastersInitArgs['textdomain']
@@ -319,23 +320,24 @@ class THEBASE {
             }
 
             self::$s_themastersInitArgs['namespace'] = 'Xiphe\\THEMASTER';
-            self::$s_themastersInitArgs['projectName'] = '!THE MASTER';
+            self::$s_themastersInitArgs['projectName'] = 'THE MASTER';
             self::$s_themastersInitArgs['updatable'] = true;
 
             if (class_exists(THE::WPBUILDER)) {
-                self::$sVersion = THEWPBUILDER::get_initArgs(THEMASTER_PROJECTFILE,false);
+                self::$sVersion = THEWPBUILDER::get_initArgs(THEMASTER_PROJECTFILE, false);
                 self::$s_themastersInitArgs['version']
                     = self::$sVersion = self::$sVersion['version'];
             }
 
-            if( function_exists( 'plugins_url' )) {
+            if (function_exists('plugins_url')) {
                 self::$s_themastersInitArgs['baseUrl']
                     = self::$sBaseUrl = X\THETOOLS::slash(plugins_url('_'.self::$sTextdomain));
+
+                self::$sTmpUrl = self::$sBaseUrl.'tmp/';
             }
-            
-            if( THESETTINGS::sGet_setting( 'errorReporting', self::$sTextID ) === true ) {
-                // error_reporting( E_ALL );
-                error_reporting( E_ALL & ~E_DEPRECATED & ~E_STRICT );
+
+            if (THESETTINGS::sGet_setting('errorReporting', self::$sTextID) === true) {
+                error_reporting(E_ALL & ~E_DEPRECATED & ~E_STRICT);
                 ini_set('display_errors', 1);
             } else {
                 error_reporting(0);
@@ -343,19 +345,20 @@ class THEBASE {
             }
 
             self::$s_initiated = true;
-            self::sdo_callback( 'afterBaseS_init' );
+            self::sdo_callback('afterBaseS_init');
         }
     }
 
     protected static function check_singleton_( $name = null ) {
-        /* check if Called Class is meant to be a Singleton (Subclass: static $singleton = true;)
+        /*
+         * check if Called Class is meant to be a Singleton (Subclass: static $singleton = true;)
          * and if it is stored in THEMASTERs private $singletons array
          */
 
-        $name = isset( $name ) ? $name :  strtolower( get_called_class() );
-        if( isset( self::$s_singletons[$name] )
-         && is_object( ( $r = self::$s_singletons[$name] ) ) 
-         && isset( $r->singleton ) && $r->singleton === true
+        $name = isset($name) ? $name :  strtolower(get_called_class());
+        if (isset(self::$s_singletons[$name]) &&
+            is_object(($r = self::$s_singletons[$name])) &&
+            isset($r->singleton) && $r->singleton === true
         ) {
             return $r;
         } else {
@@ -647,7 +650,6 @@ class THEBASE {
         $this->_reg_source('less', $filename, $args);
     }
 
-
     final public function reg_adminCoffee($filename, $args = array()) {
         $this->_reg_source('coffee', $filename, $args, true);
     }
@@ -660,7 +662,6 @@ class THEBASE {
     final public function reg_adminLess($filename, $args = array()) {
         $this->_reg_source('less', $filename, $args, true);
     }
-    
     
     final public static function sReg_coffee($filename, $args = array()) {
         self::_reg_source('coffee', $filename, $args);
@@ -715,7 +716,9 @@ class THEBASE {
         /*
          * Check if source is url, register it and skip the rest if true.
          */
-        if (in_array(substr($filename, 0, 7), array('http://', 'https:/'))) {
+        if (in_array(substr($filename, 0, 7), array('http://', 'https:/')) ||
+            substr($filename, 0, 2) === '//'
+        ) {
             self::$s_registeredSources[$foa][$source][$filename] = $filename;
             return true;
         }
@@ -723,10 +726,13 @@ class THEBASE {
         /*
          * Handle allowed arguments.
          */
-        foreach (array('vars', 'folder', 'setTime') as $arg) {
+        foreach (array('vars', 'folder', 'setTime', 'tmp') as $arg) {
             $$arg = isset($args[$arg]) ? $args[$arg] : false;
         }
+        $useTmpFolder = $tmp;
         unset($args);
+        unset($tmp);
+
 
         $isRes = false;
         if (substr($filename, 0, 3) === '../') {
@@ -753,18 +759,33 @@ class THEBASE {
          */
         $filename = basename( $filename );
 
+
         /*
          * If called on instance include the masters basePath and baseUrl into the
          * possible Paths.
          */
-        if(isset($this)) {
-            $paths[$this->basePath] = $this->baseUrl;
+        if (isset($this) &&
+            isset($this->basePath) &&
+            isset($this->baseUrl) &&
+            isset($this->tmpDir) &&
+            isset($this->tmpUrl)
+        ) {
+            $paths[($useTmpFolder ? $this->tmpDir : $this->basePath)] = array(
+                'url' => ($useTmpFolder ? $this->tmpUrl : $this->baseUrl),
+                'tmp' => $this->tmpDir,
+                'tmpurl' => $this->tmpUrl
+            );
         }
 
         /*
          * Add !THE MASTERs basePath and BaseUrl as fall-back.
          */
-        $paths[THEBASE::$sBasePath] = THEBASE::$sBaseUrl;
+        
+        $paths[($useTmpFolder ? THEBASE::$sTmpPath : THEBASE::$sBasePath)] = array(
+            'url' => ($useTmpFolder ? THEBASE::$sTmpUrl : THEBASE::$sBaseUrl),
+            'tmp' => THEBASE::$sTmpPath,
+            'tmpurl' => THEBASE::$sTmpUrl
+        );
 
         $ePaths = array();
 
@@ -785,7 +806,9 @@ class THEBASE {
         /*
          * Circle through the path's
          */
-        foreach ($paths as $path => $url) {
+        foreach ($paths as $path => $data) {
+            extract($data); // url, tmp, tmpurl
+
             /*
              * Generate the direct path to the file or folder.
              */
@@ -828,23 +851,23 @@ class THEBASE {
             } elseif ($folder == false) {
 
                 if ($source === 'coffee') {
-                    $file = self::_handle_coffee($file, $foa);
-                    $relpath = str_replace(DS.'coffee'.DS, DS.'js'.DS, $relpath);
+                    $data = self::_handle_coffee($file, compact('path', 'url', 'tmp', 'tmpurl', 'foa'));
+                    extract($data);
                     $source = 'js';
-                    $suffix = 'coffee.js';
                 }
 
                 if ($source == 'less') {
-                    $file = self::_handle_less($file, $foa);
-                    $relpath = str_replace(DS.'less'.DS, DS.'css'.DS, $relpath);
+                    $data = self::_handle_less($file, compact('path', 'url', 'tmp', 'tmpurl', 'foa'));
+                    extract($data);
                     $source = 'css';
-                    $suffix = 'less.css';
                 }
 
                 /*
                  * Is file -> Add it.
                  */
-                $url = X\THETOOLS::slash($url).str_replace(DS, '/', $relpath).$filename.'.'.$suffix;
+                if (!isset($finalUrl)) {
+                    $finalUrl = X\THETOOLS::slash($url).str_replace(DS, '/', $relpath).$filename.'.'.$suffix;
+                }
 
                 if (!is_array($vars)) {
                     $vars = array();
@@ -854,11 +877,11 @@ class THEBASE {
                 }
 
                 if (!empty($vars)) {
-                    X\THETOOLS::filter_urlQuery($url, null, null, $vars);
+                    X\THETOOLS::filter_urlQuery($finalUrl, null, null, $vars);
                 }
 
 
-                self::$s_registeredSources[$foa][$source][$file] = $url;
+                self::$s_registeredSources[$foa][$source][$file] = $finalUrl;
 
                 return true;
             }
@@ -886,29 +909,37 @@ class THEBASE {
      * @param  string $foa  admin or front
      * @return string       the css filepath
      */
-    private function _handle_less($file, $foa)
+    private function _handle_less($file, $data)
     {
+        extract($data); // path, url, tmp, tmpurl, foa
+
         /*
          * Prevent double handling in runtime.
          */
         self::$s_registeredSources[$foa]['less'][$file] = true;
+
         /*
          * Predict the css path by replacing less with css in the filepath.
          */
         $cssFile = str_replace(
             array(
+                $path,
                 DS.'less'.DS,
                 '.less'
             ),
             array(
+                $tmp,
                 DS.'css'.DS,
                 '.less.css'
             ),
             $file
         );
         
+
         $update = false;
         if (!file_exists($cssFile)) {
+            $update = true;
+        } elseif (filemtime($file) > filemtime($cssFile)) {
             $update = true;
         } elseif (strpos(basename($file), '.inc.less') > -1) {
             /*
@@ -932,20 +963,12 @@ class THEBASE {
         /*
          * If the file does not exist or the less is newer...
          */
-        if ($update || filemtime($file) > filemtime($cssFile)) {
+        if ($update) {
             /*
              * Check if the target file is existent and writable.
              */
-            if (!file_exists($cssFile)) {
-                if (!is_dir(dirname($cssFile))) {
-                    @mkdir(dirname($cssFile));
-                }
-                $h = @fopen($cssFile, 'w');
-                if ($h) {
-                    @fclose($h);
-                }
-                unset($h);
-            }
+            @X\THETOOLS::makeFile($cssFile, 0777, filemtime($file)-10);
+            
             if (!file_exists($cssFile) || !is_writable($cssFile)) {
                 throw new THEBASEException(
                     sprintf(
@@ -981,18 +1004,23 @@ class THEBASE {
              */
             if (!isset($this) || strpos($file, self::$sBasePath) === 0) {
                 $baseUrl = self::$sBaseUrl;
+                $tmpUrl = self::$sTmpUrl;
             } else {
                 $baseUrl = $this->baseUrl;
+                $tmpUrl = $this->tmpUrl;
             }
+            $baseUrl = str_replace(array('https:', 'http:'), '', $baseUrl);
             
             /*
              * Put together a list of globals that can be used inside .less
              */
             $globals = array(
-                'masterRes' => self::$sBaseUrl.'res/',
+                'masterRes' => str_replace(array('https:', 'http:'), '', self::$sBaseUrl.'res/'),
                 'baseUrl' => $baseUrl,
                 'res' => $baseUrl.'res/',
                 'img' => $baseUrl.'res/img/',
+                'tmp' => $tmpUrl,
+                'masterTmp' => self::$sTmpUrl,
             );
             if (\Xiphe\THEMASTER\WP()) {
                 $uploadDir = wp_upload_dir();
@@ -1032,7 +1060,9 @@ class THEBASE {
                 }
                 $i++;
             }
-            file_put_contents($file, $lessHeader."\n\n".implode('', $c));
+            if (is_writable($file)) {
+                file_put_contents($file, $lessHeader."\n\n".implode('', $c));
+            }
 
             /*
              * Make the globals available in .less
@@ -1083,12 +1113,16 @@ class THEBASE {
             throw new THEBASEException("Error on .less generation \"$cssFile\" does not exist.", 1);
             return false;
         } else {
-            return $cssFile;
+            return array(
+                'file' => $cssFile,
+                'finalUrl' => str_replace(DS, '/', str_replace($tmp, $tmpurl, $cssFile))
+            );
         }
     }
 
-    private function _handle_coffee($file, $foa)
+    private function _handle_coffee($file, $data)
     {
+        extract($data);
         /*
          * Prevent double handling in runtime.
          */
@@ -1099,10 +1133,12 @@ class THEBASE {
          */
         $jsFile = str_replace(
             array(
+                $path,
                 DS.'coffee'.DS,
                 '.coffee'
             ),
             array(
+                $tmp,
                 DS.'js'.DS,
                 '.coffee.js'
             ),
@@ -1118,16 +1154,8 @@ class THEBASE {
             /*
              * Check if the target file is existent and writable.
              */
-            if (!file_exists($jsFile)) {
-                if (!is_dir(dirname($jsFile))) {
-                    @mkdir(dirname($jsFile));
-                }
-                $h = @fopen($jsFile, 'w');
-                if ($h) {
-                    @fclose($h);
-                }
-                unset($h);
-            }
+            @X\THETOOLS::makeFile($jsFile, 0777, filemtime($file)-10);
+
             if (!file_exists($jsFile) || !is_writable($jsFile)) {
                 throw new THEBASEException(
                     sprintf(
@@ -1138,7 +1166,6 @@ class THEBASE {
                 );
             }
 
-            touch($file);
             
 
             /*
@@ -1155,7 +1182,7 @@ class THEBASE {
             $content = file_get_contents($file);
 
             try {
-                $js = @\CoffeeScript\Compiler::compile($content);
+                $js = \CoffeeScript\Compiler::compile($content);
             } catch (\Exception $e) {
                 X\THEDEBUG::debug($e);
                 return;
@@ -1168,7 +1195,10 @@ class THEBASE {
             throw new THEBASEException("Error on .less generation \"$jsFile\" does not exist.");
             return false;
         } else {
-            return $jsFile;
+            return array(
+                'file' => $jsFile,
+                'finalUrl' => str_replace(DS, '/', str_replace($tmp, $tmpurl, $jsFile))
+            );
         }
     }
     
