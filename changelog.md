@@ -1,8 +1,46 @@
 THE MASTER CHANGELOG
 ====================
 
+### 3.3.*
++   see [readme.md](https://github.com/Xiphe/THEMASTER/blob/master/readme.md)
+
+### 3.2.7
+* update spin.js
+* add jquery.mousewheel.min.js
+* add jquery.outer_html.min.js
+
+### 3.2.6
+* add validateCountFor, removeEmptyFrom, get_countErrorMessageFor & getValidCountStr methods to FileSelect.
+* bugfix
+
+
+### 3.2.5
+* minor bugfixes
+
+### 3.2.4
+* *.inc.less files will be checked against updated files imported by the .inc.less file and re-parsed correctly
+* minor bugfixes
+
+### 3.2.3
+* refined the js-var printing process.
+* minor bugfixes.
+
+### 3.2.2
+* introducing xiphe_responsiveimages_availablehosts filter
+* fileselect.js bugfixes
+
+### 3.2.1
+* new scrollend.js
+* minified resizeend.js
+* fixed bug where responsive images were not placed after generation.
+* minor bugfixes
+
 ### 3.2
-+   see [readme.md](https://github.com/Xiphe/-THE-MASTER/blob/master/readme.md)
+* exclude THEDEBUG, THETOOLS and THEWPTOOLS
+* switch to composer libraries
+* Autoloading of THEMASTER handled through composer
+* Autoloading of other plugin and theme classes handled by THEAUTOLOADER
+* include coffeescript parser
 
 ### 3.1.6
 + minor bugfixes

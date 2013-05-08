@@ -6,7 +6,7 @@ A base for plugins and themes
 This plugin allocates THEWPMASTER Class which brings handy functionalety and presets
 for plugin and theme development in wordpress.
 
-See [Plugin Page](https://github.com/Xiphe/-THE-MASTER) for details
+See [Plugin Page](https://github.com/Xiphe/THEMASTER) for details
 
 
 Installation
@@ -23,7 +23,7 @@ Support
 
 I've written this project for my own needs so i am not willing to give
 full support. Anyway, i am very interested in any bugs, hints, requests
-or whatever. Please use the [github issue system](https://github.com/Xiphe/-THE-MASTER/issues)
+or whatever. Please use the [github issue system](https://github.com/Xiphe/THEMASTER/issues)
 and i will try to answer.
 
 
@@ -123,45 +123,13 @@ firephp/firephp-core leafo/lessphp, ikimea/browser and some of my own packages.
 Changelog
 ---------
 
-### 3.2.7
-* update spin.js
-* add jquery.mousewheel.min.js
-* add jquery.outer_html.min.js
-
-### 3.2.6
-* add validateCountFor, removeEmptyFrom, get_countErrorMessageFor & getValidCountStr methods to FileSelect.
-* bugfix
-
-
-### 3.2.5
+### 3.3.0
+* update js_init
+* place generated less.css and coffee.js files inside the projects tmp-folder
+* add tmpDir and tmpUrl to init args
 * minor bugfixes
 
-### 3.2.4
-* *.inc.less files will be checked against updated files imported by the .inc.less file and re-parsed correctly
-* minor bugfixes
-
-### 3.2.3
-* refined the js-var printing process.
-* minor bugfixes.
-
-### 3.2.2
-* introducing xiphe_responsiveimages_availablehosts filter
-* fileselect.js bugfixes
-
-### 3.2.1
-* new scrollend.js
-* minified resizeend.js
-* fixed bug where responsive images were not placed after generation.
-* minor bugfixes
-
-### 3.2
-* exclude THEDEBUG, THETOOLS and THEWPTOOLS
-* switch to composer libraries
-* Autoloading of THEMASTER handled through composer
-* Autoloading of other plugin and theme classes handled by THEAUTOLOADER
-* include coffeescript parser
-
-### pre 3.2
+### pre 3.3
 + See changelog.md
 
 
