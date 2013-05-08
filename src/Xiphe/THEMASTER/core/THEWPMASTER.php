@@ -154,7 +154,6 @@ class THEWPMASTER extends THEWPUPDATES {
          */
         $obj = parent::__construct($initArgs);
 
-
         if ($initArgs === 'MINIMASTER') {
             if (\Xiphe\THEMASTER\WP()) {
                 $this->_versionCheck();
@@ -172,8 +171,17 @@ class THEWPMASTER extends THEWPUPDATES {
     public static function sinit() {
         if (!self::$s_initiated) {
 
-            if( function_exists( 'get_option' ) ) {
-                self::$s_theVersions = get_option( 'Xiphe\THEMASTER\theVersions', array() );
+            if (function_exists('wp_upload_dir')) {
+                $dir = wp_upload_dir();
+                $tmpDir = dirname($dir['basedir']).DS.'tmp'.DS.'wp-content'.DS.'plugins'.DS.THEBASE::$sTextdomain.DS;
+                THEBASE::$sTmpPath = $tmpDir;
+
+                $tmpUrl = dirname($dir['baseurl']).'/tmp/wp-content/plugins/'.THEBASE::$sTextdomain.'/';
+                THEBASE::$sTmpUrl = $tmpUrl;
+            }
+
+            if (function_exists('get_option')) {
+                self::$s_theVersions = get_option('Xiphe\THEMASTER\theVersions', array());
             }
 
             if (function_exists('add_action')) {

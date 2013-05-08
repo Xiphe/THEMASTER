@@ -18,6 +18,7 @@ class THEWPBUILDER extends THEMASTER {
 	private static $s_baseTemplatePath;
 	private static $s_initiated = false;
 	private static $s_access = false;
+	private static $s_uploadDir;
 
 	private static $s_initArgsCache = array();
 
@@ -235,10 +236,52 @@ class THEWPBUILDER extends THEMASTER {
 		 && !empty(self::$s_initArgsCache[$textID]['args'])
 		 && self::$s_initArgsCache[ $textID ]['time'] >= ( filemtime( $configFile ) + filemtime( $file ) )
 		) {
-			return self::$s_initArgsCache[ $textID ]['args'];
+			return self::updateBaseUrl(self::$s_initArgsCache[$textID]['args']);
 		} else {
 			return self::s_get_initArgsFromFile( $file );
 		}
+	}
+
+	private static function updateBaseUrl(&$args)
+	{
+		if ($args['projectType'] === 'plugin' && function_exists('plugins_url')) {
+			$args['baseUrl'] = plugins_url($args['textdomain']).'/';
+		} elseif(function_exists('get_bloginfo')) {
+			$args['baseUrl'] = get_bloginfo('template_url').'/';
+		} else {
+			$args['baseUrl'] = '/';
+		}
+
+		return $args;
+	}
+
+	private static function _updateTmpDir(&$args)
+	{
+		extract(self::_get_upload_dir());
+
+		$subfolder = 'wp-content'.DS;
+		if ($args['projectType'] === 'plugin') {
+			$subfolder .= 'plugins'.DS;
+		} else {
+			$subfolder .= 'themes'.DS;
+		}
+		$subfolder .= $args['textdomain'].DS;
+
+		$args['tmpDir'] = $tmpDir.$subfolder;
+		$args['tmpUrl'] = $tmpUrl.str_replace(DS, '/', $subfolder);
+	}
+
+	private static function _get_upload_dir()
+	{
+		if (!isset(self::$s_uploadDir)) {
+			$dir = wp_upload_dir();
+			self::$s_uploadDir = array(
+				'tmpDir' => dirname($dir['basedir']).DS.'tmp'.DS,
+				'tmpUrl' => dirname($dir['baseurl']).'/tmp/'
+			);
+		}
+
+		return self::$s_uploadDir;
 	}
 
 	private static function s_get_initArgsFromFile( $file ) {
@@ -282,13 +325,7 @@ class THEWPBUILDER extends THEMASTER {
 		}
 		
 		// Set baseUrl.
-		if( $iA['projectType'] === 'plugin' && function_exists( 'plugins_url' ) ) {
-			$iA['baseUrl'] = plugins_url( $iA['textdomain'] ) . '/';
-		} elseif( function_exists( 'get_bloginfo' ) ) {
-			$iA['baseUrl'] = get_bloginfo( 'template_url' ) . '/';
-		} else {
-			$iA['baseUrl'] = '/';
-		}
+		self::updateBaseUrl($iA);
 
 		// Get the file that contains additional information.
 		$iA['configFile'] = $iA['projectType'] === 'plugin'
@@ -365,12 +402,14 @@ class THEWPBUILDER extends THEMASTER {
 		}
 
 		// Check if a prefix is set or generate it from the first two uppercase chars of the projectName.
-		if( !isset( $iA['namespace'] ) && isset( $iA['projectName'] ) && isset( $iA['author'] ) ) {
-			$ns = preg_replace( '/[^A-Za-z]/', '', $iA['author'] ) . '\\';
-			$ns .= preg_replace( '/[^A-Za-z]/', '', $iA['projectName'] );
+		if (!isset($iA['namespace']) && isset($iA['projectName']) && isset($iA['author'])) {
+			$ns = preg_replace('/[^A-Za-z]/', '', $iA['author']).'\\';
+			$ns .= preg_replace('/[^A-Za-z]/', '', $iA['projectName']);
 			
 			$iA['namespace'] = $ns;
 		}
+
+		self::_updateTmpDir($iA);
 
 		if( !isset( $iA['updatable'] ) ) {
 			$iA['updatable'] = false;
