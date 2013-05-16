@@ -520,7 +520,7 @@ class THEWPMASTER extends THEWPUPDATES {
     
     final public static function print_xiphe_init_js()
     {
-        $script = file_get_contents(self::$sBasePath.'res'.DS.'js'.DS.'xiphe_init.min.js');
+        $script = file_get_contents(self::$sBasePath.'res'.DS.'js'.DS.'xiphe-init.min.js');
         $script = preg_replace('/\r\n|\n|\r/', ' ', $script);
         $script = "<script type=\"text/javascript\">$script</script>";
 
