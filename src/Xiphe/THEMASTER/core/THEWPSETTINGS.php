@@ -335,9 +335,12 @@ class THEWPSETTINGS extends THEWPBUILDER
         $opts = array();
         $cK = 'tm-setting_'.preg_replace('/[^a-z0-9-_]/', '', $sK);
         
-        foreach (X\THETOOLS::filter_getDataBy($cK) as $k => $v) {
+
+        
+        foreach (X\THETOOLS::filter_postDataBy($cK) as $k => $v) {
             $v = stripslashes($v);
 
+            
             if (!isset($defaults[$k])) {
                 $obj->_exit( 'error', 'cheatin?', 4 );
             }
