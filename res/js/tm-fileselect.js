@@ -581,7 +581,11 @@ var xiphe=xiphe||{};xiphe=jQuery.extend(true,{},xiphe,{themaster:{fileselect:(fu
                 var $val = $(this).find('input.tm-fileselect_value');
                 $(this).siblings('.tm-fileselect_preview').sortable({
                     stop: function() {
-                        $val.val($(this).sortable("serialize").replace(/&tm-fileselect_id\[\]=/g, ',').replace(/tm-fileselect_id\[\]=/g, ''));
+                        $val.val(
+                            $(this).sortable("serialize", {
+                                key: 'fileselect',
+                            }).replace(/=/g, '_').replace(/&/g, ',')
+                        );
                     }
                 });
                 $(this).siblings('.tm-fileselect_preview').disableSelection();
