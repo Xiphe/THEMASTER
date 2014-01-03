@@ -13,7 +13,7 @@
         "css-crush/css-crush": "~1.9",
         "leafo/lessphp": "~0.3",
         "ikimea/browser": "dev-master",
-        "duvanmonsa/php-query": "dev-master",
+        "electrolinux/phpquery": "dev-master",
         "firephp/firephp-core": "dev-master",
         "xiphe/base": "~1.0",
         "xiphe/thetools": "~1",

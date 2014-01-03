@@ -123,6 +123,9 @@ firephp/firephp-core leafo/lessphp, ikimea/browser and some of my own packages.
 Changelog
 ---------
 
+### 3.3.1
+* minor bugfixes
+
 ### 3.3.0
 * update js_init
 * place generated less.css and coffee.js files inside the projects tmp-folder

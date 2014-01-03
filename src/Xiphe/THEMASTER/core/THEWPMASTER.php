@@ -524,9 +524,9 @@ class THEWPMASTER extends THEWPUPDATES {
         $script = preg_replace('/\r\n|\n|\r/', ' ', $script);
         $script = "<script type=\"text/javascript\">$script</script>";
 
-        if (($HTML = self::sGet_HTML())) {
-            $HTML->blank($script);
-        } else {
+        try {
+            self::sGet_HTML()->blank($script);
+        } catch (\Xiphe\THEMASTER\core\THEBASEException $e) {
             echo $script;
         }
     }

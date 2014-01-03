@@ -4,8 +4,8 @@ Plugin Name: THE MASTER
 Plugin URI: https://github.com/Xiphe/THEMASTER
 Namespace: Xiphe\THEMASTER
 Description: The Master is here to enhance your Wordpress plug-ins and themes.
-Version: 3.3.0
-Date: 2013-05-08 10:31:39 +02.00
+Version: 3.3.1
+Date: 2014-01-03 02:31:01 +01.00
 Author: Hannes Diercks aka Xiphe
 Author URI: https://github.com/Xiphe
 Update Server: http://wpupdates.xiphe.net/v1/

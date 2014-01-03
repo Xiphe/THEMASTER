@@ -287,8 +287,6 @@ class THEBASE {
 
     private static function s_init() {
         if (!self::$s_initiated) {
-            X\THETOOLS::session();
-
             self::$s_themastersInitArgs['projectFile']
                 = self::$sProjectFile = THEMASTER_PROJECTFILE;
 
