@@ -4,7 +4,7 @@ Plugin Name: THE MASTER
 Plugin URI: https://github.com/Xiphe/THEMASTER
 Namespace: Xiphe\THEMASTER
 Description: The Master is here to enhance your Wordpress plug-ins and themes.
-Version: 3.3.1
+Version: 3.3.2
 Date: 2014-01-03 02:31:01 +01.00
 Author: Hannes Diercks aka Xiphe
 Author URI: https://github.com/Xiphe
@@ -23,7 +23,7 @@ Update Server: http://wpupdates.xiphe.net/v1/
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  GNU General Public License for more details.
- 
+
  You should have received a copy of the GNU General Public License along
  with this program; if not, write to the Free Software Foundation, Inc.,
  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
@@ -34,7 +34,7 @@ namespace Xiphe\THEMASTER;
     /* -------------------- *
      *  DEVELOPMENMT STUFF  *
      * -------------------- */
-    
+
     /*
      * In development i use one central symlinked version of this plugin.
      * Whenever something seems to be wrong i always uncomment this line
@@ -45,7 +45,7 @@ namespace Xiphe\THEMASTER;
 
     /*
      * A quick breakpoint for xdebug.
-     */ 
+     */
     // \xdebugBreak();
 
     require_once 'vendor/autoload.php';
@@ -195,7 +195,7 @@ if (!defined('THEMINIWPMASTERAVAILABLE') && !defined('THEMINIMASTERAVAILABLE')) 
 
 /**
  * Basic Exception Handler.
- * 
+ *
  * @param  Exception $e Runtime Exception from MINIMASTER init.
  * @return void
  */
@@ -219,17 +219,17 @@ function collect_tmInitErrors($e) {
 
 /**
  * Initiation for Plugins and Themes that want to use THE MASTER.
- * Automaticaly parses initiation args from main plugin file or 
+ * Automaticaly parses initiation args from main plugin file or
  * theme style.
  *
- * @param   mixed  $initArgs optional additional initiation arguments. 
+ * @param   mixed  $initArgs optional additional initiation arguments.
  *                           Keys are overwriting parsed init args.
  *                           Set Key "projectName" to prevent auto parsing.
  *                           This can also be a path to the projects info
  *                           file so the debug backtrace is not required
  *                           to get the called file.
  * @param   string $file     This can be a path to infofile if the first
- *                           param contains additional init args.    
+ *                           param contains additional init args.
  * @return  object           Instance of the Projects Master or false if error.
  */
 function INIT($initArgs = null, $file = null)
@@ -262,12 +262,12 @@ function INIT($initArgs = null, $file = null)
         } else {
             $initArgs = $filesInitArgs;
         }
-        
+
         /*
          * Add Masterflag.
          */
         $initArgs['isMaster'] = true;
-    } 
+    }
 
     if (isset($initArgs['namespace']) && isset($initArgs['basePath'])) {
         core\THEAUTOLOADER::add($initArgs['namespace'], $initArgs['basePath']);
@@ -296,7 +296,7 @@ function INIT($initArgs = null, $file = null)
  * This function can be used to automaticaly build skeletion projects.
  *
  * 1.  Check out `wp-content/plugins/_themaster/templates/new`.
- * 2.  Copy the theme or plugin folder into your wp-content/themes 
+ * 2.  Copy the theme or plugin folder into your wp-content/themes
  *     or wp-content/plugins folder.
  * 3.  Rename the projects foldername
  * 3.b If you are generating a plugin also rename the plugin file.

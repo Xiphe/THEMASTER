@@ -106,7 +106,7 @@ var xiphe=xiphe||{};xiphe=jQuery.extend(true,{},xiphe,{themaster:{fileselect:(fu
                 if ($(this).hasClass('tm-fileselect_changed')) {
                     return;
                 }
-                
+
                 /*
                  * Hide unnecessarily stuff
                  */
@@ -117,11 +117,17 @@ var xiphe=xiphe||{};xiphe=jQuery.extend(true,{},xiphe,{themaster:{fileselect:(fu
                  * Add a save button to the detail view
                  */
                 $(this).find('tr.submit .savesend .del-link').before('<button class="button tm-savechanges" style="margin-right: 5px;">'+xiphe.themaster.fileselecttext.save+'</button>');
-                
+
                 /*
                  * Add the select button / check-box
                  */
                 $(this).prepend($select_button.clone());
+
+                /*
+                 * Fix layout
+                 */
+                $(this).prepend('<div class="clear"></div>');
+                $(this).find('.menu_order').css('margin-top', '0.2em');
 
                 /*
                  * Add Class to prevent double changing.
@@ -270,7 +276,7 @@ var xiphe=xiphe||{};xiphe=jQuery.extend(true,{},xiphe,{themaster:{fileselect:(fu
                     'name': 'tm-fileselect_checkbox'
                 }).css({
                     'float': 'right',
-                    'margin': '0.9em 1.2em 0 0'
+                    'margin': '0.4em 0 0 1em'
                 });
         } else {
             $single_select_wrap = $('');
@@ -501,7 +507,7 @@ var xiphe=xiphe||{};xiphe=jQuery.extend(true,{},xiphe,{themaster:{fileselect:(fu
              */
             checked = !checked;
         }
-        
+
         if (checked) {
             /*
              * Add id to selection
@@ -541,7 +547,7 @@ var xiphe=xiphe||{};xiphe=jQuery.extend(true,{},xiphe,{themaster:{fileselect:(fu
             tb_show('', xiphe.themaster.fileselectbaseurl+'&type=file&TB_iframe=true');
             return false;
         });
-    
+
         /*
          * Remove an entry if the remove button on the preview is clicked
          */
