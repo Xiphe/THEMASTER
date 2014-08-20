@@ -72,7 +72,7 @@ class ResponsiveImages extends core\THEWPMASTER {
 	 */
 	public function init()
 	{	
-		$this->cacheLivetime = 60*60*24*7*30;
+		$this->cacheLivetime = 60*60*24*30;
 		$this->touchedImages = get_option('Xiphe\THEMASTER\ResponsiveImages');
 
 		if (isset($_GET['tmri_nojsfallback']) && $_GET['tmri_nojsfallback'] === 'now') {
