@@ -207,7 +207,7 @@ class ResponsiveImages extends core\THEWPMASTER {
 		/*
 		 * Cleanup the path.
 		 */
-		$img = X\THETOOLS::get_directPath(esc_attr($_REQUEST['image']));
+		$img = X\THETOOLS::get_directPath(esc_attr(urldecode($_REQUEST['image'])));
 
 		/*
 		 * Verify Nonce.
